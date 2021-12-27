@@ -1,5 +1,7 @@
 {
-  "compilerVersion": "./node_modules/solc",
+  "compilerType": "solcjs",
+  "compilerVersion": "0.6.6",
+  "sourceDirectory": "./contracts/v0.6.6",
   "outputType": "all",
   "compilerOptions": {
     "outputSelection": {

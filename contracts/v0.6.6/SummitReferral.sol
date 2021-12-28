@@ -142,8 +142,12 @@ contract SummitReferral is Ownable {
         return firstBuyFee[_token];
     }
 
-    function getDevAddress() external view onlyOwner returns (address) {
+    function getDevAddr() external view onlyOwner returns (address) {
         return devAddr;
+    }
+
+    function getRouter() external view onlyOwner returns (address) {
+        return router;
     }
 
     function addLeadInfluencer(address _inf, uint256 _fee) external onlyOwner {

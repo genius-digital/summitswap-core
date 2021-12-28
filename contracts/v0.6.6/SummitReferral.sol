@@ -138,6 +138,14 @@ contract SummitReferral is Ownable {
         pairInfo[_pair].devFee = _devFee;
     }
 
+    function getFirstBuyFee(address _token) external view onlyOwner returns (uint256) {
+        return firstBuyFee[_token];
+    }
+
+    function getDevAddress() external view onlyOwner returns (address) {
+        return devAddr;
+    }
+
     function addLeadInfluencer(address _inf, uint256 _fee) external onlyOwner {
         require(_fee <= feeDenominator, "Wrong Fee");
         require(influencers[_inf].leadAddress == address(0), "Not able to add sub influencer as a lead influencer");

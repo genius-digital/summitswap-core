@@ -177,11 +177,11 @@ contract SummitReferral is Ownable {
     }
 
     function getReward(address _tokenA, uint256 _amountA, address rewardToken) internal view returns (uint256) {
-        address wbnb = ISummitswapRouter02(router).WETH();
-
         if (_tokenA == rewardToken) {
             return _amountA;
         }
+
+        address wbnb = ISummitswapRouter02(router).WETH();
 
         if (_tokenA == wbnb) {
             address[] memory path = new address[](2);

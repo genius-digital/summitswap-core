@@ -119,6 +119,7 @@ contract SummitReferral is Ownable {
     }
 
     function setFirstBuyFee(address _token, uint256 _fee) external onlyOwner {
+        require(_fee <= 1000, "Wrong Fee");
         firstBuyFee[_token] = _fee;
     }
     
@@ -131,12 +132,14 @@ contract SummitReferral is Ownable {
     }
     
     function setFeeInfo(address _pair, address _rewardToken, uint256 _refFee, uint256 _devFee) external onlyOwner {
+        require(_refFee + _devFee == feeDenominator, "Wrong Fee");
         pairInfo[_pair].tokenR = _rewardToken;
         pairInfo[_pair].refFee = _refFee;
         pairInfo[_pair].devFee = _devFee;
     }
 
     function addLeadInfluencer(address _inf, uint256 _fee) external onlyOwner {
+        require(_fee <= feeDenominator, "Wrong Fee");
         require(influencers[_inf].leadAddress == address(0), "Not able to add sub influencer as a lead influencer");
         leadInfluencers[_inf] = true;
         leadInfFee[_inf] = _fee;
@@ -186,7 +189,7 @@ contract SummitReferral is Ownable {
             path[1] = rewardToken;
             uint256[] memory amountsOut = ISummitswapRouter02(router).getAmountsOut(_amountA, path);
             return amountsOut[1];
-        } 
+        }
 
         address[] memory path = new address[](3);
         path[0] = _tokenA;

@@ -172,6 +172,7 @@ contract SummitReferral is Ownable {
     
     function claimReward(address token) external {
         uint256 balance = _balances[msg.sender][token];
+        require(balance > 0, "Insufficient balance");
         IERC20(token).transfer(msg.sender, balance);
         _balances[msg.sender][token] = 0;
     }

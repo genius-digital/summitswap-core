@@ -132,7 +132,7 @@ contract SummitReferral is Ownable {
     }
     
     function setFeeInfo(address _pair, address _rewardToken, uint256 _refFee, uint256 _devFee) external onlyOwner {
-        require(_refFee + _devFee == feeDenominator, "Wrong Fee");
+        require(_refFee + _devFee <= feeDenominator, "Wrong Fee");
         pairInfo[_pair].tokenR = _rewardToken;
         pairInfo[_pair].refFee = _refFee;
         pairInfo[_pair].devFee = _devFee;

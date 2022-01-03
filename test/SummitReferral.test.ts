@@ -49,8 +49,8 @@ describe("Summit Referral", () => {
 
   it("wallet should able to recordReferral", async () => {
     await summitReferral.recordReferral(otherWallet.address, leadInfluencer.address);
-    let wallet1Referrer = await summitReferral.getReferrer(otherWallet.address);
-    assert.equal(wallet1Referrer, leadInfluencer.address);
+    let otherWalletReferrer = await summitReferral.getReferrer(otherWallet.address);
+    assert.equal(otherWalletReferrer, leadInfluencer.address);
   });
 
   it("setFirstBuyFee to 1000", async () => {
@@ -250,16 +250,17 @@ describe("Summit Referral", () => {
     assert.equal(swapInfo.tokenA, weth.address);
     assert.equal(swapInfo.tokenB, tokenA.address);
     assert.equal(swapInfo.tokenR, tokenR.address);
-    assert.equal(swapInfo.amountA, 2046957198124988);
-    assert.equal(swapInfo.amountB, 100000000000000000);
-    assert.equal(swapInfo.amountR, 5000000000000001);
-    assert.equal(swapInfo.amountD, 5000000000000001);
+    assert.equal(swapInfo.amountA.toString(), 2046957198124988);
+    assert.equal(swapInfo.amountB.toString(), 100000000000000000);
+    assert.equal(swapInfo.amountR.toString(), 5000000000000001);
+    assert.equal(swapInfo.amountD.toString(), 5000000000000001);
   });
 
-  it("reward for the user (first claim) should be 50000000000000018", async () => {
+  it("reward for the user (first swap) should be 50000000000000018", async () => {
     let rewardBalance = await summitReferral.rewardBalance(otherWallet.address, tokenR.address);
     assert.equal(rewardBalance.toString(), 50000000000000018);
   });
+
   it("tokenR rewardBalance for Referrer should be 5000000000000001 wei", async () => {
     let rewardBalance = await summitReferral.rewardBalance(leadInfluencer.address, tokenR.address);
     assert.equal(rewardBalance.toString(), 5000000000000001);
@@ -286,9 +287,103 @@ describe("Summit Referral", () => {
     ).to.be.revertedWith("Insufficient balance");
   });
 
-  it("tokenR rewardBalance for OtherWallet should be 0", async () => {
-    let rewardBalance = await summitReferral.rewardBalance(otherWallet.address, tokenR.address);
+  it("tokenR rewardBalance for LeadInfluencer should be 0", async () => {
+    let rewardBalance = await summitReferral.rewardBalance(leadInfluencer.address, tokenR.address);
     assert.equal(rewardBalance, 0);
+  });
+
+  it("OtherWallet should not not get reward for the second swap", async () => {
+
+    let amount = await summitswapRouter02.getAmountsOut(utils.parseEther('0.1'), [weth.address, tokenA.address]);
+    let amountOut = amount[0];
+    let amountIn = amount[1];
+
+    await summitswapRouter02.connect(otherWallet).swapETHForExactTokens(
+      amountOut, // uint amountOut
+      [weth.address, tokenA.address], // address[] calldata path
+      owner.address, // address to
+      Math.floor(Date.now()/1000) + 24 * 60 * 60, // uint deadline
+      {value: amountIn}
+    );
+
+    let swapList = await summitReferral.getSwapList(leadInfluencer.address);
+
+    let swapInfo = swapList[1];
+
+    assert.equal(swapInfo.tokenA, weth.address);
+    assert.equal(swapInfo.tokenB, tokenA.address);
+    assert.equal(swapInfo.tokenR, tokenR.address);
+    assert.equal(swapInfo.amountA.toString(), 2132375401164431);
+    assert.equal(swapInfo.amountB.toString(), 100000000000000000);
+    assert.equal(swapInfo.amountR.toString(), 5204303329259224);
+    assert.equal(swapInfo.amountD.toString(), 5204303329259224);
+  });
+
+  it("tokenR rewardBalance for Referrer should be 5204303329259224 wei", async () => {
+    let rewardBalance = await summitReferral.rewardBalance(leadInfluencer.address, tokenR.address);
+    assert.equal(rewardBalance.toString(), 5204303329259224);
+  });
+
+  it("leadInfluencer should be able to claim reward", async () => {
+    await summitReferral.connect(leadInfluencer).claimReward(tokenR.address);
+    let rewardBalance = await summitReferral.rewardBalance(leadInfluencer.address, tokenR.address);
+    assert.equal(rewardBalance.toString(), "0");
+  });
+
+  it("tokenR rewardBalance for Developer should be 10204303329259225 wei", async () => {
+    let rewardBalance = await summitReferral.rewardBalance(owner.address, tokenR.address);
+    assert.equal(rewardBalance.toString(), 10204303329259225);
+  });
+
+  it("reward for the user (the second swap) should be 50000000000000018", async () => {
+    // 50000000000000018 is the value of that the user get from the first swap
+    let rewardBalance = await summitReferral.rewardBalance(otherWallet.address, tokenR.address);
+    assert.equal(rewardBalance.toString(), 50000000000000018);
+  });
+
+  it("LeadInfluencer should get reward if SubInfluencer getReward", async () => {
+    await summitReferral.recordReferral(otherWallet2.address, subInfluencer.address);
+    let otherWallet2Referrer = await summitReferral.getReferrer(otherWallet2.address);
+    assert.equal(otherWallet2Referrer, subInfluencer.address);
+
+    let amount = await summitswapRouter02.getAmountsOut(utils.parseEther('0.1'), [weth.address, tokenA.address]);
+    let amountOut = amount[0];
+    let amountIn = amount[1];
+
+    await summitswapRouter02.connect(otherWallet2).swapETHForExactTokens(
+      amountOut, // uint amountOut
+      [weth.address, tokenA.address], // address[] calldata path
+      owner.address, // address to
+      Math.floor(Date.now()/1000) + 24 * 60 * 60, // uint deadline
+      {value: amountIn}
+    );
+
+    let swapList = await summitReferral.getSwapList(leadInfluencer.address);
+
+    let swapInfo = swapList[2];
+
+    assert.equal(swapInfo.tokenA, weth.address);
+    assert.equal(swapInfo.tokenB, tokenA.address);
+    assert.equal(swapInfo.tokenR, tokenR.address);
+    assert.equal(swapInfo.amountA.toString(), 2223251298561417);
+    assert.equal(swapInfo.amountB.toString(), 100000000000000000);
+    assert.equal(swapInfo.amountR.toString(), 27106433114488);
+    assert.equal(swapInfo.amountD.toString(), 0);
+  });
+
+  it("tokenR rewardBalance for LeadInfluencer should be 27106433114488 wei", async () => {
+    let rewardBalance = await summitReferral.rewardBalance(leadInfluencer.address, tokenR.address);
+    assert.equal(rewardBalance.toString(), "27106433114488");
+  });
+
+  it("tokenR rewardBalance for SubInfluencer should be 27106433114488 wei", async () => {
+    let rewardBalance = await summitReferral.rewardBalance(subInfluencer.address, tokenR.address);
+    assert.equal(rewardBalance.toString(), "27106433114488");
+  });
+
+  it("tokenR rewardBalance for OtherWallet2 should be 54212866228977482 wei", async () => {
+    let rewardBalance = await summitReferral.rewardBalance(otherWallet2.address, tokenR.address);
+    assert.equal(rewardBalance.toString(), "54212866228977482");
   });
 
 })

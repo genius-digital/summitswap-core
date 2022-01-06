@@ -10,7 +10,7 @@ contract Ownable {
     address private _owner;
 
     constructor () internal {
-        // _owner = msg.sender;
+        _owner = msg.sender;
         emit OwnershipTransferred(address(0), _owner);
     }
 

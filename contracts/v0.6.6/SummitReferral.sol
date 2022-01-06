@@ -55,7 +55,7 @@ contract SummitReferral is Ownable {
         uint256 devFee;
     }
     mapping(address => FeeInfo) public pairInfo;  // pair address => fee info
-    uint256 public feeDenominator = 10000;  // fee denominator
+    uint256 public feeDenominator = 1000000000;  // fee denominator
 
     struct InfInfo {
         address leadAddress;
@@ -119,7 +119,7 @@ contract SummitReferral is Ownable {
     }
 
     function setFirstBuyFee(address _token, uint256 _fee) external onlyOwner {
-        require(_fee <= 1000, "Wrong Fee");
+        require(_fee <= feeDenominator, "Wrong Fee");
         firstBuyFee[_token] = _fee;
     }
     
@@ -165,7 +165,7 @@ contract SummitReferral is Ownable {
         require(leadInfluencers[msg.sender] == true, "No permission to add influencer");
         require(leadInfluencers[_inf] == false, "Not able to add lead influencer as a sub influencer");
         require(influencers[_inf].leadAddress == address(0), "This address is already added by another lead");
-        require(_leadFee + _infFee == 1000, "Wrong Fee");
+        require(_leadFee + _infFee == feeDenominator, "Wrong Fee");
         influencers[_inf].leadAddress = msg.sender;
         influencers[_inf].refFee = _infFee;
         influencers[_inf].leadFee = _leadFee;
@@ -173,7 +173,7 @@ contract SummitReferral is Ownable {
 
     function changeSubInfluencer(address _inf, uint _leadFee, uint _infFee) external {
         require(influencers[_inf].leadAddress == msg.sender, "No permission to change this influencer");
-        require(_leadFee + _infFee == 1000, "Wrong Fee");
+        require(_leadFee + _infFee == feeDenominator, "Wrong Fee");
         influencers[_inf].refFee = _infFee;
         influencers[_inf].leadFee = _leadFee;
     }
@@ -236,7 +236,7 @@ contract SummitReferral is Ownable {
         
         if (influencers[referrer].leadAddress != address(0)) {
             uint256 amountI = amountReward.mul(leadInfFee[influencers[referrer].leadAddress]).div(feeDenominator);
-            uint256 amountL = amountI.mul(influencers[referrer].leadFee).div(1000);
+            uint256 amountL = amountI.mul(influencers[referrer].leadFee).div(feeDenominator);
             _balances[influencers[referrer].leadAddress][rewardToken] = _balances[influencers[referrer].leadAddress][rewardToken] + amountL;
             swapList[influencers[referrer].leadAddress].push(
                 SwapInfo({
@@ -249,8 +249,8 @@ contract SummitReferral is Ownable {
                     amountR: amountL,
                     amountD: 0
                 })
-            );    
-            amountR = amountI.mul(influencers[referrer].refFee).div(1000);
+            );
+            amountR = amountI.mul(influencers[referrer].refFee).div(feeDenominator);
         } else {
             amountR = amountReward.mul(pairInfo[pair].refFee).div(feeDenominator);
         }
@@ -258,7 +258,7 @@ contract SummitReferral is Ownable {
         uint256 amountD = amountReward.mul(pairInfo[pair].devFee).div(feeDenominator);
 
         if (firstBuy[user][_tokenA] == false) {
-            _balances[user][rewardToken] = _balances[user][rewardToken] + amountReward.mul(firstBuyFee[_tokenA]).div(1000);
+            _balances[user][rewardToken] = _balances[user][rewardToken] + amountReward.mul(firstBuyFee[_tokenA]).div(feeDenominator);
             firstBuy[user][_tokenA] = true;
         }
         _balances[referrer][rewardToken] = _balances[referrer][rewardToken] + amountR;

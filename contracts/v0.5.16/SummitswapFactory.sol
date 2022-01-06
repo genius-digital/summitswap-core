@@ -9,6 +9,8 @@ contract SummitswapFactory is ISummitswapFactory {
     address public feeTo;
     address public feeToSetter;
 
+    address operator;
+
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
@@ -16,6 +18,7 @@ contract SummitswapFactory is ISummitswapFactory {
 
     constructor(address _feeToSetter) public {
         feeToSetter = _feeToSetter;
+        operator = msg.sender;
     }
 
     function allPairsLength() external view returns (uint) {
@@ -32,7 +35,7 @@ contract SummitswapFactory is ISummitswapFactory {
         assembly {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
-        ISummitswapPair(pair).initialize(token0, token1);
+        ISummitswapPair(pair).initialize(token0, token1, operator);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);

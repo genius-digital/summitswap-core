@@ -1,5 +1,7 @@
 {
-  "compilerVersion": "./node_modules/solc",
+  "compilerType": "solcjs",
+  "compilerVersion": "0.5.16",
+  "sourceDirectory": "./contracts/v0.5.16",
   "outputType": "all",
   "compilerOptions": {
     "outputSelection": {
@@ -18,7 +20,7 @@
     "evmVersion": "istanbul",
     "optimizer": {
       "enabled": true,
-      "runs": 999999
+      "runs": 200
     }
   }
 }

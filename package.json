@@ -19,7 +19,7 @@
     "lint": "yarn prettier ./test/*.ts --check",
     "lint:fix": "yarn prettier ./test/*.ts --write",
     "clean": "rimraf ./build/",
-    "precompile": "yarn clean",
+    "prebuild": "yarn clean",
     "build": "waffle .waffle-v0.4.18.json && waffle .waffle-v0.5.16.json && waffle .waffle-v0.6.6.json",
     "pretest": "yarn build",
     "test": "mocha",

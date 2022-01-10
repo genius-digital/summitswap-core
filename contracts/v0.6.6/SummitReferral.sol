@@ -287,7 +287,7 @@ contract SummitReferral is Ownable {
         }
 
         uint256 amountD = amountReward.mul(pairInfo[pair].devFee).div(feeDenominator);
-        if (firstBuy[user][_tokenA]) {
+        if (firstBuy[user][_tokenA] == false) {
             amountU = amountReward.mul(firstBuyFee[_tokenA]);
             amountU = amountU.div(feeDenominator);
             rewardUser(user, _tokenA, rewardToken, amountU);

@@ -204,6 +204,7 @@ contract SummitReferral is Ownable {
         require(balance > 0, 'Insufficient balance');
         IERC20(token).transfer(msg.sender, balance);
         _balances[msg.sender][token] = 0;
+        totalSharedReward[token] = totalSharedReward[token] - balance;
     }
 
     function getReward(

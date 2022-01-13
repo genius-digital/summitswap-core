@@ -1,6 +1,10 @@
 node_modules
-artifacts
-cache
 typechain
+artifacts
 coverage
+cache
+
+.env
+.eslintcache
+coverage.json
 gasReporterOutput.json

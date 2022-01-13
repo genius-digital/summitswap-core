@@ -1,9 +1,10 @@
 node_modules
-.env
-coverage
-coverage.json
 typechain
-
-#Hardhat files
-cache
 artifacts
+coverage
+cache
+
+.env
+.eslintcache
+coverage.json
+gasReporterOutput.json

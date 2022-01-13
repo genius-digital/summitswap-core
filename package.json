@@ -1,9 +1,15 @@
 {
   "name": "summitswap-contracts",
   "scripts": {
+    "prebuild": "npm run clean",
     "build": "hardhat compile",
-    "pretest": "hardhat compile",
+
+    "pretest": "npm run build",
     "test": "hardhat test",
+
+    "precoverage": "npm run build",
+    "coverage": "hardhat coverage",
+    
     "clean": "hardhat clean",
     "help": "hardhat help"
   },

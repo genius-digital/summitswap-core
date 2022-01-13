@@ -1,24 +1,22 @@
-name: Node.js CI
+name: test
 
 on: [pull_request]
 
 jobs:
-  environment:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone repo
+      - name: clone repo
         uses: actions/checkout@v2
-      - name: Setup node 14
+
+      - name: setup node 14
         uses: actions/setup-node@v2
         with:
           node-version: "14"
           cache: "npm"
-      - name: Install dependencies
+
+      - name: install dependencies
         run: npm ci
 
-  test:
-    needs: environment
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run tests
+      - name: run test
         run: npm run test

@@ -11,6 +11,7 @@ use(solidity);
 
 describe("Summit Referral", () => {
   const [owner, leadInfluencer, subInfluencer, otherWallet, otherWallet2] = new MockProvider().getWallets();
+  const feeDenominator = 10 ** 9;
   let weth: Contract;
   let summitswapFactory: Contract;
   let summitswapRouter02: Contract;
@@ -43,8 +44,7 @@ describe("Summit Referral", () => {
   });
 
   it("feeDenominator should be 10^9", async () => {
-    let feeDenominator = await summitReferral.feeDenominator();
-    assert.equal(feeDenominator, 10 ** 9);
+    assert.equal(await summitReferral.feeDenominator(), feeDenominator);
   });
 
   it("wallet should able to recordReferral", async () => {
@@ -54,18 +54,18 @@ describe("Summit Referral", () => {
   });
 
   it("setFirstBuyFee to 50000000", async () => {
-    await summitReferral.setFirstBuyFee(tokenA.address, 5 * 10 ** 8);
+    await summitReferral.setFirstBuyFee(tokenA.address, (50 * feeDenominator) / 100);
     let firstBuyFeeTokenA = await summitReferral.getFirstBuyFee(tokenA.address);
-    assert.equal(firstBuyFeeTokenA, 5 * 10 ** 8);
+    assert.equal(firstBuyFeeTokenA, (50 * feeDenominator) / 100);
 
-    await summitReferral.setFirstBuyFee(weth.address, 5 * 10 ** 8);
+    await summitReferral.setFirstBuyFee(weth.address, (50 * feeDenominator) / 100);
     let firstBuyFeeWETH = await summitReferral.getFirstBuyFee(weth.address);
-    assert.equal(firstBuyFeeWETH, 5 * 10 ** 8);
+    assert.equal(firstBuyFeeWETH, (50 * feeDenominator) / 100);
   });
 
   it("setFirstBuyFee value should be less than feeDenominator", async () => {
     await expect(
-      summitReferral.setFirstBuyFee(tokenA.address, 10 ** 9 + 1)
+      summitReferral.setFirstBuyFee(tokenA.address, feeDenominator + 1)
     ).to.be.revertedWith("Wrong Fee");
   })
 
@@ -106,16 +106,16 @@ describe("Summit Referral", () => {
     let pairAddress = await summitswapFactory.getPair(tokenA.address, tokenB.address);
 
     await expect(
-      summitReferral.setFeeInfo(pairAddress, tokenR.address, 10 ** 9, 1)
+      summitReferral.setFeeInfo(pairAddress, tokenR.address, feeDenominator, 1)
     ).to.be.revertedWith("Wrong Fee");
   });
 
   it("setFeeInfo to TokenB, TokenR, refFee=500000000, devFee=500000000", async () => {
-    await summitReferral.setFeeInfo(tokenB.address, tokenR.address, 5 * 10 ** 7, 5 * 10 ** 7);
+    await summitReferral.setFeeInfo(tokenB.address, tokenR.address, (5 * feeDenominator) / 100, (5 * feeDenominator) / 100);
     let pairInfo = await summitReferral.pairInfo(tokenB.address);
     assert.equal(pairInfo.tokenR, tokenR.address);
-    assert.equal(pairInfo.refFee, 5 * 10 ** 7);
-    assert.equal(pairInfo.devFee, 5 * 10 ** 7);
+    assert.equal(pairInfo.refFee, (5 * feeDenominator) / 100);
+    assert.equal(pairInfo.devFee, (5 * feeDenominator) / 100);
   });
 
   it("setFeeInfo with otherWallet (Not The Owner) should be reverted", async () => {
@@ -126,22 +126,22 @@ describe("Summit Referral", () => {
 
   it("add LeadInfluencer with fee greater than feeDenominator should be reverted", async () => {
     await expect(
-      summitReferral.addLeadInfluencer(owner.address, 10 ** 9 + 1)
+      summitReferral.addLeadInfluencer(owner.address, feeDenominator + 1)
     ).to.be.revertedWith("Wrong Fee");
   });
 
   it("add owner as Lead Influencer", async () => {
-    await summitReferral.addLeadInfluencer(owner.address, 5 * 10 ** 7);
+    await summitReferral.addLeadInfluencer(owner.address, (5 * feeDenominator) / 100);
     let leadInfluencer = await summitReferral.leadInfluencers(owner.address);
     assert.equal(leadInfluencer, true);
 
     let leadInfFee = await summitReferral.leadInfFee(owner.address);
-    assert.equal(leadInfFee, 5 * 10 ** 7);
+    assert.equal(leadInfFee, (5 * feeDenominator) / 100);
   });
 
   it("addLeadInfluencer with otherWallet (Not The Owner) should be reverted", async () => {
     await expect(
-      summitReferral.connect(otherWallet).addLeadInfluencer(otherWallet.address, 5 * 10 ** 7)
+      summitReferral.connect(otherWallet).addLeadInfluencer(otherWallet.address, (5 * feeDenominator) / 100)
     ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 
@@ -159,7 +159,7 @@ describe("Summit Referral", () => {
 
   it("addSubInfluencer should only be called by Lead Influencer", async () => {
     await expect(
-      summitReferral.addSubInfluencer(subInfluencer.address, 5 * 10 ** 8, 5 * 10 ** 8)
+      summitReferral.addSubInfluencer(subInfluencer.address, (50 * feeDenominator) / 100, (50 * feeDenominator) / 100)
     ).to.be.revertedWith("No permission to add influencer");
   });
 
@@ -168,33 +168,33 @@ describe("Summit Referral", () => {
     await summitReferral.addLeadInfluencer(leadInfluencer.address, 5 * 10 ** 6);
 
     await expect(
-      summitReferral.addSubInfluencer(leadInfluencer.address, 5 * 10 ** 8, 5 * 10 ** 8)
+      summitReferral.addSubInfluencer(leadInfluencer.address, (50 * feeDenominator) / 100, (50 * feeDenominator) / 100)
     ).to.be.revertedWith("Not able to add lead influencer as a sub influencer");
   });
 
   it("addSubInfluencer _leadFee + _infFee should be 10^9", async () => {
     await expect(
-      summitReferral.addSubInfluencer(subInfluencer.address, 5 * 10 ** 5, 5 * 10 ** 8)
+      summitReferral.addSubInfluencer(subInfluencer.address, (0.05 * feeDenominator) / 100, (50 * feeDenominator) / 100)
     ).to.be.revertedWith("Wrong Fee");
   });
 
   it("LeadInfluencer should able to add SubInfluencer", async () => {
-    await summitReferral.connect(leadInfluencer).addSubInfluencer(subInfluencer.address, 5 * 10 ** 8, 5 * 10 ** 8);
+    await summitReferral.connect(leadInfluencer).addSubInfluencer(subInfluencer.address, (50 * feeDenominator) / 100, (50 * feeDenominator) / 100);
     let influencer = await summitReferral.influencers(subInfluencer.address);
     assert.equal(influencer.leadAddress, leadInfluencer.address);
-    assert.equal(influencer.refFee, 5 * 10 ** 8);
-    assert.equal(influencer.leadFee, 5 * 10 ** 8);
+    assert.equal(influencer.refFee, (50 * feeDenominator) / 100);
+    assert.equal(influencer.leadFee, (50 * feeDenominator) / 100);
   });
 
   it("Other LeadInfluencer should not be able to add SubInfluencer that already added by another lead", async () => {
     await expect(
-      summitReferral.addSubInfluencer(subInfluencer.address, 5 * 10 ** 8, 5 * 10 ** 8)
+      summitReferral.addSubInfluencer(subInfluencer.address, (50 * feeDenominator) / 100, (50 * feeDenominator) / 100)
     ).to.be.revertedWith("This address is already added by another lead");
   });
 
   it("SubInfluencer should not be added as Lead Influencer", async () => {
     await expect(
-      summitReferral.addLeadInfluencer(subInfluencer.address, 5 * 10 ** 8)
+      summitReferral.addLeadInfluencer(subInfluencer.address, (50 * feeDenominator) / 100)
     ).to.be.revertedWith("Not able to add sub influencer as a lead influencer");
   });
 
@@ -229,7 +229,7 @@ describe("Summit Referral", () => {
     );
 
     let pairAddress = await summitswapFactory.getPair(weth.address, tokenA.address);
-    await summitReferral.setFeeInfo(pairAddress, tokenR.address, 5 * 10 ** 7, 5 * 10 ** 7);
+    await summitReferral.setFeeInfo(pairAddress, tokenR.address, (5 * feeDenominator) / 100, (5 * feeDenominator) / 100);
 
     let amount = await summitswapRouter02.getAmountsOut(utils.parseEther('0.1'), [weth.address, tokenA.address]);
     let amountOut = amount[0];
@@ -303,7 +303,6 @@ describe("Summit Referral", () => {
   });
 
   it("OtherWallet should not not get reward for the second swap", async () => {
-
     let amount = await summitswapRouter02.getAmountsOut(utils.parseEther('0.1'), [weth.address, tokenA.address]);
     let amountOut = amount[0];
     let amountIn = amount[1];

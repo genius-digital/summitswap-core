@@ -7,5 +7,7 @@
   },
   "solidity.defaultCompiler": "remote",
   "solidity.linter": "solhint",
-  "solidity.formatter": "prettier"
+  "solidity.formatter": "prettier",
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false
 }

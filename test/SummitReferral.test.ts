@@ -174,7 +174,7 @@ describe("Summit Referral", () => {
 
   it("addSubInfluencer _leadFee + _infFee should be 10^9", async () => {
     await expect(
-      summitReferral.addSubInfluencer(subInfluencer.address, 5 * 10 ** 5, (50 * feeDenominator) / 100)
+      summitReferral.addSubInfluencer(subInfluencer.address, (0.05 * feeDenominator) / 100, (50 * feeDenominator) / 100)
     ).to.be.revertedWith("Wrong Fee");
   });
 
@@ -256,6 +256,11 @@ describe("Summit Referral", () => {
     assert.equal(swapInfo.amountD.toString(), 5000000000000001);
   });
 
+  it("totalSharedReward should be 60000000000000020", async () => {
+    let totalSharedReward = await summitReferral.totalSharedReward(tokenR.address);
+    assert(totalSharedReward.toString(), "60000000000000020");
+  });
+
   it("reward for the user (first swap) should be 50000000000000018", async () => {
     let rewardBalance = await summitReferral.rewardBalance(otherWallet.address, tokenR.address);
     assert.equal(rewardBalance.toString(), 50000000000000018);
@@ -279,6 +284,11 @@ describe("Summit Referral", () => {
 
     let walletTokenRAmount = await tokenR.balanceOf(leadInfluencer.address);
     assert.equal(rewardBalance.toString(), walletTokenRAmount.toString());
+  });
+
+  it("totalSharedReward should be 55000000000000020", async () => {
+    let totalSharedReward = await summitReferral.totalSharedReward(tokenR.address);
+    assert(totalSharedReward.toString(), "55000000000000020");
   });
 
   it("leadInfluencer should not be able to claim reward when balance is 0", async () => {

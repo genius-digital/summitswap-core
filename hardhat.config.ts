@@ -46,11 +46,11 @@ const config: HardhatUserConfig = {
   },
   networks: {
     bscMainnet: {
-      url: process.env.BSC_MAINNET_URL,
+      url: "https://bsc-dataseed.binance.org/",
       accounts,
     },
     bscTestnet: {
-      url: process.env.BSC_TESTNET_URL,
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       accounts,
     },
   },

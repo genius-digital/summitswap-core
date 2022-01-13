@@ -2,7 +2,7 @@ import { expect, assert } from "chai";
 import { Contract, utils } from "ethers";
 // import { deployContract, MockProvider, solidity } from "ethereum-waffle";
 import SummitReferral from "../artifacts/contracts/SummitReferral.sol/SummitReferral.json";
-import WETH from "../artifacts/contracts/utils/WETH.sol/WBNB.json";
+import WETH from "../artifacts/contracts/utils/WBNB.sol/WBNB.json";
 import Token from "../artifacts/contracts/utils/DummyToken.sol/DummyToken.json";
 import SummitswapFactory from "../artifacts/contracts/SummitswapFactory.sol/SummitswapFactory.json";
 import SummitswapRouter02 from "../artifacts/contracts/SummitswapRouter02.sol/SummitswapRouter02.json";

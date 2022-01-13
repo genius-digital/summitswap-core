@@ -3,7 +3,7 @@ name: Node.js CI
 on: [pull_request]
 
 jobs:
-  build:
+  environment:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
@@ -17,7 +17,7 @@ jobs:
         run: npm ci
 
   test:
-    needs: setup-dependencies
+    needs: environment
     runs-on: ubuntu-latest
     steps:
       - name: Run tests

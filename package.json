@@ -1,5 +1,12 @@
 {
-  "name": "hardhat-project",
+  "name": "summitswap-contracts",
+  "scripts": {
+    "build": "hardhat compile",
+    "pretest": "hardhat compile",
+    "test": "hardhat test",
+    "clean": "hardhat clean",
+    "help": "hardhat help"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-etherscan": "^2.1.8",

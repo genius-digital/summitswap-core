@@ -1,13 +1,11 @@
 import { expect, assert } from "chai";
 import { Contract, utils } from "ethers";
-// import { deployContract, MockProvider, solidity } from "ethereum-waffle";
 import SummitReferral from "../artifacts/contracts/SummitReferral.sol/SummitReferral.json";
 import WETH from "../artifacts/contracts/utils/WBNB.sol/WBNB.json";
 import Token from "../artifacts/contracts/utils/DummyToken.sol/DummyToken.json";
 import SummitswapFactory from "../artifacts/contracts/SummitswapFactory.sol/SummitswapFactory.json";
 import SummitswapRouter02 from "../artifacts/contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
-
-import { ethers, waffle } from "hardhat";
+import { waffle } from "hardhat";
 
 const { deployContract, provider } = waffle;
 
@@ -273,7 +271,7 @@ describe("Summit Referral", () => {
 
   it("reward for the user (first swap) should be 50000000000000018", async () => {
     const rewardBalance = await summitReferral.rewardBalance(otherWallet.address, tokenR.address);
-    assert.equal(rewardBalance.toString(), 50000000000000018);
+    assert.equal(rewardBalance.toString(), "50000000000000018");
   });
 
   it("tokenR rewardBalance for Referrer should be 5000000000000001 wei", async () => {
@@ -351,13 +349,13 @@ describe("Summit Referral", () => {
 
   it("tokenR rewardBalance for Developer should be 10204303329259225 wei", async () => {
     const rewardBalance = await summitReferral.rewardBalance(owner.address, tokenR.address);
-    assert.equal(rewardBalance.toString(), 10204303329259225);
+    assert.equal(rewardBalance.toString(), "10204303329259225");
   });
 
   it("reward for the user (the second swap) should be 50000000000000018", async () => {
     // 50000000000000018 is the value of that the user get from the first swap
     const rewardBalance = await summitReferral.rewardBalance(otherWallet.address, tokenR.address);
-    assert.equal(rewardBalance.toString(), 50000000000000018);
+    assert.equal(rewardBalance.toString(), "50000000000000018");
   });
 
   it("LeadInfluencer should get reward if SubInfluencer getReward", async () => {

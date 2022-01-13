@@ -2,7 +2,7 @@
 
 pragma solidity =0.6.6;
 
-import "./shared/ERC20.sol";
+import "../shared/ERC20.sol";
 
 contract DummyToken is ERC20 {
   address public owner;

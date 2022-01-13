@@ -7,7 +7,7 @@
     "test": "hardhat test",
     "precoverage": "npm run build",
     "coverage": "hardhat coverage",
-    "lint": "prettier --write **/*.{sol,json} && eslint --fix **/*{js,ts}",
+    "lint": "prettier --write **/*.{sol,json} && eslint --fix **/*{js,ts} && npx solhint --fix **/*.sol",
     "clean": "hardhat clean",
     "flatten": "hardhat flatten",
     "help": "hardhat help"

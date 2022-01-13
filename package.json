@@ -3,14 +3,13 @@
   "scripts": {
     "prebuild": "npm run clean",
     "build": "hardhat compile",
-
     "pretest": "npm run build",
     "test": "hardhat test",
-
     "precoverage": "npm run build",
     "coverage": "hardhat coverage",
-    
+    "lint": "prettier --write **/*.{sol,json} && eslint --fix **/*{js,ts}",
     "clean": "hardhat clean",
+    "flatten": "hardhat flatten",
     "help": "hardhat help"
   },
   "devDependencies": {
@@ -21,9 +20,9 @@
     "@typechain/hardhat": "^2.3.1",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.0.0",
-    "@types/node": "^12.20.41",
-    "@typescript-eslint/eslint-plugin": "^4.33.0",
-    "@typescript-eslint/parser": "^4.33.0",
+    "@types/node": "^14.18.5",
+    "@typescript-eslint/eslint-plugin": "^5.9.1",
+    "@typescript-eslint/parser": "^5.9.1",
     "chai": "^4.3.4",
     "dotenv": "^10.0.0",
     "eslint": "^8.6.0",

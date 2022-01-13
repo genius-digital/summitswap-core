@@ -1,3 +1,10 @@
-hardhat.config.ts
+node_modules
+coverage
 scripts
 test
+
+.env
+.eslintcache
+coverage.json
+hardhat.config.ts
+gasReporterOutput.json

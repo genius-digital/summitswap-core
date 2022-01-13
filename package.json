@@ -8,10 +8,15 @@
     "test": "hardhat test",
     "precoverage": "npm run build",
     "coverage": "hardhat coverage",
-    "lint": "prettier --write **/*.{sol,json} && eslint --fix **/*{js,ts} && npx solhint --fix **/*.sol",
+    "lint": "prettier --write **/*.{sol,json} && eslint --cache --fix **/*{js,ts} && solhint --fix **/*.sol",
     "clean": "hardhat clean",
     "flatten": "hardhat flatten",
     "help": "hardhat help"
+  },
+  "lint-staged": {
+    "**/*.{sol,json}": "prettier --write",
+    "**/*.{js,ts}": "eslint --cache --fix",
+    "**/*.sol": "solhint --fix"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.4",

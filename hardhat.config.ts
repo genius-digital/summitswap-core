@@ -25,6 +25,12 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [];
 
 const config: HardhatUserConfig = {
+  paths: {
+    sources: "./src/contracts",
+    tests: "./src/tests",
+    cache: "./cache",
+    artifacts: "./artifacts",
+  },
   solidity: {
     compilers: [
       {

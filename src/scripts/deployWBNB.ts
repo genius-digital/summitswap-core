@@ -1,4 +1,5 @@
 import hre, { ethers } from "hardhat";
+import { environment } from "../environment";
 
 async function main() {
   const WBNB = await ethers.getContractFactory("WBNB");
@@ -6,9 +7,11 @@ async function main() {
 
   console.log("Contract deployed to:", wbnb.address);
 
-  await hre.run("verify:verify", {
-    address: wbnb.address,
-  });
+  if (environment.IS_VERIFY_SUPPORTED) {
+    await hre.run("verify:verify", {
+      address: wbnb.address,
+    });
+  }
 }
 
 main();

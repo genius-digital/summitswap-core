@@ -1,25 +1,16 @@
 pragma solidity =0.6.6;
 
-import "./interfaces/ISummitswapFactory.sol";
-import "./libraries/TransferHelper.sol";
-
-import "./interfaces/ISummitswapRouter02.sol";
 import "./libraries/SummitswapLibrary.sol";
+import "./libraries/TransferHelper.sol";
 import "./libraries/SafeMath2.sol";
+
+import "./interfaces/ISummitReferral.sol";
+import "./interfaces/ISummitswapFactory.sol";
+import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/IWETH.sol";
 
 import "./shared/Ownable.sol";
-
-interface ISummitReferral {
-  function swap(
-    address account,
-    address input,
-    address output,
-    uint256 amountInput,
-    uint256 amountOutput
-  ) external;
-}
 
 contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
   using SafeMath for uint256;

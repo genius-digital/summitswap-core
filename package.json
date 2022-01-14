@@ -13,6 +13,8 @@
     "lint": "prettier --write **/*.{sol,json} && eslint --cache --fix **/*{js,ts} && solhint --fix **/*.sol",
     "clean": "hardhat clean",
     "flatten": "hardhat flatten",
+    "node": "hardhat node",
+    "console": "hardhat console",
     "help": "hardhat help"
   },
   "lint-staged": {

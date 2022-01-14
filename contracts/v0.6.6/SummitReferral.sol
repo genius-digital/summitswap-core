@@ -76,6 +76,7 @@ contract SummitReferral is Ownable {
         uint256 amountD; // Dev amount
     }
     mapping(address => SwapInfo[]) private swapList; // refer address => swap info
+    mapping(address => mapping(address => uint256)) public claimedRewardIndex;
 
     mapping(address => bool) private rewardEnabled;
     address[] private rewardTokens;
@@ -205,6 +206,7 @@ contract SummitReferral is Ownable {
         IERC20(token).transfer(msg.sender, balance);
         _balances[msg.sender][token] = 0;
         totalSharedReward[token] = totalSharedReward[token] - balance;
+        claimedRewardIndex[msg.sender][token] = swapList[msg.sender].length;
     }
 
     function getReward(

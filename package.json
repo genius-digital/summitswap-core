@@ -9,6 +9,7 @@
     "precoverage": "npm run build",
     "coverage": "hardhat coverage",
     "script": "hardhat run",
+    "verify": "hardhat verify",
     "lint": "prettier --write **/*.{sol,json} && eslint --cache --fix **/*{js,ts} && solhint --fix **/*.sol",
     "clean": "hardhat clean",
     "flatten": "hardhat flatten",

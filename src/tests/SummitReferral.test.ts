@@ -1,11 +1,11 @@
 import { waffle } from "hardhat";
 import { expect, assert } from "chai";
 import { Contract, utils } from "ethers";
-import SummitReferral from "../../artifacts/src/contracts/SummitReferral.sol/SummitReferral.json";
-import WETH from "../../artifacts/src/contracts/utils/WBNB.sol/WBNB.json";
-import Token from "../../artifacts/src/contracts/utils/DummyToken.sol/DummyToken.json";
-import SummitswapFactory from "../../artifacts/src/contracts/SummitswapFactory.sol/SummitswapFactory.json";
-import SummitswapRouter02 from "../../artifacts/src/contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
+import SummitReferral from "../../build/artifacts/src/contracts/SummitReferral.sol/SummitReferral.json";
+import WETH from "../../build/artifacts/src/contracts/utils/WBNB.sol/WBNB.json";
+import Token from "../../build/artifacts/src/contracts/utils/DummyToken.sol/DummyToken.json";
+import SummitswapFactory from "../../build/artifacts/src/contracts/SummitswapFactory.sol/SummitswapFactory.json";
+import SummitswapRouter02 from "../../build/artifacts/src/contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
 
 const { deployContract, provider } = waffle;
 

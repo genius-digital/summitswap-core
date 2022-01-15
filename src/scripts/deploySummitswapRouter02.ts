@@ -2,6 +2,7 @@ import hre, { ethers } from "hardhat";
 import { environment } from "../environment";
 import { deploySummitswapFactory } from "./deploySummitswapFactory";
 import { deployWBNB } from "./deployWBNB";
+import { tryVerify } from "./utils/verify";
 
 export async function deploySummitswapRouter02() {
   const [wallet1] = await ethers.getSigners();
@@ -17,20 +18,7 @@ export async function deploySummitswapRouter02() {
 
   console.log("SummitswapRouter02 deployed to:", summitswapRouter02.address);
 
-  if (environment.IS_VERIFY_SUPPORTED) {
-    try {
-      await hre.run("verify:verify", {
-        address: summitswapRouter02.address,
-        constructorArguments: [factory, wbnb],
-      });
-    } catch (err: any) {
-      if (err.message.includes("Already Verified")) {
-        console.log("Already Verified");
-      } else {
-        console.log(err);
-      }
-    }
-  }
+  await tryVerify(summitswapRouter02.address, [factory, wbnb]);
 }
 
 async function main() {

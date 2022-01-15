@@ -1,5 +1,6 @@
 import hre, { ethers } from "hardhat";
 import { environment } from "../environment";
+import { tryVerify } from "./utils/verify";
 
 export async function deploySummitswapFactory(feeToSetter: string) {
   console.log("Starting to deploy SummitswapFactory");
@@ -10,20 +11,7 @@ export async function deploySummitswapFactory(feeToSetter: string) {
 
   console.log("SummitswapFactory deployed to:", summitswapFactory.address);
 
-  if (environment.IS_VERIFY_SUPPORTED) {
-    try {
-      await hre.run("verify:verify", {
-        address: summitswapFactory.address,
-        constructorArguments: [feeToSetter],
-      });
-    } catch (err: any) {
-      if (err.message.includes("Already Verified")) {
-        console.log("Already Verified");
-      } else {
-        console.log(err);
-      }
-    }
-  }
+  await tryVerify(summitswapFactory.address, [feeToSetter]);
 
   return summitswapFactory;
 }

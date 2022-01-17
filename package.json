@@ -10,7 +10,7 @@
     "coverage": "hardhat coverage",
     "script": "hardhat run",
     "verify": "hardhat verify",
-    "lint": "prettier --write **/*.{sol,json} && eslint --cache --fix **/*{js,ts} && solhint --fix **/*.sol",
+    "lint": "prettier --write **/*.{sol,json} && eslint --cache --fix **/*{js,ts} && solhint --fix src/**/*.sol",
     "clean": "hardhat clean",
     "flatten": "hardhat flatten",
     "node": "hardhat node",

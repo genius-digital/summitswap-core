@@ -67,6 +67,7 @@ const config: HardhatUserConfig = {
     97: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       accounts,
+      timeout: 100000,
     },
   },
   gasReporter: {

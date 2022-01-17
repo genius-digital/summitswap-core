@@ -7,8 +7,11 @@ import { tryVerify } from "./utils/verify";
 export async function deploySummitswapRouter02() {
   const [wallet1] = await ethers.getSigners();
 
-  const factory = process.env.FACTORY_ADDRESS ?? (await deploySummitswapFactory(wallet1.address)).address;
-  const wbnb = process.env.WBNB_ADDRESS ?? (await deployWBNB()).address;
+  const wbnb = process.env.WBNB_ADDRESS ?? environment.WBNB ?? (await deployWBNB()).address;
+  const factory =
+    process.env.FACTORY_ADDRESS ??
+    environment.SUMMITSWAP_FACTORY ??
+    (await deploySummitswapFactory(wallet1.address)).address;
 
   console.log("Starting to deploy SummitswapRouter02");
 

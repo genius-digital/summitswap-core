@@ -1,5 +1,4 @@
-import hre, { ethers } from "hardhat";
-import { environment } from "../environment";
+import { ethers } from "hardhat";
 import { tryVerify } from "./utils/verify";
 
 export async function deploySummitswapFactory(feeToSetter: string) {

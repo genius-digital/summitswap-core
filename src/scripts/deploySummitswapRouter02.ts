@@ -1,4 +1,4 @@
-import hre, { ethers } from "hardhat";
+import { ethers } from "hardhat";
 import { environment } from "../environment";
 import { deploySummitswapFactory } from "./deploySummitswapFactory";
 import { deployWBNB } from "./deployWBNB";
@@ -22,6 +22,8 @@ export async function deploySummitswapRouter02() {
   console.log("SummitswapRouter02 deployed to:", summitswapRouter02.address);
 
   await tryVerify(summitswapRouter02.address, [factory, wbnb]);
+
+  return summitswapRouter02;
 }
 
 async function main() {

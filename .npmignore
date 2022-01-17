@@ -6,6 +6,7 @@ environment
 
 .env
 .eslintcache
+flattened.txt
 coverage.json
 hardhat.config.ts
 gasReporterOutput.json

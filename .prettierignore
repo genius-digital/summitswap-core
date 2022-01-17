@@ -6,5 +6,6 @@ cache
 
 .env
 .eslintcache
+flattened.txt
 coverage.json
 gasReporterOutput.json

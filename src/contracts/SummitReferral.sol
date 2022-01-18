@@ -55,7 +55,7 @@ contract SummitReferral is Ownable {
   mapping(address => mapping(address => uint256)) public _balances; // address => token => amount
   mapping(address => mapping(address => bool)) public firstBuy;
   mapping(address => uint256) public firstBuyFee;
-  mapping(address => mapping(address => address)) public referrers; // referree => token => referrer
+  mapping(address => address) public referrers; // referree => token => referrer
   mapping(address => uint256) public totalSharedReward; // tokenR address => total reward amount
 
   // TODO: Ask do we need this?
@@ -77,16 +77,10 @@ contract SummitReferral is Ownable {
   }
 
   // TODO: I should not be able to call this function with another user's address
-  function recordReferral(
-    address _user,
-    address _token,
-    address _referrer
-  ) external {
+  function recordReferral(address _user, address _referrer) external {
     // TODO: Ask do we need to check (_user != address(0) && _referrer != address(0))?
-    if (
-      _user != address(0) && _referrer != address(0) && _user != _referrer && referrers[_user][_token] == address(0)
-    ) {
-      referrers[_user][_token] = _referrer;
+    if (_user != address(0) && _referrer != address(0) && _user != _referrer && referrers[_user] == address(0)) {
+      referrers[_user] = _referrer;
       referralsCount[_referrer] += 1;
       emit ReferralRecorded(_user, _referrer);
     }
@@ -163,7 +157,7 @@ contract SummitReferral is Ownable {
     uint256 _amountA,
     uint256 _amountB
   ) external onlyRouter {
-    address referrer = referrers[user][_tokenB];
+    address referrer = referrers[user];
     if (referrer == address(0)) {
       return;
     }

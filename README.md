@@ -1,3 +1,13 @@
+# Summitswap Contracts
+
+`npm run build` - To build
+
+`npm run test` - To run tests
+
+`npm run flatten PATH_TO_CONTRACT > flatten.txt` - To flatten solidity contract and output in `flatten.txt`
+
+`npm run script PATH_TO_SCRIPT -- --network 97` - To deploy contract and verify on testnet
+
 # Advanced Sample Hardhat Project
 
 This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.

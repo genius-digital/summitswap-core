@@ -1,35 +1,41 @@
 import { waffle } from "hardhat";
 import { expect, assert } from "chai";
 import { Contract, utils } from "ethers";
-import SummitReferral from "@built-contracts/SummitReferral.sol/SummitReferral.json";
-import WETH from "@built-contracts/utils/WBNB.sol/WBNB.json";
-import Token from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
-import SummitswapFactory from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
-import SummitswapRouter02 from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
+import SummitReferralArtifact from "@built-contracts/SummitReferral.sol/SummitReferral.json";
+import WETHArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
+import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
+import SummitswapFactoryArtifact from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
+import SummitswapRouter02Artifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
+import { DummyToken, SummitReferral, SummitswapFactory, SummitswapRouter02, WBNB } from "build/typechain";
 
 const { deployContract, provider } = waffle;
 
 describe("Summit Referral", () => {
   const [owner, leadInfluencer, subInfluencer, otherWallet, otherWallet2] = provider.getWallets();
   const feeDenominator = 10 ** 9;
-  let weth: Contract;
-  let summitswapFactory: Contract;
-  let summitswapRouter02: Contract;
-  let summitReferral: Contract;
-  let tokenA: Contract;
-  let tokenB: Contract;
-  let tokenR: Contract;
+  let weth: WBNB;
+  let summitswapFactory: SummitswapFactory;
+  let summitswapRouter02: SummitswapRouter02;
+  let summitReferral: SummitReferral;
+  let tokenA: DummyToken;
+  let tokenB: DummyToken;
+  let tokenR: DummyToken;
 
   beforeEach(async () => {
-    weth = await deployContract(owner, WETH, []);
-    tokenA = await deployContract(owner, Token, []);
-    tokenB = await deployContract(owner, Token, []);
-    tokenR = await deployContract(owner, Token, []);
-    summitswapFactory = await deployContract(owner, SummitswapFactory, [owner.address]);
-    summitswapRouter02 = await deployContract(owner, SummitswapRouter02, [summitswapFactory.address, weth.address], {
-      gasLimit: 4600000,
-    });
-    summitReferral = await deployContract(owner, SummitReferral, []);
+    weth = (await deployContract(owner, WETHArtifact, [])) as WBNB;
+    tokenA = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+    tokenB = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+    tokenR = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+    summitswapFactory = (await deployContract(owner, SummitswapFactoryArtifact, [owner.address])) as SummitswapFactory;
+    summitswapRouter02 = (await deployContract(
+      owner,
+      SummitswapRouter02Artifact,
+      [summitswapFactory.address, weth.address],
+      {
+        gasLimit: 4600000,
+      }
+    )) as SummitswapRouter02;
+    summitReferral = (await deployContract(owner, SummitReferralArtifact, [])) as SummitReferral;
 
     await summitswapFactory.setFeeTo(owner.address);
     await summitswapRouter02.setSummitReferral(summitReferral.address);

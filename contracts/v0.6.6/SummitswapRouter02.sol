@@ -53,21 +53,145 @@ interface ISummitReferral {
     function swap(address account, address input, address output, uint256 amountInput, uint256 amountOutput) external;
 }
 
+interface IPancakePair {
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    function name() external pure returns (string memory);
+    function symbol() external pure returns (string memory);
+    function decimals() external pure returns (uint8);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address owner) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+
+    function approve(address spender, uint value) external returns (bool);
+    function transfer(address to, uint value) external returns (bool);
+    function transferFrom(address from, address to, uint value) external returns (bool);
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+    function PERMIT_TYPEHASH() external pure returns (bytes32);
+    function nonces(address owner) external view returns (uint);
+
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
+
+    event Mint(address indexed sender, uint amount0, uint amount1);
+    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    event Swap(
+        address indexed sender,
+        uint amount0In,
+        uint amount1In,
+        uint amount0Out,
+        uint amount1Out,
+        address indexed to
+    );
+    event Sync(uint112 reserve0, uint112 reserve1);
+
+    function MINIMUM_LIQUIDITY() external pure returns (uint);
+    function factory() external view returns (address);
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function price0CumulativeLast() external view returns (uint);
+    function price1CumulativeLast() external view returns (uint);
+    function kLast() external view returns (uint);
+
+    function mint(address to) external returns (uint liquidity);
+    function burn(address to) external returns (uint amount0, uint amount1);
+    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;
+    function skim(address to) external;
+    function sync() external;
+
+    function initialize(address, address) external;
+}
+
+interface IPancakeRouter {
+    function factory() external pure returns (address);
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
+
+    // **** SWAP ****
+    // requires the initial amount to have already been sent to the first pair
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapTokensForExactTokens(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapExactETHForTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapTokensForExactETH(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapExactTokensForETH(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapETHForExactTokens(
+        uint amountOut,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable returns (uint[] memory amounts);
+
+    // **** SWAP (supporting fee-on-transfer tokens) ****
+    // requires the initial amount to have already been sent to the first pair
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable;
+    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+}
+
 contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     using SafeMath for uint;
 
     address public immutable override factory;
     address public immutable override WETH;
     address public summitReferral;
+    IPancakeRouter pancakeRouter;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'SummitswapRouter02: EXPIRED');
         _;
     }
 
-    constructor(address _factory, address _WETH) public {
+    constructor(address _factory, address _WETH, address _pancakeRouter) public {
         factory = _factory;
         WETH = _WETH;
+        pancakeRouter = IPancakeRouter(_pancakeRouter);
     }
 
     receive() external payable {
@@ -452,6 +576,129 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
         require(amountOut >= amountOutMin, 'SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH(WETH).withdraw(amountOut);
         TransferHelper.safeTransferBNB(to, amountOut);
+    }
+
+    // **** Pancake SWAP ****
+    // requires the initial amount to have already been sent to the first pair
+    function _pancakeSwap(uint[] memory amounts, address[] memory path) internal virtual {
+        for (uint i; i < path.length - 1; i++) {
+            (address input, address output) = (path[i], path[i + 1]);
+            uint amountOut = amounts[i + 1];
+            if (summitReferral != address(0)) {
+                ISummitReferral(summitReferral).swap(msg.sender, input, output, amounts[i], amountOut);
+            }
+        }
+    }
+    function pancakeSwapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts) {
+        amounts = pancakeRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline);
+        _pancakeSwap(amounts, path);
+    }
+    function pancakeSwapTokensForExactTokens(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual returns (uint[] memory amounts) {
+        amounts = pancakeRouter.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
+        _pancakeSwap(amounts, path);
+    }
+    function pancakeSwapExactETHForTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual payable returns (uint[] memory amounts) {
+        amounts = pancakeRouter.swapExactETHForTokens(amountOutMin, path, to, deadline);
+        _pancakeSwap(amounts, path);
+    }
+    function pancakeSwapTokensForExactETH(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual returns (uint[] memory amounts) {
+        amounts = pancakeRouter.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
+        _pancakeSwap(amounts, path);
+    }
+    function pancakeSwapExactTokensForETH(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual returns (uint[] memory amounts) {
+        amounts = pancakeRouter.swapExactTokensForETH(amountIn, amountOutMin, path, to, deadline);
+        _pancakeSwap(amounts, path);
+    }
+    function pancakeSwapETHForExactTokens(
+        uint amountOut,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual payable returns (uint[] memory amounts) {
+        amounts = pancakeRouter.swapETHForExactTokens(amountOut, path, to, deadline);
+        _pancakeSwap(amounts, path);
+    }
+
+    // **** SWAP (supporting fee-on-transfer tokens) ****
+    // requires the initial amount to have already been sent to the first pair
+    function _pancakeSwapSupportingFeeOnTransferTokens(address[] memory path) internal virtual {
+        for (uint i; i < path.length - 1; i++) {
+            (address input, address output) = (path[i], path[i + 1]);
+            (address token0,) = SummitswapLibrary.sortTokens(input, output);
+            address pancakeFactory = pancakeRouter.factory();
+            address pancakePair = ISummitswapFactory(pancakeFactory).getPair(input, output);
+            IPancakePair pair = IPancakePair(pancakePair);
+            uint amountInput;
+            uint amountOutput;
+            { // scope to avoid stack too deep errors
+            (uint reserve0, uint reserve1,) = pair.getReserves(); 
+            (uint reserveInput, uint reserveOutput) = input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
+            amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);
+            amountOutput = pancakeRouter.getAmountOut(amountInput, reserveInput, reserveOutput);
+            }
+            if (summitReferral != address(0)) {
+                ISummitReferral(summitReferral).swap(msg.sender, input, output, amountInput, amountOutput);
+            }
+        }
+    }
+    function pancakeSwapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual {
+        pancakeRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin, path, to, deadline);
+        _pancakeSwapSupportingFeeOnTransferTokens(path);
+    }
+    function pancakeSwapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual payable {
+        pancakeRouter.swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin, path, to, deadline);
+        _pancakeSwapSupportingFeeOnTransferTokens(path);
+    }
+    function pancakeSwapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual
+    {
+        pancakeRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(amountIn, amountOutMin, path, to, deadline);
+        _pancakeSwapSupportingFeeOnTransferTokens(path);
     }
 
     // **** LIBRARY FUNCTIONS ****

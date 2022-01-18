@@ -8,10 +8,14 @@ export async function deploySummitswapRouter02() {
   const [wallet1] = await ethers.getSigners();
 
   const wbnb = process.env.WBNB_ADDRESS ?? environment.WBNB ?? (await deployWBNB()).address;
-  const factory =
+  let factory =
     process.env.FACTORY_ADDRESS ??
     environment.SUMMITSWAP_FACTORY ??
     (await deploySummitswapFactory(wallet1.address)).address;
+
+  if (factory === "-1") {
+    factory = (await deploySummitswapFactory(wallet1.address)).address;
+  }
 
   console.log("Starting to deploy SummitswapRouter02");
 

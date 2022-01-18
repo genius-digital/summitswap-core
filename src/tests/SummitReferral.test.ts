@@ -80,7 +80,7 @@ describe("Summit Referral", () => {
       assert.equal(await summitReferral.referrers(otherWallet.address), "0x0000000000000000000000000000000000000000");
     });
     it("LeadInfluencer should be able to record otherWallet as referral ", async () => {
-      await summitReferral.recordReferral(otherWallet.address, leadInfluencer.address);
+      await summitReferral.connect(otherWallet).recordReferral(leadInfluencer.address);
       assert.equal(await summitReferral.referrers(otherWallet.address), leadInfluencer.address);
     });
   });
@@ -258,7 +258,7 @@ describe("Summit Referral", () => {
 
   describe("Account Should able to swap", async () => {
     beforeEach(async () => {
-      await summitReferral.recordReferral(otherWallet.address, leadInfluencer.address);
+      await summitReferral.connect(otherWallet).recordReferral(leadInfluencer.address);
       await summitReferral.setFirstBuyFee(tokenA.address, (50 * feeDenominator) / 100);
       await summitReferral.setFirstBuyFee(weth.address, (50 * feeDenominator) / 100);
       await summitReferral.setDevAddress(owner.address);
@@ -388,7 +388,7 @@ describe("Summit Referral", () => {
 
   describe("Account should be able to claimReward", async () => {
     beforeEach(async () => {
-      await summitReferral.recordReferral(otherWallet.address, leadInfluencer.address);
+      await summitReferral.connect(otherWallet).recordReferral(leadInfluencer.address);
       await summitReferral.setFirstBuyFee(tokenA.address, (50 * feeDenominator) / 100);
       await summitReferral.setFirstBuyFee(weth.address, (50 * feeDenominator) / 100);
       await summitReferral.setDevAddress(owner.address);
@@ -467,7 +467,7 @@ describe("Summit Referral", () => {
 
   describe("LeadInfluencer should get reward if SubInfluencer get reward", async () => {
     beforeEach(async () => {
-      await summitReferral.recordReferral(otherWallet.address, leadInfluencer.address);
+      await summitReferral.connect(otherWallet).recordReferral(leadInfluencer.address);
       await summitReferral.setFirstBuyFee(tokenA.address, (50 * feeDenominator) / 100);
       await summitReferral.setFirstBuyFee(weth.address, (50 * feeDenominator) / 100);
       await summitReferral.setDevAddress(owner.address);
@@ -481,7 +481,7 @@ describe("Summit Referral", () => {
       await summitReferral
         .connect(leadInfluencer)
         .addSubInfluencer(subInfluencer.address, (50 * feeDenominator) / 100, (50 * feeDenominator) / 100);
-      await summitReferral.recordReferral(otherWallet2.address, subInfluencer.address);
+      await summitReferral.connect(otherWallet2).recordReferral(subInfluencer.address);
 
       await summitswapRouter02.addLiquidityETH(
         tokenA.address, // address token,

@@ -76,13 +76,11 @@ contract SummitReferral is Ownable {
     _;
   }
 
-  // TODO: I should not be able to call this function with another user's address
-  function recordReferral(address _user, address _referrer) external {
-    // TODO: Ask do we need to check (_user != address(0) && _referrer != address(0))?
-    if (_user != address(0) && _referrer != address(0) && _user != _referrer && referrers[_user] == address(0)) {
-      referrers[_user] = _referrer;
+  function recordReferral(address _referrer) external {
+    if (_referrer != address(0) && msg.sender != _referrer && referrers[msg.sender] == address(0)) {
+      referrers[msg.sender] = _referrer;
       referralsCount[_referrer] += 1;
-      emit ReferralRecorded(_user, _referrer);
+      emit ReferralRecorded(msg.sender, _referrer);
     }
   }
 

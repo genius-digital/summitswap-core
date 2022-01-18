@@ -2,8 +2,9 @@ import dotenv from "dotenv";
 import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
+import "tsconfig-paths/register";
 import "hardhat-gas-reporter";
+import "@typechain/hardhat";
 import "solidity-coverage";
 
 dotenv.config();
@@ -18,7 +19,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [];
 
-const config: HardhatUserConfig = {
+export default {
   typechain: {
     outDir: "./build/typechain",
   },
@@ -77,6 +78,4 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: process.env.BSCSCAN_API_KEY,
   },
-};
-
-export default config;
+} as HardhatUserConfig;

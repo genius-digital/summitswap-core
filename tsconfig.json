@@ -6,6 +6,10 @@
     "esModuleInterop": true,
     "outDir": "dist",
     "declaration": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@built-contracts/*": ["build/artifacts/src/contracts/*"]
+    }
   }
 }

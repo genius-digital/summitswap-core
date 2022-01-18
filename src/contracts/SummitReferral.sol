@@ -15,9 +15,11 @@ struct FeeInfo {
 }
 
 struct InfInfo {
-  address leadAddress;
-  uint256 refFee;
+  address lead;
   uint256 leadFee;
+  uint256 refFee;
+  bool isActive;
+  bool isLead;
 }
 
 struct SwapInfo {
@@ -31,37 +33,38 @@ struct SwapInfo {
   uint256 amountD; // Dev amount
 }
 
+// TODO: I think there was some invalid cases with fee percentages
 contract SummitReferral is Ownable {
   using SafeMath for uint256;
 
-  uint256 public feeDenominator = 1000000000; // fee denominator
+  uint256 public feeDenominator = 1000000000;
 
-  address public router;
+  address public summitswapRouter;
+  address public pancakeswapRouter;
   address public devAddr;
 
-  mapping(address => FeeInfo) public pairInfo; // pair address => fee info
+  mapping(address => mapping(address => bool)) public isManager; // output token => manager => is manager
 
-  mapping(address => bool) public leadInfluencers;
-  mapping(address => uint256) public leadInfFee;
-  mapping(address => InfInfo) public influencers;
+  mapping(address => FeeInfo) public feeInfo; // output token => fee info
+  mapping(address => uint256) public firstBuyRefereeFee; // output token => first buy referee fee
+  mapping(address => mapping(address => bool)) public isFirstBuy; // output token => referee => is first buy
 
-  mapping(address => SwapInfo[]) private swapList; // refer address => swap info
+  mapping(address => mapping(address => InfInfo)) public influencers; // output token token => influencer => influencer info
+  mapping(address => mapping(address => address)) public subInfluencerAcceptedLead; // output token token => sub influencer => lead influencer
+  mapping(address => mapping(address => address)) public referrers; // output token => referee => referrer
 
-  mapping(address => bool) private rewardEnabled;
+  mapping(address => SwapInfo[]) public swapList; // referrer => swap infos
+  mapping(address => uint256) public swapCount; // referrer => swap count
 
-  // TODO: Ask do we need this?
-  address[] private rewardTokens;
+  mapping(address => mapping(address => uint256)) public balances; // reward token => user => amount
+  mapping(address => uint256) public totalReward; // reward token => total reward
 
-  mapping(address => mapping(address => uint256)) public _balances; // address => token => amount
-  mapping(address => mapping(address => bool)) public firstBuy;
-  mapping(address => uint256) public firstBuyFee;
-  mapping(address => address) public referrers; // referree => token => referrer
-  mapping(address => uint256) public totalSharedReward; // tokenR address => total reward amount
+  // mapping(address => uint256) public referralsCount; // referrer address => referrals count
+  // mapping(address => bool) private rewardEnabled;
+  // address[] private rewardTokens;
 
-  // TODO: Ask do we need this?
-  mapping(address => uint256) public referralsCount; // referrer address => referrals count
+  event ReferralRecorded(address indexed referee, address indexed referrer, address indexed outputToken);
 
-  event ReferralRecorded(address indexed user, address indexed referrer);
   event ReferralReward(
     address indexed user,
     address indexed tokenR,
@@ -71,193 +74,239 @@ contract SummitReferral is Ownable {
     uint256 amountD
   ); // amountL - LeadInfReward, amountS - SubInfReward, amountU - userReward, amountD - devReward
 
+  constructor(address _summitswapRouter, address _pancakeswapRouter) public {
+    summitswapRouter = _summitswapRouter;
+    pancakeswapRouter = _pancakeswapRouter;
+  }
+
   modifier onlyRouter() {
-    require(msg.sender == router, "caller is not the router");
+    require(msg.sender == summitswapRouter, "Caller is not the router");
     _;
   }
 
-  function recordReferral(address _referrer) external {
-    if (_referrer != address(0) && msg.sender != _referrer && referrers[msg.sender] == address(0)) {
-      referrers[msg.sender] = _referrer;
-      referralsCount[_referrer] += 1;
-      emit ReferralRecorded(msg.sender, _referrer);
-    }
-  }
-
-  function addLeadInfluencer(address _user, uint256 _fee) external onlyOwner {
-    require(_fee <= feeDenominator, "Wrong Fee");
-    require(influencers[_user].leadAddress == address(0), "Not able to add sub influencer as a lead influencer");
-    leadInfluencers[_user] = true;
-    leadInfFee[_user] = _fee;
-  }
-
-  function removeLeadInfluencer(address _influencer) external onlyOwner {
-    leadInfluencers[_influencer] = false;
-  }
-
-  // TODO: Ask if leadinfluencer could add anyone as their subinfluencer without their consent
-  function addSubInfluencer(
-    address _user,
-    uint256 _leadFee,
-    uint256 _infFee
-  ) external {
-    require(leadInfluencers[msg.sender] == true, "No permission to add influencer");
-    require(leadInfluencers[_user] == false, "Not able to add lead influencer as a sub influencer");
+  modifier onlyManager(address _outputToken) {
     require(
-      influencers[_user].leadAddress == address(0) || influencers[_user].leadAddress == msg.sender,
-      "This address is already added by another lead"
+      msg.sender == owner() || isManager[_outputToken][msg.sender] == true,
+      "Caller is not the manager of specified token"
     );
-    require(_leadFee + _infFee == feeDenominator, "Wrong Fee");
-    influencers[_user].leadAddress = msg.sender;
-    influencers[_user].refFee = _infFee;
-    influencers[_user].leadFee = _leadFee;
+    _;
   }
 
-  function claimReward(address _rewardToken) external {
-    uint256 balance = _balances[msg.sender][_rewardToken];
-    require(balance > 0, "Insufficient balance");
-    _balances[msg.sender][_rewardToken] = 0;
-    totalSharedReward[_rewardToken] -= balance;
-    IERC20(_rewardToken).transfer(msg.sender, balance);
-  }
-
-  function getReward(
-    address _tokenA,
-    uint256 _amountA,
-    address rewardToken
-  ) internal view returns (uint256) {
-    if (_tokenA == rewardToken) {
-      return _amountA;
-    }
-
-    address wbnb = ISummitswapRouter02(router).WETH();
-
-    if (_tokenA == wbnb) {
-      address[] memory path = new address[](2);
-      path[0] = wbnb;
-      path[1] = rewardToken;
-      uint256[] memory amountsOut = ISummitswapRouter02(router).getAmountsOut(_amountA, path);
-      return amountsOut[1];
-    }
-
-    address[] memory path = new address[](3);
-    path[0] = _tokenA;
-    path[1] = wbnb;
-    path[2] = rewardToken;
-    uint256[] memory amountsOut = ISummitswapRouter02(router).getAmountsOut(_amountA, path);
-    return amountsOut[2];
-  }
-
-  function swap(
-    address user,
-    address _tokenA,
-    address _tokenB,
-    uint256 _amountA,
-    uint256 _amountB
-  ) external onlyRouter {
-    address referrer = referrers[user];
-    if (referrer == address(0)) {
-      return;
-    }
-
-    address factory = ISummitswapRouter02(router).factory();
-    address pair = ISummitswapFactory(factory).getPair(_tokenA, _tokenB);
-
-    address rewardToken = pairInfo[pair].tokenR;
-    if (rewardToken == address(0)) {
-      return;
-    }
-
-    if (rewardEnabled[rewardToken] == false) {
-      rewardEnabled[rewardToken] = true;
-      rewardTokens.push(rewardToken);
-    }
-
-    uint256 amountReward = getReward(_tokenA, _amountA, rewardToken);
-    uint256 amountR;
-    uint256 amountL;
-    uint256 amountU;
-
-    if (influencers[referrer].leadAddress != address(0)) {
-      uint256 amountI = amountReward.mul(leadInfFee[influencers[referrer].leadAddress]).div(feeDenominator);
-      amountL = amountI.mul(influencers[referrer].leadFee).div(feeDenominator);
-      _balances[influencers[referrer].leadAddress][rewardToken] += amountL;
-      swapList[influencers[referrer].leadAddress].push(
-        SwapInfo({
-          timestamp: block.timestamp,
-          tokenA: _tokenA,
-          tokenB: _tokenB,
-          tokenR: rewardToken,
-          amountA: _amountA,
-          amountB: _amountB,
-          amountR: amountL,
-          amountD: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
-        })
-      );
-      amountR = amountI.mul(influencers[referrer].refFee).div(feeDenominator);
-    } else {
-      amountR = amountReward.mul(pairInfo[pair].refFee).div(feeDenominator);
-    }
-
-    if (firstBuy[user][_tokenA] == false) {
-      firstBuy[user][_tokenA] = true;
-      amountU = amountReward.mul(firstBuyFee[_tokenA]);
-      amountU = amountU.div(feeDenominator);
-      _balances[user][rewardToken] += amountU;
-    }
-
-    uint256 amountD = amountReward.mul(pairInfo[pair].devFee).div(feeDenominator);
-
-    _balances[referrer][rewardToken] += amountR;
-    _balances[devAddr][rewardToken] += amountD;
-
-    swapList[referrer].push(
-      SwapInfo({
-        timestamp: block.timestamp,
-        tokenA: _tokenA,
-        tokenB: _tokenB,
-        tokenR: rewardToken,
-        amountA: _amountA,
-        amountB: _amountB,
-        amountR: amountR,
-        amountD: amountD
-      })
+  modifier onlyLeadInfluencer(address _outputToken, address _user) {
+    require(influencers[_outputToken][msg.sender].isActive == true, "You aren't lead influencer on this output token");
+    require(influencers[_outputToken][msg.sender].isLead == true, "You aren't lead influencer on this output token");
+    require(
+      subInfluencerAcceptedLead[_outputToken][_user] == msg.sender,
+      "This user didn't accept you as a lead influencer"
     );
-
-    totalSharedReward[rewardToken] = totalSharedReward[rewardToken] + amountL + amountR + amountU + amountD;
-    emit ReferralReward(user, rewardToken, amountL, amountR, amountU, amountD);
-  }
-
-  function getSwapList(address _referrer) external view returns (SwapInfo[] memory result) {
-    result = swapList[_referrer];
-  }
-
-  function getRewardTokens() external view returns (address[] memory result) {
-    result = rewardTokens;
-  }
-
-  function setFirstBuyFee(address _token, uint256 _fee) external onlyOwner {
-    require(_fee <= feeDenominator, "Wrong Fee");
-    firstBuyFee[_token] = _fee;
+    _;
   }
 
   function setDevAddress(address _devAddr) external onlyOwner {
     devAddr = _devAddr;
   }
 
-  function setRouter(address _router) external onlyOwner {
-    router = _router;
+  function setSummitswapRouter(address _summitswapRouter) external onlyOwner {
+    summitswapRouter = _summitswapRouter;
+  }
+
+  function setPancakeswapRouter(address _pancakeswapRouter) external onlyOwner {
+    pancakeswapRouter = _pancakeswapRouter;
+  }
+
+  function setFirstBuyFee(address _outputToken, uint256 _fee) external onlyManager(_outputToken) {
+    require(_fee <= feeDenominator, "Wrong Fee");
+    firstBuyRefereeFee[_outputToken] = _fee;
   }
 
   function setFeeInfo(
-    address _pair,
+    address _outputToken,
     address _rewardToken,
     uint256 _refFee,
     uint256 _devFee
-  ) external onlyOwner {
+  ) external onlyManager(_outputToken) {
     require(_refFee + _devFee <= feeDenominator, "Wrong Fee");
-    pairInfo[_pair].tokenR = _rewardToken;
-    pairInfo[_pair].refFee = _refFee;
-    pairInfo[_pair].devFee = _devFee;
+    feeInfo[_outputToken].tokenR = _rewardToken;
+    feeInfo[_outputToken].refFee = _refFee;
+    feeInfo[_outputToken].devFee = _devFee;
   }
+
+  function recordReferral(address _outputToken, address _referrer) external {
+    if (_referrer != msg.sender && _referrer != address(0) && referrers[_outputToken][msg.sender] == address(0)) {
+      referrers[_outputToken][msg.sender] = _referrer;
+      // referralsCount[_referrer] += 1;
+      emit ReferralRecorded(msg.sender, _referrer, _outputToken);
+    }
+  }
+
+  // Improvement: In the previous version it was impossible to provote subInfluencer to be leadInfluencer
+  function setLeadInfluencer(
+    address _outputToken,
+    address _user,
+    uint256 _leadFee
+  ) external onlyManager(_outputToken) {
+    require(_leadFee <= feeDenominator, "Wrong Fee");
+
+    influencers[_outputToken][_user].lead = address(0);
+    influencers[_outputToken][_user].leadFee = _leadFee;
+    influencers[_outputToken][_user].refFee = 0;
+    influencers[_outputToken][_user].isActive = true;
+    influencers[_outputToken][_user].isLead = true;
+  }
+
+  // Improvement: In the previous version we did not even check in swap function if leadInfluencer was active or not
+  function removeLeadInfluencer(address _outputToken, address _user) external onlyManager(_outputToken) {
+    influencers[_outputToken][_user].isActive = false;
+  }
+
+  // Improvement: In the previous version sub influencer wasn't able to change lead influencer
+  function setSubInfluencer(
+    address _outputToken,
+    address _user,
+    uint256 _leadFee,
+    uint256 _infFee
+  ) external onlyLeadInfluencer(_outputToken, _user) {
+    require(influencers[_outputToken][_user].isLead == false, "User is already lead influencer on this output token");
+    require(_leadFee + _infFee == feeDenominator, "Wrong Fee");
+
+    influencers[_outputToken][_user].isActive = true;
+    influencers[_outputToken][_user].lead = msg.sender;
+    influencers[_outputToken][_user].refFee = _infFee;
+    influencers[_outputToken][_user].leadFee = _leadFee;
+  }
+
+  // Improvement: In the previous version we weren't able to remove subInfluencers
+  function removeSubInfluencer(address _outputToken, address _user) external {
+    require(
+      influencers[_outputToken][_user].lead == msg.sender,
+      "This user is added by another lead on this output token"
+    );
+
+    influencers[_outputToken][_user].isActive = false;
+  }
+
+  function claimReward(address _rewardToken) external {
+    uint256 balance = balances[msg.sender][_rewardToken];
+
+    require(balance > 0, "Insufficient balance");
+
+    balances[msg.sender][_rewardToken] = 0;
+    totalReward[_rewardToken] -= balance;
+    IERC20(_rewardToken).transfer(msg.sender, balance);
+  }
+
+  // TODO: Add ability to convert automatically to BNB, BUSD
+  function getReward(
+    address _outputToken,
+    uint256 _outputTokenAmount,
+    address _rewardToken
+  ) internal view returns (uint256) {
+    if (_outputToken == _rewardToken) {
+      return _outputTokenAmount;
+    }
+
+    address[] memory path = new address[](3);
+
+    path[0] = _outputToken;
+    path[1] = ISummitswapRouter02(summitswapRouter).WETH();
+    path[2] = _rewardToken;
+    uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
+
+    path[0] = _outputToken;
+    path[1] = ISummitswapRouter02(pancakeswapRouter).WETH();
+    path[2] = _rewardToken;
+    uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
+
+    return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+  }
+
+  // function swap(
+  //   address user,
+  //   address _tokenA,
+  //   address _tokenB,
+  //   uint256 _amountA,
+  //   uint256 _amountB
+  // ) external onlyRouter {
+  //   address referrer = referrers[user];
+  //   if (referrer == address(0)) {
+  //     return;
+  //   }
+
+  //   address factory = ISummitswapRouter02(router).factory();
+  //   address pair = ISummitswapFactory(factory).getPair(_tokenA, _tokenB);
+
+  //   address rewardToken = pairInfo[pair].tokenR;
+  //   if (rewardToken == address(0)) {
+  //     return;
+  //   }
+
+  //   // if (rewardEnabled[rewardToken] == false) {
+  //   //   rewardEnabled[rewardToken] = true;
+  //   //   rewardTokens.push(rewardToken);
+  //   // }
+
+  //   uint256 amountReward = getReward(_tokenA, _amountA, rewardToken);
+  //   uint256 amountR;
+  //   uint256 amountL;
+  //   uint256 amountU;
+
+  //   if (influencers[referrer].leadAddress != address(0)) {
+  //     uint256 amountI = amountReward.mul(leadInfFee[influencers[referrer].leadAddress]).div(feeDenominator);
+  //     amountL = amountI.mul(influencers[referrer].leadFee).div(feeDenominator);
+  //     balances[influencers[referrer].leadAddress][rewardToken] += amountL;
+  //     swapList[influencers[referrer].leadAddress].push(
+  //       SwapInfo({
+  //         timestamp: block.timestamp,
+  //         tokenA: _tokenA,
+  //         tokenB: _tokenB,
+  //         tokenR: rewardToken,
+  //         amountA: _amountA,
+  //         amountB: _amountB,
+  //         amountR: amountL,
+  //         amountD: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
+  //       })
+  //     );
+  //     amountR = amountI.mul(influencers[referrer].refFee).div(feeDenominator);
+  //   } else {
+  //     amountR = amountReward.mul(pairInfo[pair].refFee).div(feeDenominator);
+  //   }
+
+  //   if (firstBuy[user][_tokenA] == false) {
+  //     firstBuy[user][_tokenA] = true;
+  //     amountU = amountReward.mul(firstBuyFee[_tokenA]);
+  //     amountU = amountU.div(feeDenominator);
+  //     balances[user][rewardToken] += amountU;
+  //   }
+
+  //   uint256 amountD = amountReward.mul(pairInfo[pair].devFee).div(feeDenominator);
+
+  //   balances[referrer][rewardToken] += amountR;
+  //   balances[devAddr][rewardToken] += amountD;
+
+  //   swapList[referrer].push(
+  //     SwapInfo({
+  //       timestamp: block.timestamp,
+  //       tokenA: _tokenA,
+  //       tokenB: _tokenB,
+  //       tokenR: rewardToken,
+  //       amountA: _amountA,
+  //       amountB: _amountB,
+  //       amountR: amountR,
+  //       amountD: amountD
+  //     })
+  //   );
+
+  //   totalSharedReward[rewardToken] = totalSharedReward[rewardToken] + amountL + amountR + amountU + amountD;
+  //   emit ReferralReward(user, rewardToken, amountL, amountR, amountU, amountD);
+  // }
+
+  // Improvement: If swapList is big wont be usable
+  // function getSwapList(address _referrer) external view returns (SwapInfo[] memory result) {
+  //   result = swapList[_referrer];
+  // }
+
+  // Improvement: If rewardTokens is big wont be usable
+  // function getRewardTokens() external view returns (address[] memory result) {
+  //   result = rewardTokens;
+  // }
 }

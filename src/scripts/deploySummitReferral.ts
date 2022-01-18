@@ -10,11 +10,12 @@ export async function deploySummitReferral() {
   let summitswapRouter02Address = process.env.ROUTER_ADDRESS ?? environment.SUMMITSWAP_ROUTER;
 
   let summitswapRouter02: SummitswapRouter02;
-  if (summitswapRouter02Address) {
-    summitswapRouter02 = SummitswapRouter02.attach(summitswapRouter02Address);
-  } else {
+
+  if (summitswapRouter02Address === "-1" || !summitswapRouter02Address) {
     summitswapRouter02 = await deploySummitswapRouter02();
     summitswapRouter02Address = summitswapRouter02.address;
+  } else {
+    summitswapRouter02 = SummitswapRouter02.attach(summitswapRouter02Address);
   }
 
   console.log("Starting to deploy SummitReferral");

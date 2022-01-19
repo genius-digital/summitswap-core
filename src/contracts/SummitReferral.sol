@@ -58,6 +58,9 @@ contract SummitReferral is Ownable {
 
   mapping(address => SwapInfo[]) public swapList; // referrer => swap infos
 
+  // mapping(address => address) public preferredToken; // referee => token preferred to withdraw rewards
+  // mapping(address => uint256) public preferredTokenFee; // preferred token => fee
+
   mapping(address => mapping(address => uint256)) public balances; // reward token => user => amount
   mapping(address => address[]) public hasBalance; // user => list of reward tokens he has balance on
   mapping(address => mapping(address => uint256)) public hasBalanceIndex; // reward token => user => array index in hasBalance
@@ -208,7 +211,7 @@ contract SummitReferral is Ownable {
   }
 
   function claimAllRewards() external {
-    for (uint256 i = 0; i < hasBalance[msg.sender].length; i++) {
+    for (uint256 i = hasBalance[msg.sender].length - 1; i >= 0; i--) {
       claimReward(hasBalance[msg.sender][i]);
     }
   }
@@ -267,25 +270,34 @@ contract SummitReferral is Ownable {
     uint256 amountL;
     uint256 amountU;
 
-    if (influencers[_outputToken][referrer].lead != address(0)) {
-      // uint256 amountI = rewardAmount.mul(leadInfFee[influencers[referrer].leadAddress]).div(feeDenominator);
-      // amountL = amountI.mul(influencers[referrer].leadFee).div(feeDenominator);
-      // balances[influencers[referrer].leadAddress][rewardToken] += amountL;
-      // swapList[influencers[referrer].leadAddress].push(
-      //   SwapInfo({
-      //     timestamp: block.timestamp,
-      //     tokenA: _tokenA,
-      //     tokenB: _tokenB,
-      //     tokenR: rewardToken,
-      //     amountA: _amountA,
-      //     amountB: _amountB,
-      //     amountR: amountL,
-      //     amountD: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
-      //   })
-      // );
-      // amountR = amountI.mul(influencers[referrer].refFee).div(feeDenominator);
-    } else {
+    address leadInfluencer = influencers[_outputToken][referrer].lead;
+
+    if (leadInfluencer == address(0) || influencers[_outputToken][leadInfluencer].isActive == false) {
       amountR = rewardAmount.mul(feeInfo[_outputToken].refFee).div(feeDenominator);
+    } else {
+      uint256 amountI = rewardAmount.mul(influencers[_outputToken][leadInfluencer].leadFee).div(feeDenominator);
+
+      amountL = amountI.mul(influencers[_outputToken][referrer].leadFee).div(feeDenominator);
+      amountR = amountI.mul(influencers[_outputToken][referrer].refFee).div(feeDenominator);
+
+      if (balances[rewardToken][leadInfluencer] == 0) {
+        hasBalanceIndex[rewardToken][leadInfluencer] = hasBalance[leadInfluencer].length;
+        hasBalance[leadInfluencer].push(rewardToken);
+      }
+      balances[rewardToken][leadInfluencer] += amountL;
+
+      swapList[influencers[_outputToken][referrer].lead].push(
+        SwapInfo({
+          timestamp: block.timestamp,
+          tokenA: _inputToken,
+          tokenB: _outputToken,
+          tokenR: rewardToken,
+          amountA: _inputTokenAmount,
+          amountB: _outputTokenAmount,
+          amountR: amountL,
+          amountD: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
+        })
+      );
     }
 
     if (isFirstBuy[_outputToken][_user] == false) {

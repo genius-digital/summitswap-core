@@ -181,6 +181,7 @@ contract SummitReferral is Ownable {
 
   // Improvement: In the previous version we did not even check in swap function if leadInfluencer was active or not
   function removeLeadInfluencer(address _outputToken, address _lead) external onlyManager(_outputToken) {
+    influencers[_outputToken][_lead].isLead = false;
     influencers[_outputToken][_lead].isActive = false;
   }
 

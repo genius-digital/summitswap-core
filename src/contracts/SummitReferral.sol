@@ -34,6 +34,7 @@ struct SwapInfo {
 }
 
 // TODO: I think there was some invalid cases with fee percentages
+// TODO: Use plurar names for maps
 contract SummitReferral is Ownable {
   using SafeMath for uint256;
 
@@ -54,7 +55,6 @@ contract SummitReferral is Ownable {
   mapping(address => mapping(address => address)) public referrers; // output token => referee => referrer
 
   mapping(address => SwapInfo[]) public swapList; // referrer => swap infos
-  mapping(address => uint256) public swapCount; // referrer => swap count
 
   mapping(address => mapping(address => uint256)) public balances; // reward token => user => amount
   mapping(address => uint256) public totalReward; // reward token => total reward
@@ -193,6 +193,10 @@ contract SummitReferral is Ownable {
     balances[msg.sender][_rewardToken] = 0;
     totalReward[_rewardToken] -= balance;
     IERC20(_rewardToken).transfer(msg.sender, balance);
+  }
+
+  function getSwapListCount(address _referrer) external view returns (uint256) {
+    return swapList[_referrer].length;
   }
 
   // TODO: Add ability to convert automatically to BNB, BUSD

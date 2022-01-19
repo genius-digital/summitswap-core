@@ -172,8 +172,8 @@ contract SummitReferral is Ownable {
   }
 
   // Improvement: In the previous version we did not even check in swap function if leadInfluencer was active or not
-  function removeLeadInfluencer(address _outputToken, address _user) external onlyManager(_outputToken) {
-    influencers[_outputToken][_user].isActive = false;
+  function removeLeadInfluencer(address _outputToken, address _lead) external onlyManager(_outputToken) {
+    influencers[_outputToken][_lead].isActive = false;
   }
 
   // Improvement: In the previous version sub influencer wasn't able to change lead influencer
@@ -277,7 +277,11 @@ contract SummitReferral is Ownable {
 
     address leadInfluencer = influencers[_outputToken][referrer].lead;
 
-    if (leadInfluencer == address(0) || influencers[_outputToken][leadInfluencer].isActive == false) {
+    if (
+      leadInfluencer == address(0) ||
+      influencers[_outputToken][leadInfluencer].isActive == false ||
+      influencers[_outputToken][leadInfluencer].isLead == false
+    ) {
       amountR = rewardAmount.mul(feeInfo[_outputToken].refFee).div(feeDenominator);
     } else {
       uint256 amountI = rewardAmount.mul(influencers[_outputToken][leadInfluencer].leadFee).div(feeDenominator);

@@ -35,6 +35,7 @@ struct SwapInfo {
 
 // TODO: I think there was some invalid cases with fee percentages
 // TODO: Use plurar names for maps
+// TODO: In balances reward token should be first
 contract SummitReferral is Ownable {
   using SafeMath for uint256;
 
@@ -57,6 +58,10 @@ contract SummitReferral is Ownable {
   mapping(address => SwapInfo[]) public swapList; // referrer => swap infos
 
   mapping(address => mapping(address => uint256)) public balances; // reward token => user => amount
+  // mapping(address => mapping(address => bool)) public hasBalance; // reward token => user => has balance
+  mapping(address => mapping(address => uint256)) public hasBalanceIndex; // reward token => user => array index in hasBalance
+  mapping(address => address[]) public hasBalance; // user => list of reward tokens he has balance on
+
   mapping(address => uint256) public totalReward; // reward token => total reward
 
   // mapping(address => uint256) public referralsCount; // referrer address => referrals count
@@ -112,6 +117,10 @@ contract SummitReferral is Ownable {
 
   function setPancakeswapRouter(address _pancakeswapRouter) external onlyOwner {
     pancakeswapRouter = _pancakeswapRouter;
+  }
+
+  function getSwapListCount(address _referrer) external view returns (uint256) {
+    return swapList[_referrer].length;
   }
 
   function setFirstBuyFee(address _outputToken, uint256 _fee) external onlyManager(_outputToken) {
@@ -185,18 +194,23 @@ contract SummitReferral is Ownable {
     influencers[_outputToken][_user].isActive = false;
   }
 
-  function claimReward(address _rewardToken) external {
-    uint256 balance = balances[msg.sender][_rewardToken];
+  function claimReward(address _rewardToken) public {
+    uint256 balance = balances[_rewardToken][msg.sender];
 
     require(balance > 0, "Insufficient balance");
 
-    balances[msg.sender][_rewardToken] = 0;
+    balances[_rewardToken][msg.sender] = 0;
+    uint256 rewardTokenIndex = hasBalanceIndex[_rewardToken][msg.sender];
+    hasBalance[msg.sender][rewardTokenIndex] = hasBalance[msg.sender][hasBalance[msg.sender].length - 1];
+    hasBalance[msg.sender].pop();
     totalReward[_rewardToken] -= balance;
     IERC20(_rewardToken).transfer(msg.sender, balance);
   }
 
-  function getSwapListCount(address _referrer) external view returns (uint256) {
-    return swapList[_referrer].length;
+  function claimAllRewards() external {
+    for (uint256 i = 0; i < hasBalance[msg.sender].length; i++) {
+      claimReward(hasBalance[msg.sender][i]);
+    }
   }
 
   // TODO: Add ability to convert automatically to BNB, BUSD

@@ -92,7 +92,7 @@ contract SummitReferral is Ownable {
     pancakeswapRouter = _pancakeswapRouter;
   }
 
-  modifier onlyRouter() {
+  modifier onlySummitswapRouter() {
     require(msg.sender == summitswapRouter, "Caller is not the router");
     _;
   }
@@ -265,7 +265,7 @@ contract SummitReferral is Ownable {
     address _outputToken,
     uint256 _inputTokenAmount,
     uint256 _outputTokenAmount
-  ) external onlyRouter {
+  ) external onlySummitswapRouter {
     address referrer = referrers[_outputToken][_user];
 
     if (referrer == address(0)) {

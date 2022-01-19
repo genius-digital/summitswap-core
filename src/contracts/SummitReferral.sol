@@ -185,6 +185,10 @@ contract SummitReferral is Ownable {
     influencers[_outputToken][_lead].isActive = false;
   }
 
+  function acceptLeadInfluencer(address _outputToken, address _leadInfluencer) external {
+    subInfluencerAcceptedLead[_outputToken][msg.sender] = _leadInfluencer;
+  }
+
   // Improvement: In the previous version sub influencer wasn't able to change lead influencer
   function setSubInfluencer(
     address _outputToken,

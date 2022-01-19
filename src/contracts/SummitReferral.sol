@@ -36,6 +36,7 @@ struct SwapInfo {
 // TODO: I think there was some invalid cases with fee percentages
 // TODO: Use plurar names for maps
 // TODO: In balances reward token should be first
+// TODO: We don't consider amountU in totalSharedRewards to notify project owner
 contract SummitReferral is Ownable {
   using SafeMath for uint256;
 
@@ -58,9 +59,8 @@ contract SummitReferral is Ownable {
   mapping(address => SwapInfo[]) public swapList; // referrer => swap infos
 
   mapping(address => mapping(address => uint256)) public balances; // reward token => user => amount
-  // mapping(address => mapping(address => bool)) public hasBalance; // reward token => user => has balance
-  mapping(address => mapping(address => uint256)) public hasBalanceIndex; // reward token => user => array index in hasBalance
   mapping(address => address[]) public hasBalance; // user => list of reward tokens he has balance on
+  mapping(address => mapping(address => uint256)) public hasBalanceIndex; // reward token => user => array index in hasBalance
 
   mapping(address => uint256) public totalReward; // reward token => total reward
 
@@ -238,85 +238,91 @@ contract SummitReferral is Ownable {
     return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
   }
 
-  // function swap(
-  //   address user,
-  //   address _tokenA,
-  //   address _tokenB,
-  //   uint256 _amountA,
-  //   uint256 _amountB
-  // ) external onlyRouter {
-  //   address referrer = referrers[user];
-  //   if (referrer == address(0)) {
-  //     return;
-  //   }
+  function swap(
+    address _user,
+    address _inputToken,
+    address _outputToken,
+    uint256 _inputTokenAmount,
+    uint256 _outputTokenAmount
+  ) external onlyRouter {
+    address referrer = referrers[_outputToken][_user];
 
-  //   address factory = ISummitswapRouter02(router).factory();
-  //   address pair = ISummitswapFactory(factory).getPair(_tokenA, _tokenB);
+    if (referrer == address(0)) {
+      return;
+    }
 
-  //   address rewardToken = pairInfo[pair].tokenR;
-  //   if (rewardToken == address(0)) {
-  //     return;
-  //   }
+    address rewardToken = feeInfo[_outputToken].tokenR;
 
-  //   // if (rewardEnabled[rewardToken] == false) {
-  //   //   rewardEnabled[rewardToken] = true;
-  //   //   rewardTokens.push(rewardToken);
-  //   // }
+    if (rewardToken == address(0)) {
+      return;
+    }
 
-  //   uint256 amountReward = getReward(_tokenA, _amountA, rewardToken);
-  //   uint256 amountR;
-  //   uint256 amountL;
-  //   uint256 amountU;
+    // if (rewardEnabled[rewardToken] == false) {
+    //   rewardEnabled[rewardToken] = true;
+    //   rewardTokens.push(rewardToken);
+    // }
 
-  //   if (influencers[referrer].leadAddress != address(0)) {
-  //     uint256 amountI = amountReward.mul(leadInfFee[influencers[referrer].leadAddress]).div(feeDenominator);
-  //     amountL = amountI.mul(influencers[referrer].leadFee).div(feeDenominator);
-  //     balances[influencers[referrer].leadAddress][rewardToken] += amountL;
-  //     swapList[influencers[referrer].leadAddress].push(
-  //       SwapInfo({
-  //         timestamp: block.timestamp,
-  //         tokenA: _tokenA,
-  //         tokenB: _tokenB,
-  //         tokenR: rewardToken,
-  //         amountA: _amountA,
-  //         amountB: _amountB,
-  //         amountR: amountL,
-  //         amountD: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
-  //       })
-  //     );
-  //     amountR = amountI.mul(influencers[referrer].refFee).div(feeDenominator);
-  //   } else {
-  //     amountR = amountReward.mul(pairInfo[pair].refFee).div(feeDenominator);
-  //   }
+    uint256 rewardAmount = getReward(_outputToken, _outputTokenAmount, rewardToken);
+    uint256 amountR;
+    uint256 amountL;
+    uint256 amountU;
 
-  //   if (firstBuy[user][_tokenA] == false) {
-  //     firstBuy[user][_tokenA] = true;
-  //     amountU = amountReward.mul(firstBuyFee[_tokenA]);
-  //     amountU = amountU.div(feeDenominator);
-  //     balances[user][rewardToken] += amountU;
-  //   }
+    if (influencers[_outputToken][referrer].lead != address(0)) {
+      // uint256 amountI = rewardAmount.mul(leadInfFee[influencers[referrer].leadAddress]).div(feeDenominator);
+      // amountL = amountI.mul(influencers[referrer].leadFee).div(feeDenominator);
+      // balances[influencers[referrer].leadAddress][rewardToken] += amountL;
+      // swapList[influencers[referrer].leadAddress].push(
+      //   SwapInfo({
+      //     timestamp: block.timestamp,
+      //     tokenA: _tokenA,
+      //     tokenB: _tokenB,
+      //     tokenR: rewardToken,
+      //     amountA: _amountA,
+      //     amountB: _amountB,
+      //     amountR: amountL,
+      //     amountD: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
+      //   })
+      // );
+      // amountR = amountI.mul(influencers[referrer].refFee).div(feeDenominator);
+    } else {
+      amountR = rewardAmount.mul(feeInfo[_outputToken].refFee).div(feeDenominator);
+    }
 
-  //   uint256 amountD = amountReward.mul(pairInfo[pair].devFee).div(feeDenominator);
+    if (isFirstBuy[_outputToken][_user] == false) {
+      isFirstBuy[_outputToken][_user] = true;
+      amountU = rewardAmount.mul(firstBuyRefereeFee[_outputToken]).div(feeDenominator);
+      IERC20(rewardToken).transfer(_user, amountU);
+    }
 
-  //   balances[referrer][rewardToken] += amountR;
-  //   balances[devAddr][rewardToken] += amountD;
+    if (balances[rewardToken][referrer] == 0) {
+      hasBalanceIndex[rewardToken][referrer] = hasBalance[referrer].length;
+      hasBalance[referrer].push(rewardToken);
+    }
+    balances[_outputToken][referrer] += amountR;
 
-  //   swapList[referrer].push(
-  //     SwapInfo({
-  //       timestamp: block.timestamp,
-  //       tokenA: _tokenA,
-  //       tokenB: _tokenB,
-  //       tokenR: rewardToken,
-  //       amountA: _amountA,
-  //       amountB: _amountB,
-  //       amountR: amountR,
-  //       amountD: amountD
-  //     })
-  //   );
+    if (balances[rewardToken][devAddr] == 0) {
+      hasBalanceIndex[rewardToken][devAddr] = hasBalance[devAddr].length;
+      hasBalance[devAddr].push(rewardToken);
+    }
+    uint256 amountD = rewardAmount.mul(feeInfo[_outputToken].devFee).div(feeDenominator);
+    balances[_outputToken][devAddr] += amountD;
 
-  //   totalSharedReward[rewardToken] = totalSharedReward[rewardToken] + amountL + amountR + amountU + amountD;
-  //   emit ReferralReward(user, rewardToken, amountL, amountR, amountU, amountD);
-  // }
+    swapList[referrer].push(
+      SwapInfo({
+        timestamp: block.timestamp,
+        tokenA: _inputToken,
+        tokenB: _outputToken,
+        tokenR: rewardToken,
+        amountA: _inputTokenAmount,
+        amountB: _outputTokenAmount,
+        amountR: amountR,
+        amountD: amountD
+      })
+    );
+
+    totalReward[rewardToken] += amountL + amountR + amountD;
+    emit ReferralReward(_user, rewardToken, amountL, amountR, amountD, amountU);
+  }
 
   // Improvement: If swapList is big wont be usable
   // function getSwapList(address _referrer) external view returns (SwapInfo[] memory result) {

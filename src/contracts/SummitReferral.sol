@@ -82,7 +82,12 @@ contract SummitReferral is Ownable {
     uint256 amountD
   ); // amountL - LeadInfReward, amountS - SubInfReward, amountU - userReward, amountD - devReward
 
-  constructor(address _summitswapRouter, address _pancakeswapRouter) public {
+  constructor(
+    address _devAddr,
+    address _summitswapRouter,
+    address _pancakeswapRouter
+  ) public {
+    devAddr = _devAddr;
     summitswapRouter = _summitswapRouter;
     pancakeswapRouter = _pancakeswapRouter;
   }

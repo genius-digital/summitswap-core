@@ -136,6 +136,14 @@ contract SummitReferral is Ownable {
     firstBuyRefereeFee[_outputToken] = _fee;
   }
 
+  function setManager(
+    address _outputToken,
+    address _manager,
+    bool _isManager
+  ) external onlyOwner {
+    isManager[_outputToken][_manager] = _isManager;
+  }
+
   function setFeeInfo(
     address _outputToken,
     address _rewardToken,

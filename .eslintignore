@@ -1,6 +1,8 @@
 node_modules
+typechain
+artifacts
 coverage
-build
+cache
 
 .env
 .eslintcache

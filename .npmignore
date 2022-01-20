@@ -1,9 +1,12 @@
 node_modules
 coverage
-build
+scripts
+tests
+environment
 
 .env
 .eslintcache
 flattened.txt
 coverage.json
+hardhat.config.ts
 gasReporterOutput.json

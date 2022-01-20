@@ -332,14 +332,14 @@ contract SummitReferral is Ownable {
       hasBalanceIndex[rewardToken][referrer] = hasBalance[referrer].length;
       hasBalance[referrer].push(rewardToken);
     }
-    balances[_outputToken][referrer] += amountR;
+    balances[rewardToken][referrer] += amountR;
 
     if (balances[rewardToken][devAddr] == 0) {
       hasBalanceIndex[rewardToken][devAddr] = hasBalance[devAddr].length;
       hasBalance[devAddr].push(rewardToken);
     }
     uint256 amountD = rewardAmount.mul(feeInfo[_outputToken].devFee).div(feeDenominator);
-    balances[_outputToken][devAddr] += amountD;
+    balances[rewardToken][devAddr] += amountD;
 
     swapList[referrer].push(
       SwapInfo({

@@ -24,13 +24,13 @@ struct InfInfo {
 
 struct SwapInfo {
   uint256 timestamp;
-  address tokenA;
-  address tokenB;
-  address tokenR; // reward token
-  uint256 amountA; // tokenA amount
-  uint256 amountB; // tokenB amount
-  uint256 amountR; // Ref amount
-  uint256 amountD; // Dev amount
+  address inputToken;
+  address outputToken;
+  address rewardToken;
+  uint256 inputTokenAmount;
+  uint256 outputTokenAmount;
+  uint256 referrerReward;
+  uint256 devReward;
 }
 
 // TODO: I think there was some invalid cases with fee percentages
@@ -308,16 +308,16 @@ contract SummitReferral is Ownable {
       }
       balances[rewardToken][leadInfluencer] += amountL;
 
-      swapList[influencers[_outputToken][referrer].lead].push(
+      swapList[leadInfluencer].push(
         SwapInfo({
           timestamp: block.timestamp,
-          tokenA: _inputToken,
-          tokenB: _outputToken,
-          tokenR: rewardToken,
-          amountA: _inputTokenAmount,
-          amountB: _outputTokenAmount,
-          amountR: amountL,
-          amountD: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
+          inputToken: _inputToken,
+          outputToken: _outputToken,
+          rewardToken: rewardToken,
+          inputTokenAmount: _inputTokenAmount,
+          outputTokenAmount: _outputTokenAmount,
+          referrerReward: amountL,
+          devReward: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
         })
       );
     }
@@ -344,13 +344,13 @@ contract SummitReferral is Ownable {
     swapList[referrer].push(
       SwapInfo({
         timestamp: block.timestamp,
-        tokenA: _inputToken,
-        tokenB: _outputToken,
-        tokenR: rewardToken,
-        amountA: _inputTokenAmount,
-        amountB: _outputTokenAmount,
-        amountR: amountR,
-        amountD: amountD
+        inputToken: _inputToken,
+        outputToken: _outputToken,
+        rewardToken: rewardToken,
+        inputTokenAmount: _inputTokenAmount,
+        outputTokenAmount: _outputTokenAmount,
+        referrerReward: amountR,
+        devReward: amountD
       })
     );
 

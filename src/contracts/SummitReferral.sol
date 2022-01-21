@@ -78,8 +78,8 @@ contract SummitReferral is Ownable {
     address indexed tokenR,
     uint256 amountL,
     uint256 amountS,
-    uint256 amountU,
-    uint256 amountD
+    uint256 amountD,
+    uint256 amountU
   ); // amountL - LeadInfReward, amountS - SubInfReward, amountU - userReward, amountD - devReward
 
   constructor(

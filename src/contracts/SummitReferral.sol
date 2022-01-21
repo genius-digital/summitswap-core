@@ -132,6 +132,10 @@ contract SummitReferral is Ownable {
     return swapList[_referrer].length;
   }
 
+  function getBalancesLength(address _user) external view returns (uint256) {
+    return hasBalance[_user].length;
+  }
+
   function setFirstBuyFee(address _outputToken, uint256 _fee) external onlyManager(_outputToken) {
     require(_fee <= feeDenominator, "Wrong Fee");
     firstBuyRefereeFee[_outputToken] = _fee;
@@ -224,7 +228,9 @@ contract SummitReferral is Ownable {
     balances[_rewardToken][msg.sender] = 0;
     isBalanceIndex[_rewardToken][msg.sender] = false;
     uint256 rewardTokenIndex = hasBalanceIndex[_rewardToken][msg.sender];
-    hasBalance[msg.sender][rewardTokenIndex] = hasBalance[msg.sender][hasBalance[msg.sender].length - 1];
+    address lastToken = hasBalance[msg.sender][hasBalance[msg.sender].length - 1];
+    hasBalanceIndex[lastToken][msg.sender] = rewardTokenIndex;
+    hasBalance[msg.sender][rewardTokenIndex] = lastToken;
     hasBalance[msg.sender].pop();
     totalReward[_rewardToken] -= balance;
 
@@ -232,7 +238,8 @@ contract SummitReferral is Ownable {
   }
 
   function claimAllRewards() external {
-    for (uint256 i = 0; i < hasBalance[msg.sender].length; i++) {
+    uint256 hasBalanceLength = hasBalance[msg.sender].length;
+    for (uint256 i = 0; i < hasBalanceLength; i++) {
       claimReward(hasBalance[msg.sender][0]);
     }
   }

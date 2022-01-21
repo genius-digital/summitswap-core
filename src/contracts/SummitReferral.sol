@@ -64,6 +64,7 @@ contract SummitReferral is Ownable {
   mapping(address => mapping(address => uint256)) public balances; // reward token => user => amount
   mapping(address => address[]) public hasBalance; // user => list of reward tokens he has balance on
   mapping(address => mapping(address => uint256)) public hasBalanceIndex; // reward token => user => array index in hasBalance
+  mapping(address => mapping(address => bool)) public isBalanceIndex; // reward token => user => has array index in hasBalance or not
 
   mapping(address => uint256) public totalReward; // reward token => total reward
 
@@ -221,16 +222,18 @@ contract SummitReferral is Ownable {
     require(balance > 0, "Insufficient balance");
 
     balances[_rewardToken][msg.sender] = 0;
+    isBalanceIndex[_rewardToken][msg.sender] = false;
     uint256 rewardTokenIndex = hasBalanceIndex[_rewardToken][msg.sender];
     hasBalance[msg.sender][rewardTokenIndex] = hasBalance[msg.sender][hasBalance[msg.sender].length - 1];
     hasBalance[msg.sender].pop();
     totalReward[_rewardToken] -= balance;
+
     IERC20(_rewardToken).transfer(msg.sender, balance);
   }
 
   function claimAllRewards() external {
-    for (uint256 i = hasBalance[msg.sender].length - 1; i >= 0; i--) {
-      claimReward(hasBalance[msg.sender][i]);
+    for (uint256 i = 0; i < hasBalance[msg.sender].length; i++) {
+      claimReward(hasBalance[msg.sender][0]);
     }
   }
 
@@ -266,6 +269,7 @@ contract SummitReferral is Ownable {
   ) internal {
     if (balances[_rewardToken][_user] == 0) {
       hasBalanceIndex[_rewardToken][_user] = hasBalance[_user].length;
+      isBalanceIndex[_rewardToken][_user] = true;
       hasBalance[_user].push(_rewardToken);
     }
     balances[_rewardToken][_user] += _amount;

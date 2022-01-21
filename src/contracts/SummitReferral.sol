@@ -259,6 +259,18 @@ contract SummitReferral is Ownable {
     return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
   }
 
+  function increaseBalance(
+    address _user,
+    address _rewardToken,
+    uint256 _amount
+  ) internal {
+    if (balances[_rewardToken][_user] == 0) {
+      hasBalanceIndex[_rewardToken][_user] = hasBalance[_user].length;
+      hasBalance[_user].push(_rewardToken);
+    }
+    balances[_rewardToken][_user] += _amount;
+  }
+
   function swap(
     address _user,
     address _inputToken,
@@ -302,11 +314,7 @@ contract SummitReferral is Ownable {
       amountL = amountI.mul(influencers[_outputToken][referrer].leadFee).div(feeDenominator);
       amountR = amountI.mul(influencers[_outputToken][referrer].refFee).div(feeDenominator);
 
-      if (balances[rewardToken][leadInfluencer] == 0) {
-        hasBalanceIndex[rewardToken][leadInfluencer] = hasBalance[leadInfluencer].length;
-        hasBalance[leadInfluencer].push(rewardToken);
-      }
-      balances[rewardToken][leadInfluencer] += amountL;
+      increaseBalance(leadInfluencer, rewardToken, amountL);
 
       swapList[leadInfluencer].push(
         SwapInfo({
@@ -328,18 +336,10 @@ contract SummitReferral is Ownable {
       IERC20(rewardToken).transfer(_user, amountU);
     }
 
-    if (balances[rewardToken][referrer] == 0) {
-      hasBalanceIndex[rewardToken][referrer] = hasBalance[referrer].length;
-      hasBalance[referrer].push(rewardToken);
-    }
-    balances[rewardToken][referrer] += amountR;
+    increaseBalance(referrer, rewardToken, amountR);
 
-    if (balances[rewardToken][devAddr] == 0) {
-      hasBalanceIndex[rewardToken][devAddr] = hasBalance[devAddr].length;
-      hasBalance[devAddr].push(rewardToken);
-    }
     uint256 amountD = rewardAmount.mul(feeInfo[_outputToken].devFee).div(feeDenominator);
-    balances[rewardToken][devAddr] += amountD;
+    increaseBalance(devAddr, rewardToken, amountD);
 
     swapList[referrer].push(
       SwapInfo({

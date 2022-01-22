@@ -8,12 +8,19 @@ import "./interfaces/ISummitswapRouter02.sol";
 
 import "./shared/Ownable.sol";
 
+// TODO: Explain scheme - and maybe simplify a little bit
+// TODO: Optimize gas fees - make a new mapping for each field
+// TODO: Ask - promotions only work for noninfluencers
 struct FeeInfo {
   address tokenR;
   uint256 refFee;
   uint256 devFee;
+  uint256 promRefFee;
+  uint256 promStart;
+  uint256 promEnd;
 }
 
+// TODO: Optimize gas fees - make a new mapping for each field
 struct InfInfo {
   address lead;
   uint256 leadFee;
@@ -22,6 +29,7 @@ struct InfInfo {
   bool isLead;
 }
 
+// TODO: Optimize gas fees - maybe remove fully
 struct SwapInfo {
   uint256 timestamp;
   address inputToken;
@@ -153,12 +161,19 @@ contract SummitReferral is Ownable {
     address _outputToken,
     address _rewardToken,
     uint256 _refFee,
-    uint256 _devFee
+    uint256 _devFee,
+    uint256 _promRefFee,
+    uint256 _promStart,
+    uint256 _promEnd
   ) external onlyManager(_outputToken) {
     require(_refFee + _devFee <= feeDenominator, "Wrong Fee");
+
     feeInfo[_outputToken].tokenR = _rewardToken;
     feeInfo[_outputToken].refFee = _refFee;
     feeInfo[_outputToken].devFee = _devFee;
+    feeInfo[_outputToken].promRefFee = _promRefFee;
+    feeInfo[_outputToken].promStart = _promStart;
+    feeInfo[_outputToken].promEnd = _promEnd;
   }
 
   // Improvement: Revert if some conditions are not met
@@ -321,7 +336,11 @@ contract SummitReferral is Ownable {
       influencers[_outputToken][leadInfluencer].isActive == false ||
       influencers[_outputToken][leadInfluencer].isLead == false
     ) {
-      amountR = rewardAmount.mul(feeInfo[_outputToken].refFee).div(feeDenominator);
+      if (block.timestamp >= feeInfo[_outputToken].promStart && block.timestamp <= feeInfo[_outputToken].promEnd) {
+        amountR = rewardAmount.mul(feeInfo[_outputToken].promRefFee).div(feeDenominator);
+      } else {
+        amountR = rewardAmount.mul(feeInfo[_outputToken].refFee).div(feeDenominator);
+      }
     } else {
       uint256 amountI = rewardAmount.mul(influencers[_outputToken][leadInfluencer].leadFee).div(feeDenominator);
 
@@ -339,7 +358,7 @@ contract SummitReferral is Ownable {
           inputTokenAmount: _inputTokenAmount,
           outputTokenAmount: _outputTokenAmount,
           referrerReward: amountL,
-          devReward: 0 // TODO: Why do we throw this event with amountD: 0, on line 227 we calculate amountD
+          devReward: 0
         })
       );
     }

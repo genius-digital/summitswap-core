@@ -191,6 +191,22 @@ describe("summitReferral", () => {
         "0x0000000000000000000000000000000000000000"
       );
     });
+    it("should revert if user reffered himself", async () => {
+      await expect(
+        summitReferral.connect(otherWallet).recordReferral(tokenA.address, otherWallet.address)
+      ).to.be.revertedWith("You can't refer yourself");
+    });
+    it("should revert referrer was burn address", async () => {
+      await expect(
+        summitReferral.connect(otherWallet).recordReferral(tokenA.address, "0x0000000000000000000000000000000000000000")
+      ).to.be.revertedWith("You can't use burn address as a refferer");
+    });
+    it("should revert if referred already", async () => {
+      await summitReferral.connect(otherWallet).recordReferral(tokenA.address, otherWallet2.address);
+      await expect(
+        summitReferral.connect(otherWallet).recordReferral(tokenA.address, otherWallet2.address)
+      ).to.be.revertedWith("You are already referred on this token");
+    });
     it("should be able to record otherWallet as referree", async () => {
       await summitReferral.connect(otherWallet).recordReferral(tokenA.address, otherWallet2.address);
       assert.equal(await summitReferral.referrers(tokenA.address, otherWallet.address), otherWallet2.address);

@@ -161,12 +161,15 @@ contract SummitReferral is Ownable {
     feeInfo[_outputToken].devFee = _devFee;
   }
 
+  // Improvement: Revert if some conditions are not met
   function recordReferral(address _outputToken, address _referrer) external {
-    if (_referrer != msg.sender && _referrer != address(0) && referrers[_outputToken][msg.sender] == address(0)) {
-      referrers[_outputToken][msg.sender] = _referrer;
-      // referralsCount[_referrer] += 1;
-      emit ReferralRecorded(msg.sender, _referrer, _outputToken);
-    }
+    require(_referrer != msg.sender, "You can't refer yourself");
+    require(_referrer != address(0), "You can't use burn address as a refferer");
+    require(referrers[_outputToken][msg.sender] == address(0), "You are already referred on this token");
+
+    referrers[_outputToken][msg.sender] = _referrer;
+    // referralsCount[_referrer] += 1;
+    emit ReferralRecorded(msg.sender, _referrer, _outputToken);
   }
 
   // Improvement: In the previous version it was impossible to provote subInfluencer to be leadInfluencer

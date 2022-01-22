@@ -620,7 +620,7 @@ describe("summitReferral", () => {
 
         assert.equal((await summitReferral.totalReward(tokenR.address)).toString(), devReward.toString());
       });
-      it.only("should claim multiple tokens using claim all", async () => {
+      it("should claim multiple tokens using claim all", async () => {
         await summitReferral.setFeeInfo(
           tokenA.address,
           tokenB.address,

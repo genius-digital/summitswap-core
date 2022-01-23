@@ -9,7 +9,6 @@ import "./interfaces/ISummitswapRouter02.sol";
 import "./shared/Ownable.sol";
 
 // TODO: Explain scheme - and maybe simplify a little bit
-// TODO: Optimize gas fees - make a new mapping for each field
 // TODO: Ask - promotions only work for noninfluencers
 struct FeeInfo {
   address tokenR;
@@ -20,7 +19,6 @@ struct FeeInfo {
   uint256 promEnd;
 }
 
-// TODO: Optimize gas fees - make a new mapping for each field
 struct InfInfo {
   address lead;
   uint256 leadFee;
@@ -41,9 +39,7 @@ struct SwapInfo {
   uint256 devReward;
 }
 
-// TODO: I think there was some invalid cases with fee percentages
 // TODO: Use plurar names for maps
-// TODO: In balances reward token should be first
 // TODO: We don't consider amountU in totalSharedRewards to notify project owner
 contract SummitReferral is Ownable {
   using SafeMath for uint256;

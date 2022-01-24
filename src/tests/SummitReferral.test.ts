@@ -659,15 +659,15 @@ describe("summitReferral", () => {
 
       const leadFee = rewardAmount.mul(20).div(100);
       const leadReward = leadFee.mul(60).div(100);
-      const subReward = leadFee.mul(40).div(100);
+      const subReward = leadFee.mul(40).div(100).add(rewardAmount.mul(5).div(100));
       const devReward = rewardAmount.mul(5).div(100);
 
       // Balances
       const leadBalance = await summitReferral.balances(tokenR.address, leadInfluencer.address);
       assert.equal(leadBalance.toString(), leadReward.toString());
 
-      const referrerBalance = await summitReferral.balances(tokenR.address, subInfluencer.address);
-      assert.equal(referrerBalance.toString(), subReward.toString());
+      const subInfluencerBalance = await summitReferral.balances(tokenR.address, subInfluencer.address);
+      assert.equal(subInfluencerBalance.toString(), subReward.toString());
 
       const devBalance = await summitReferral.balances(tokenR.address, dev.address);
       assert.equal(devBalance.toString(), devReward.toString());
@@ -699,7 +699,7 @@ describe("summitReferral", () => {
 
       const leadFee = rewardAmount.mul(20).div(100);
       const leadReward = leadFee.mul(60).div(100).toString();
-      const subReward = leadFee.mul(40).div(100).toString();
+      const subReward = leadFee.mul(40).div(100).add(rewardAmount.mul(5).div(100)).toString();
       const devReward = rewardAmount.mul(5).div(100).toString();
 
       // Swap Info

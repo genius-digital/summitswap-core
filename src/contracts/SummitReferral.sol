@@ -10,6 +10,7 @@ import "./shared/Ownable.sol";
 
 // TODO: Explain scheme - and maybe simplify a little bit
 // TODO: Ask - promotions only work for noninfluencers
+// TODO: Add functions to simply set 1 field in feeInfo
 struct FeeInfo {
   address tokenR;
   uint256 refFee;
@@ -327,24 +328,25 @@ contract SummitReferral is Ownable {
 
     address leadInfluencer = influencers[_outputToken][referrer].lead;
 
-    if (
-      leadInfluencer == address(0) ||
-      influencers[_outputToken][leadInfluencer].isActive == false ||
-      influencers[_outputToken][leadInfluencer].isLead == false
-    ) {
-      if (block.timestamp >= feeInfo[_outputToken].promStart && block.timestamp <= feeInfo[_outputToken].promEnd) {
-        amountR = rewardAmount.mul(feeInfo[_outputToken].promRefFee).div(feeDenominator);
-      } else {
-        amountR = rewardAmount.mul(feeInfo[_outputToken].refFee).div(feeDenominator);
-      }
+    if (block.timestamp >= feeInfo[_outputToken].promStart && block.timestamp <= feeInfo[_outputToken].promEnd) {
+      amountR = rewardAmount.mul(feeInfo[_outputToken].promRefFee).div(feeDenominator);
     } else {
+      amountR = rewardAmount.mul(feeInfo[_outputToken].refFee).div(feeDenominator);
+    }
+
+    if (
+      leadInfluencer != address(0) &&
+      influencers[_outputToken][leadInfluencer].isActive == true &&
+      influencers[_outputToken][leadInfluencer].isLead == true
+    ) {
       uint256 amountI = rewardAmount.mul(influencers[_outputToken][leadInfluencer].leadFee).div(feeDenominator);
 
       amountL = amountI.mul(influencers[_outputToken][referrer].leadFee).div(feeDenominator);
-      amountR = amountI.mul(influencers[_outputToken][referrer].refFee).div(feeDenominator);
+      amountR += amountI.mul(influencers[_outputToken][referrer].refFee).div(feeDenominator);
 
       increaseBalance(leadInfluencer, rewardToken, amountL);
 
+      // TODO: remove in future
       swapList[leadInfluencer].push(
         SwapInfo({
           timestamp: block.timestamp,
@@ -370,6 +372,7 @@ contract SummitReferral is Ownable {
     uint256 amountD = rewardAmount.mul(feeInfo[_outputToken].devFee).div(feeDenominator);
     increaseBalance(devAddr, rewardToken, amountD);
 
+    // TODO: remove in future
     swapList[referrer].push(
       SwapInfo({
         timestamp: block.timestamp,

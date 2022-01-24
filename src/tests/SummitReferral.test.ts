@@ -14,6 +14,7 @@ const { deployContract, provider } = waffle;
 describe("summitReferral", () => {
   const [owner, leadInfluencer, subInfluencer, otherWallet, otherWallet2, dev, manager] = provider.getWallets();
   const feeDenominator = 10 ** 9;
+  const nullAddress = "0x0000000000000000000000000000000000000000";
   let weth: WBNB;
   let summitswapFactory: SummitswapFactory;
   let summitswapRouter02: SummitswapRouter02;
@@ -78,7 +79,7 @@ describe("summitReferral", () => {
 
   describe("feeDenominator", async () => {
     it("should be equal to 10^9", async () => {
-      assert.equal(await (await summitReferral.feeDenominator()).toString(), feeDenominator.toString());
+      assert.equal((await summitReferral.feeDenominator()).toString(), feeDenominator.toString());
     });
   });
 
@@ -144,8 +145,13 @@ describe("summitReferral", () => {
         "Caller is not the manager of specified token"
       );
     });
-    it("should revert if setFirstBuyFee is greater than feeDenominator", async () => {
+    it("should revert if setFirstBuyFee with owner wallet is greater than feeDenominator", async () => {
       await expect(summitReferral.setFirstBuyFee(tokenA.address, feeDenominator + 1)).to.be.revertedWith("Wrong Fee");
+    });
+    it("should revert if setFirstBuyFee with manager wallet is greater than feeDenominator", async () => {
+      await expect(
+        summitReferral.connect(manager).setFirstBuyFee(tokenA.address, feeDenominator + 1)
+      ).to.be.revertedWith("Wrong Fee");
     });
     it("should set setFirstBuyFee to 50000000 with manager wallet", async () => {
       await summitReferral.connect(manager).setFirstBuyFee(tokenA.address, (50 * feeDenominator) / 100);
@@ -160,19 +166,24 @@ describe("summitReferral", () => {
   });
 
   describe("setFeeInfo", async () => {
-    it("should revert if called with nonManager wallet", async () => {
+    it("should revert if called with nonManager or owner wallet", async () => {
       await expect(
         summitReferral
           .connect(otherWallet)
           .setFeeInfo(tokenB.address, tokenR.address, 50000000, 50000000, "0", "0", "0")
       ).to.be.revertedWith("Caller is not the manager of specified token");
     });
-    it("should revert if refFee + devFee is greater than feeDenominator", async () => {
+    it("should revert if setFeeInfo with owner wallet and refFee + devFee is greater than feeDenominator", async () => {
       await expect(
         summitReferral.setFeeInfo(tokenA.address, tokenR.address, feeDenominator, 1, "0", "0", "0")
       ).to.be.revertedWith("Wrong Fee");
     });
-    it("should set fee info correctly", async () => {
+    it("should revert if setFeeInfo with manager wallet and refFee + devFee is greater than feeDenominator", async () => {
+      await expect(
+        summitReferral.connect(manager).setFeeInfo(tokenA.address, tokenR.address, feeDenominator, 1, "0", "0", "0")
+      ).to.be.revertedWith("Wrong Fee");
+    });
+    it("should setFeeInfo correctly with owner wallet", async () => {
       await summitReferral.setFeeInfo(
         tokenB.address,
         tokenR.address,
@@ -187,14 +198,26 @@ describe("summitReferral", () => {
       assert.equal(feeInfo.refFee.toString(), String((5 * feeDenominator) / 100));
       assert.equal(feeInfo.devFee.toString(), String((5 * feeDenominator) / 100));
     });
+    it("should setFeeInfo correctly with manager wallet", async () => {
+      await summitReferral.setFeeInfo(
+        tokenB.address,
+        tokenR.address,
+        (5 * feeDenominator) / 100,
+        (5 * feeDenominator) / 100,
+        "0",
+        "0",
+        "0"
+      );
+      const feeInfo = await summitReferral.connect(manager).feeInfo(tokenB.address);
+      assert.equal(feeInfo.tokenR, tokenR.address);
+      assert.equal(feeInfo.refFee.toString(), String((5 * feeDenominator) / 100));
+      assert.equal(feeInfo.devFee.toString(), String((5 * feeDenominator) / 100));
+    });
   });
 
   describe("recordReferral", async () => {
     it("should return address(0) if user wasn't referred", async () => {
-      assert.equal(
-        await summitReferral.referrers(tokenA.address, otherWallet.address),
-        "0x0000000000000000000000000000000000000000"
-      );
+      assert.equal(await summitReferral.referrers(tokenA.address, otherWallet.address), nullAddress);
     });
     it("should revert if user reffered himself", async () => {
       await expect(
@@ -202,9 +225,9 @@ describe("summitReferral", () => {
       ).to.be.revertedWith("You can't refer yourself");
     });
     it("should revert referrer was burn address", async () => {
-      await expect(
-        summitReferral.connect(otherWallet).recordReferral(tokenA.address, "0x0000000000000000000000000000000000000000")
-      ).to.be.revertedWith("You can't use burn address as a refferer");
+      await expect(summitReferral.connect(otherWallet).recordReferral(tokenA.address, nullAddress)).to.be.revertedWith(
+        "You can't use burn address as a refferer"
+      );
     });
     it("should revert if referred already", async () => {
       await summitReferral.connect(otherWallet).recordReferral(tokenA.address, otherWallet2.address);
@@ -215,6 +238,15 @@ describe("summitReferral", () => {
     it("should be able to record otherWallet as referree", async () => {
       await summitReferral.connect(otherWallet).recordReferral(tokenA.address, otherWallet2.address);
       assert.equal(await summitReferral.referrers(tokenA.address, otherWallet.address), otherWallet2.address);
+    });
+    it("should able to have more than 1 referral for different token", async () => {
+      await summitReferral.connect(otherWallet).recordReferral(tokenA.address, otherWallet2.address);
+      await summitReferral.connect(otherWallet).recordReferral(tokenB.address, otherWallet2.address);
+      await summitReferral.connect(otherWallet).recordReferral(tokenR.address, owner.address);
+
+      assert.equal(await summitReferral.referrers(tokenA.address, otherWallet.address), otherWallet2.address);
+      assert.equal(await summitReferral.referrers(tokenB.address, otherWallet.address), otherWallet2.address);
+      assert.equal(await summitReferral.referrers(tokenR.address, otherWallet.address), owner.address);
     });
   });
 
@@ -231,12 +263,44 @@ describe("summitReferral", () => {
         summitReferral.setLeadInfluencer(tokenA.address, owner.address, feeDenominator + 1)
       ).to.be.revertedWith("Wrong Fee");
     });
-    it("should add otherWallet as a Lead Influencer", async () => {
+    it("should add otherWallet as a Lead Influencer with owner wallet", async () => {
       await summitReferral.setLeadInfluencer(tokenA.address, owner.address, (5 * feeDenominator) / 100);
       const leadInfluencer = await summitReferral.influencers(tokenA.address, owner.address);
       assert.equal(leadInfluencer.isLead, true);
 
       assert.equal(leadInfluencer.leadFee.toString(), String((5 * feeDenominator) / 100));
+    });
+    it("should add otherWallet as a Lead Influencer with manager wallet", async () => {
+      await summitReferral
+        .connect(manager)
+        .setLeadInfluencer(tokenA.address, owner.address, (5 * feeDenominator) / 100);
+      const leadInfluencer = await summitReferral.influencers(tokenA.address, owner.address);
+      assert.equal(leadInfluencer.isLead, true);
+
+      assert.equal(leadInfluencer.leadFee.toString(), String((5 * feeDenominator) / 100));
+    });
+    it("should be able to add Sub Influencer as Lead Influencer", async () => {
+      await summitReferral
+        .connect(manager)
+        .setLeadInfluencer(tokenA.address, owner.address, (5 * feeDenominator) / 100);
+      await summitReferral.connect(subInfluencer).acceptLeadInfluencer(tokenA.address, owner.address);
+      await summitReferral.setSubInfluencer(
+        tokenA.address,
+        subInfluencer.address,
+        (50 * feeDenominator) / 100,
+        (50 * feeDenominator) / 100
+      );
+      let currentSubInfluencer = await summitReferral.influencers(tokenA.address, subInfluencer.address);
+      assert.equal(currentSubInfluencer.isLead, false);
+      assert.equal(currentSubInfluencer.lead, owner.address);
+
+      await summitReferral
+        .connect(manager)
+        .setLeadInfluencer(tokenA.address, subInfluencer.address, (5 * feeDenominator) / 100);
+      currentSubInfluencer = await summitReferral.influencers(tokenA.address, subInfluencer.address);
+      assert.equal(currentSubInfluencer.isLead, true);
+      assert.equal(currentSubInfluencer.lead, nullAddress);
+      assert.equal(currentSubInfluencer.leadFee.toString(), String((5 * feeDenominator) / 100));
     });
   });
 
@@ -249,10 +313,17 @@ describe("summitReferral", () => {
         summitReferral.connect(otherWallet).removeLeadInfluencer(tokenA.address, owner.address)
       ).to.be.revertedWith("Caller is not the manager of specified token");
     });
-    it("should remove otherwallet from Lead Influencer", async () => {
+    it("should remove otherwallet from Lead Influencer with owner wallet", async () => {
       let influencer = await summitReferral.influencers(tokenA.address, otherWallet.address);
       assert.equal(influencer.isLead, true);
       await summitReferral.removeLeadInfluencer(tokenA.address, otherWallet.address);
+      influencer = await summitReferral.influencers(tokenA.address, otherWallet.address);
+      assert.equal(influencer.isLead, false);
+    });
+    it("should remove otherwallet from Lead Influencer with manager wallet", async () => {
+      let influencer = await summitReferral.influencers(tokenA.address, otherWallet.address);
+      assert.equal(influencer.isLead, true);
+      await summitReferral.connect(manager).removeLeadInfluencer(tokenA.address, otherWallet.address);
       influencer = await summitReferral.influencers(tokenA.address, otherWallet.address);
       assert.equal(influencer.isLead, false);
     });
@@ -297,7 +368,7 @@ describe("summitReferral", () => {
           )
       ).to.be.revertedWith("You aren't lead influencer on this output token");
     });
-    it("should not set leadInfluencer as subInfluencer", async () => {
+    it("should revert if set leadInfluencer as subInfluencer", async () => {
       await summitReferral.connect(leadInfluencer).acceptLeadInfluencer(tokenA.address, leadInfluencer.address);
       await expect(
         summitReferral
@@ -322,6 +393,19 @@ describe("summitReferral", () => {
           )
       ).to.be.revertedWith("Wrong Fee");
     });
+    it("should revert if ex-leadInfluencer setSubInfluencer", async () => {
+      await summitReferral.removeLeadInfluencer(tokenA.address, leadInfluencer.address);
+      await expect(
+        summitReferral
+          .connect(leadInfluencer)
+          .setSubInfluencer(
+            tokenA.address,
+            subInfluencer.address,
+            (50 * feeDenominator) / 100,
+            (50 * feeDenominator) / 100
+          )
+      ).to.be.revertedWith("You aren't lead influencer on this output token");
+    });
     it("should add subInfluencer if leadInfluencer called and was accepted", async () => {
       await summitReferral
         .connect(leadInfluencer)
@@ -335,6 +419,31 @@ describe("summitReferral", () => {
       assert.equal(influencer.lead, leadInfluencer.address);
       assert.equal(influencer.refFee.toString(), String((50 * feeDenominator) / 100));
       assert.equal(influencer.leadFee.toString(), String((50 * feeDenominator) / 100));
+    });
+    it("should add subInfluencer if leadInfluencer called and was accepted, even if subInfluencer has Lead already", async () => {
+      await summitReferral
+        .connect(leadInfluencer)
+        .setSubInfluencer(
+          tokenA.address,
+          subInfluencer.address,
+          (50 * feeDenominator) / 100,
+          (50 * feeDenominator) / 100
+        );
+      let influencer = await summitReferral.influencers(tokenA.address, subInfluencer.address);
+      assert.equal(influencer.lead, leadInfluencer.address);
+
+      await summitReferral.setLeadInfluencer(tokenA.address, owner.address, (5 * feeDenominator) / 100);
+      await summitReferral.connect(subInfluencer).acceptLeadInfluencer(tokenA.address, owner.address);
+      await summitReferral.setSubInfluencer(
+        tokenA.address,
+        subInfluencer.address,
+        (70 * feeDenominator) / 100,
+        (30 * feeDenominator) / 100
+      );
+      influencer = await summitReferral.influencers(tokenA.address, subInfluencer.address);
+      assert.equal(influencer.lead, owner.address);
+      assert.equal(influencer.refFee.toString(), String((30 * feeDenominator) / 100));
+      assert.equal(influencer.leadFee.toString(), String((70 * feeDenominator) / 100));
     });
   });
 
@@ -516,6 +625,16 @@ describe("summitReferral", () => {
 
       referreRewardBalance = await tokenR.balanceOf(otherWallet.address).then((o) => o.toString());
       const referreeBalanceShouldBe = ((+rewardAmount * 5) / 100).toString();
+      assert.equal(referreRewardBalance, referreeBalanceShouldBe);
+
+      await summitswapRouter02.connect(otherWallet).swapETHForExactTokens(
+        amountOut, // uint amountOut
+        [weth.address, tokenA.address], // address[] calldata path
+        owner.address, // address to
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+        { value: amountIn }
+      );
+      referreRewardBalance = await tokenR.balanceOf(otherWallet.address).then((o) => o.toString());
       assert.equal(referreRewardBalance, referreeBalanceShouldBe);
     });
     it("should give rewards to lead, sub and dev when sub influencer referrs", async () => {

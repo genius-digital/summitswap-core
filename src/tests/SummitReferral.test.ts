@@ -637,6 +637,31 @@ describe("summitReferral", () => {
       referreRewardBalance = await tokenR.balanceOf(otherWallet.address).then((o) => o.toString());
       assert.equal(referreRewardBalance, referreeBalanceShouldBe);
     });
+    it("should give correct rewards to lead when lead influencer referrs", async () => {
+      await summitReferral.setLeadInfluencer(tokenA.address, leadInfluencer.address, (20 * feeDenominator) / 100);
+
+      await summitswapRouter02.connect(otherWallet).swapETHForExactTokens(
+        amountOut, // uint amountOut
+        [weth.address, tokenA.address], // address[] calldata path
+        owner.address, // address to
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+        { value: amountIn }
+      );
+
+      const leadFee = rewardAmount.mul(20).div(100);
+      const leadReward = leadFee.mul(20).div(100).add(rewardAmount.mul(5).div(100));
+      const devReward = rewardAmount.mul(5).div(100);
+
+      // Balances
+      const leadBalance = await summitReferral.balances(tokenR.address, leadInfluencer.address);
+      assert.equal(leadBalance.toString(), leadReward.toString());
+
+      const devBalance = await summitReferral.balances(tokenR.address, dev.address);
+      assert.equal(devBalance.toString(), devReward.toString());
+
+      const totalRewardBalance = await summitReferral.totalReward(tokenR.address);
+      assert.equal(totalRewardBalance.toString(), leadReward.add(devReward).toString());
+    });
     it("should give rewards to lead, sub and dev when sub influencer referrs", async () => {
       await summitReferral.setLeadInfluencer(tokenA.address, leadInfluencer.address, (20 * feeDenominator) / 100);
       await summitReferral.connect(subInfluencer).acceptLeadInfluencer(tokenA.address, leadInfluencer.address);

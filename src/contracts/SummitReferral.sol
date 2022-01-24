@@ -334,11 +334,11 @@ contract SummitReferral is Ownable {
       amountR = rewardAmount.mul(feeInfo[_outputToken].refFee).div(feeDenominator);
     }
 
-    if (
-      leadInfluencer != address(0) &&
-      influencers[_outputToken][leadInfluencer].isActive == true &&
-      influencers[_outputToken][leadInfluencer].isLead == true
-    ) {
+    if (influencers[_outputToken][referrer].isActive && influencers[_outputToken][referrer].isLead) {
+      uint256 amountI = rewardAmount.mul(influencers[_outputToken][referrer].leadFee).div(feeDenominator);
+
+      amountR += amountI.mul(influencers[_outputToken][referrer].leadFee).div(feeDenominator);
+    } else if (influencers[_outputToken][leadInfluencer].isActive && influencers[_outputToken][leadInfluencer].isLead) {
       uint256 amountI = rewardAmount.mul(influencers[_outputToken][leadInfluencer].leadFee).div(feeDenominator);
 
       amountL = amountI.mul(influencers[_outputToken][referrer].leadFee).div(feeDenominator);

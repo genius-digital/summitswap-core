@@ -10,7 +10,6 @@ import { DummyToken, SummitReferral, SummitswapFactory, SummitswapRouter02, WBNB
 
 const { deployContract, provider } = waffle;
 
-// TODO: add messages to asserts
 describe("summitReferral", () => {
   const [owner, leadInfluencer, subInfluencer, otherWallet, otherWallet2, dev, manager] = provider.getWallets();
   const feeDenominator = 10 ** 9;
@@ -471,8 +470,9 @@ describe("summitReferral", () => {
         "0"
       );
 
-      await tokenR.transfer(summitReferral.address, utils.parseEther("50"));
+      await tokenA.transfer(summitReferral.address, utils.parseEther("50"));
       await tokenB.transfer(summitReferral.address, utils.parseEther("50"));
+      await tokenR.transfer(summitReferral.address, utils.parseEther("50"));
 
       await summitReferral.connect(otherWallet).recordReferral(tokenA.address, leadInfluencer.address);
       await summitReferral.connect(otherWallet2).recordReferral(tokenA.address, subInfluencer.address);
@@ -516,7 +516,7 @@ describe("summitReferral", () => {
       amountIn = amount[1];
 
       const path = [tokenA.address, weth.address, tokenR.address];
-      rewardAmount = (await summitswapRouter02.getAmountsOut(amountOut.toString(), path))[2];
+      rewardAmount = amountOut;
     });
     it("should revert if called by nonSummitswapRouter", async () => {
       await expect(summitReferral.swap(owner.address, tokenA.address, tokenB.address, 100, 0)).to.be.revertedWith(
@@ -537,15 +537,15 @@ describe("summitReferral", () => {
 
       // Balances
       const leadBalance = await summitReferral
-        .balances(tokenR.address, leadInfluencer.address)
+        .balances(tokenA.address, leadInfluencer.address)
         .then((o) => o.toString());
       assert.equal(leadBalance, referrerRewardAmount.toString());
 
-      const devBalance = await summitReferral.balances(tokenR.address, dev.address).then((o) => o.toString());
+      const devBalance = await summitReferral.balances(tokenA.address, dev.address).then((o) => o.toString());
       assert.equal(devBalance, devRewardAmount.toString());
 
       // Other
-      const totalReward = await summitReferral.totalReward(tokenR.address).then((o) => o.toString());
+      const totalReward = await summitReferral.totalReward(tokenA.address).then((o) => o.toString());
       const referrerAndDevReward = referrerRewardAmount.add(devRewardAmount);
       assert.equal(totalReward, referrerAndDevReward.toString());
     });
@@ -573,22 +573,22 @@ describe("summitReferral", () => {
 
       // Balances
       const leadBalance = await summitReferral
-        .balances(tokenR.address, leadInfluencer.address)
+        .balances(tokenA.address, leadInfluencer.address)
         .then((o) => o.toString());
       assert.equal(leadBalance, referrerRewardAmount.toString());
 
-      const devBalance = await summitReferral.balances(tokenR.address, dev.address).then((o) => o.toString());
+      const devBalance = await summitReferral.balances(tokenA.address, dev.address).then((o) => o.toString());
       assert.equal(devBalance, devRewardAmount.toString());
 
       // Other
-      const totalReward = await summitReferral.totalReward(tokenR.address).then((o) => o.toString());
+      const totalReward = await summitReferral.totalReward(tokenA.address).then((o) => o.toString());
       const referrerAndDevReward = referrerRewardAmount.add(devRewardAmount);
       assert.equal(totalReward, referrerAndDevReward.toString());
     });
     it("should give reward when swapping for the first time", async () => {
       await summitReferral.setFirstBuyFee(tokenA.address, (5 * feeDenominator) / 100);
 
-      let referreRewardBalance = await tokenR.balanceOf(otherWallet.address).then((o) => o.toString());
+      let referreRewardBalance = await tokenA.balanceOf(otherWallet.address).then((o) => o.toString());
       assert.equal(referreRewardBalance, "0");
 
       await summitswapRouter02.connect(otherWallet).swapETHForExactTokens(
@@ -602,17 +602,17 @@ describe("summitReferral", () => {
       const subReward = rewardAmount.mul(5).div(100);
       const devReward = rewardAmount.mul(5).div(100);
 
-      referreRewardBalance = await tokenR.balanceOf(otherWallet.address).then((o) => o.toString());
+      referreRewardBalance = await tokenA.balanceOf(otherWallet.address).then((o) => o.toString());
       const referreeBalanceShouldBe = rewardAmount.mul(5).div(100).toString();
       assert.equal(referreRewardBalance, referreeBalanceShouldBe);
 
-      const totalRewardBalance = await summitReferral.totalReward(tokenR.address).then((o) => o.toString());
+      const totalRewardBalance = await summitReferral.totalReward(tokenA.address).then((o) => o.toString());
       assert.equal(totalRewardBalance, subReward.add(devReward).toString());
     });
     it("shouldn't give reward when swapping for the second time", async () => {
       await summitReferral.setFirstBuyFee(tokenA.address, (5 * feeDenominator) / 100);
 
-      let referreRewardBalance = await tokenR.balanceOf(otherWallet.address).then((o) => o.toString());
+      let referreRewardBalance = await tokenA.balanceOf(otherWallet.address).then((o) => o.toString());
       assert.equal(referreRewardBalance, "0");
 
       await summitswapRouter02.connect(otherWallet).swapETHForExactTokens(
@@ -623,7 +623,7 @@ describe("summitReferral", () => {
         { value: amountIn }
       );
 
-      referreRewardBalance = await tokenR.balanceOf(otherWallet.address).then((o) => o.toString());
+      referreRewardBalance = await tokenA.balanceOf(otherWallet.address).then((o) => o.toString());
       const referreeBalanceShouldBe = ((+rewardAmount * 5) / 100).toString();
       assert.equal(referreRewardBalance, referreeBalanceShouldBe);
 
@@ -634,7 +634,7 @@ describe("summitReferral", () => {
         Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
         { value: amountIn }
       );
-      referreRewardBalance = await tokenR.balanceOf(otherWallet.address).then((o) => o.toString());
+      referreRewardBalance = await tokenA.balanceOf(otherWallet.address).then((o) => o.toString());
       assert.equal(referreRewardBalance, referreeBalanceShouldBe);
     });
     it("should give correct rewards to lead when lead influencer referrs", async () => {
@@ -653,13 +653,13 @@ describe("summitReferral", () => {
       const devReward = rewardAmount.mul(5).div(100);
 
       // Balances
-      const leadBalance = await summitReferral.balances(tokenR.address, leadInfluencer.address);
+      const leadBalance = await summitReferral.balances(tokenA.address, leadInfluencer.address);
       assert.equal(leadBalance.toString(), leadReward.toString());
 
-      const devBalance = await summitReferral.balances(tokenR.address, dev.address);
+      const devBalance = await summitReferral.balances(tokenA.address, dev.address);
       assert.equal(devBalance.toString(), devReward.toString());
 
-      const totalRewardBalance = await summitReferral.totalReward(tokenR.address);
+      const totalRewardBalance = await summitReferral.totalReward(tokenA.address);
       assert.equal(totalRewardBalance.toString(), leadReward.add(devReward).toString());
     });
     it("should give rewards to lead, sub and dev when sub influencer referrs", async () => {
@@ -688,67 +688,20 @@ describe("summitReferral", () => {
       const devReward = rewardAmount.mul(5).div(100);
 
       // Balances
-      const leadBalance = await summitReferral.balances(tokenR.address, leadInfluencer.address);
+      const leadBalance = await summitReferral.balances(tokenA.address, leadInfluencer.address);
       assert.equal(leadBalance.toString(), leadReward.toString());
 
-      const subInfluencerBalance = await summitReferral.balances(tokenR.address, subInfluencer.address);
+      const subInfluencerBalance = await summitReferral.balances(tokenA.address, subInfluencer.address);
       assert.equal(subInfluencerBalance.toString(), subReward.toString());
 
-      const devBalance = await summitReferral.balances(tokenR.address, dev.address);
+      const devBalance = await summitReferral.balances(tokenA.address, dev.address);
       assert.equal(devBalance.toString(), devReward.toString());
 
-      const totalRewardBalance = await summitReferral.totalReward(tokenR.address);
+      const totalRewardBalance = await summitReferral.totalReward(tokenA.address);
       assert.equal(totalRewardBalance.toString(), leadReward.add(subReward).add(devReward).toString());
     });
-    it("should have correct swapInfos when sub influencer referrs", async () => {
-      await summitReferral.setLeadInfluencer(tokenA.address, leadInfluencer.address, (20 * feeDenominator) / 100);
-      await summitReferral.connect(subInfluencer).acceptLeadInfluencer(tokenA.address, leadInfluencer.address);
-      await summitReferral
-        .connect(leadInfluencer)
-        .setSubInfluencer(
-          tokenA.address,
-          subInfluencer.address,
-          (60 * feeDenominator) / 100,
-          (40 * feeDenominator) / 100
-        );
 
-      await summitswapRouter02.connect(otherWallet2).swapETHForExactTokens(
-        amountOut, // uint amountOut
-        [weth.address, tokenA.address], // address[] calldata path
-        owner.address, // address to
-        Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
-        { value: amountIn }
-      );
-
-      const leadSwapInfo = await summitReferral.swapList(leadInfluencer.address, 0);
-
-      const leadFee = rewardAmount.mul(20).div(100);
-      const leadReward = leadFee.mul(60).div(100).toString();
-      const subReward = leadFee.mul(40).div(100).add(rewardAmount.mul(5).div(100)).toString();
-      const devReward = rewardAmount.mul(5).div(100).toString();
-
-      // Swap Info
-      assert.equal(leadSwapInfo.inputToken.toString(), weth.address);
-      assert.equal(leadSwapInfo.outputToken.toString(), tokenA.address);
-      assert.equal(leadSwapInfo.rewardToken.toString(), tokenR.address);
-      assert.equal(leadSwapInfo.inputTokenAmount.toString(), "2046957198124988");
-      assert.equal(leadSwapInfo.outputTokenAmount.toString(), amountOut.toString());
-      assert.equal(leadSwapInfo.referrerReward.toString(), leadReward);
-      assert.equal(leadSwapInfo.devReward.toString(), "0");
-
-      const subSwapInfo = await summitReferral.swapList(subInfluencer.address, 0);
-
-      // Swap Info
-      assert.equal(subSwapInfo.inputToken.toString(), weth.address);
-      assert.equal(subSwapInfo.outputToken.toString(), tokenA.address);
-      assert.equal(subSwapInfo.rewardToken.toString(), tokenR.address);
-      assert.equal(subSwapInfo.inputTokenAmount.toString(), "2046957198124988");
-      assert.equal(subSwapInfo.outputTokenAmount.toString(), amountOut.toString());
-      assert.equal(subSwapInfo.referrerReward.toString(), subReward);
-      assert.equal(subSwapInfo.devReward.toString(), devReward);
-    });
-
-    describe("claiming", async () => {
+    xdescribe("claiming", async () => {
       let leadRewardBalanceIndex: BigNumber;
       let leadHasBalance: string;
       let isValidLeadRewardBalanceIndex: boolean;

@@ -9,6 +9,7 @@
   "extends": ["standard", "plugin:node/recommended", "plugin:prettier/recommended"],
   "parser": "@typescript-eslint/parser",
   "rules": {
+    "prefer-const": "warn",
     "node/no-missing-import": "off",
     "no-unused-vars": "warn",
     "prettier/prettier": "warn",

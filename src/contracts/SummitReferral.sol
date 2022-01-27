@@ -29,8 +29,7 @@ struct InfInfo {
   bool isLead;
 }
 
-// TODO: Use plurar names for maps
-// TODO: We don't consider amountU in totalSharedRewards to notify project owner
+// We don't consider refferee first time fees in totalReward to notify project owner
 contract SummitReferral is Ownable {
   using SafeMath for uint256;
 
@@ -41,6 +40,7 @@ contract SummitReferral is Ownable {
   address public devAddr;
   address public kapex;
   address public busd;
+  address public wbnb;
 
   mapping(address => mapping(address => bool)) public isManager; // output token => manager => is manager
 
@@ -95,6 +95,7 @@ contract SummitReferral is Ownable {
     pancakeswapRouter = _pancakeswapRouter;
     kapex = _kapex;
     busd = _busd;
+    wbnb = ISummitswapRouter02(_summitswapRouter).WETH();
   }
 
   modifier onlySummitswapRouter() {
@@ -235,8 +236,15 @@ contract SummitReferral is Ownable {
     influencers[_outputToken][_user].isActive = false;
   }
 
-  // TODO: contraint claiming in uknown token
   function claimRewardIn(address _outputToken, address _claimToken) public {
+    require(
+      _claimToken == _outputToken ||
+        _claimToken == busd ||
+        _claimToken == wbnb ||
+        _claimToken == feeInfo[_outputToken].tokenR,
+      "You can't claim in that token"
+    );
+
     uint256 balance = balances[_outputToken][msg.sender];
 
     require(balance > 0, "Insufficient balance");
@@ -250,6 +258,7 @@ contract SummitReferral is Ownable {
     hasBalance[msg.sender].pop();
     totalReward[_outputToken] -= balance;
 
+    // TODO: Test claiming fee
     uint256 rewardInClaimingTokenAmount = convertOutputToReward(_outputToken, balance, _claimToken);
     uint256 rewardInClaimingTokenAmountWithFees = rewardInClaimingTokenAmount.sub(
       rewardInClaimingTokenAmount.mul(claimingFee[_claimToken]).div(feeDenominator)
@@ -261,10 +270,6 @@ contract SummitReferral is Ownable {
       IERC20(_claimToken).transfer(msg.sender, rewardInClaimingTokenAmountWithFees);
     }
   }
-
-  // function claimReward(address _outputToken) public {
-  //   claimRewardIn(_outputToken, _outputToken);
-  // }
 
   function claimAllRewardsIn(address _claimToken) external {
     uint256 hasBalanceLength = hasBalance[msg.sender].length;
@@ -280,13 +285,6 @@ contract SummitReferral is Ownable {
     }
   }
 
-  // function claimAllRewards() external {
-  //   uint256 hasBalanceLength = hasBalance[msg.sender].length;
-  //   for (uint256 i = 0; i < hasBalanceLength; i++) {
-  //     claimReward(hasBalance[msg.sender][0]);
-  //   }
-  // }
-
   function convertOutputToReward(
     address _outputToken,
     uint256 _outputTokenAmount,
@@ -295,8 +293,6 @@ contract SummitReferral is Ownable {
     if (_outputToken == _claimToken) {
       return _outputTokenAmount;
     }
-
-    address wbnb = ISummitswapRouter02(summitswapRouter).WETH();
 
     if (_claimToken == wbnb) {
       address[] memory path = new address[](2);

@@ -765,6 +765,13 @@ describe("summitReferral", () => {
           summitReferral.connect(otherWallet2).claimRewardIn(tokenA.address, tokenA.address)
         ).to.be.revertedWith("Insufficient balance");
       });
+      it("should revert if claiming in unknown token", async () => {
+        await expect(
+          summitReferral
+            .connect(otherWallet)
+            .claimRewardIn(tokenA.address, "0x0000000000000000000000000000000000000000")
+        ).to.be.revertedWith("You can't claim in that token");
+      });
       it("should be able claim rewards in outputToken", async () => {
         await summitReferral.connect(leadInfluencer).claimRewardIn(tokenA.address, tokenA.address);
 

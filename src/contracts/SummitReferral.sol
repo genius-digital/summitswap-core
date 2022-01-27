@@ -7,6 +7,8 @@ import "./interfaces/ISummitswapRouter02.sol";
 
 import "./shared/Ownable.sol";
 
+import "hardhat/console.sol";
+
 // TODO: Explain scheme - and maybe simplify a little bit
 // TODO: Ask - promotions only work for noninfluencers
 // TODO: Add functions to simply set 1 field in feeInfo
@@ -37,6 +39,8 @@ contract SummitReferral is Ownable {
   address public summitswapRouter;
   address public pancakeswapRouter;
   address public devAddr;
+  address public kapex;
+  address public busd;
 
   mapping(address => mapping(address => bool)) public isManager; // output token => manager => is manager
 
@@ -54,6 +58,8 @@ contract SummitReferral is Ownable {
   mapping(address => mapping(address => bool)) public isBalanceIndex; // reward token => user => has array index in hasBalance or not
 
   mapping(address => uint256) public totalReward; // reward token => total reward
+
+  mapping(address => uint256) public claimingFee; // claim token => claiming fee
 
   // Removed maps
   // mapping(address => uint256) public referralsCount; // referrer address => referrals count
@@ -80,11 +86,15 @@ contract SummitReferral is Ownable {
   constructor(
     address _devAddr,
     address _summitswapRouter,
-    address _pancakeswapRouter
+    address _pancakeswapRouter,
+    address _kapex,
+    address _busd
   ) public {
     devAddr = _devAddr;
     summitswapRouter = _summitswapRouter;
     pancakeswapRouter = _pancakeswapRouter;
+    kapex = _kapex;
+    busd = _busd;
   }
 
   modifier onlySummitswapRouter() {
@@ -126,6 +136,10 @@ contract SummitReferral is Ownable {
     return hasBalance[_user].length;
   }
 
+  function setClaimingFee(address _claimToken, uint256 _fee) external onlyOwner {
+    claimingFee[_claimToken] = _fee;
+  }
+
   function setFirstBuyFee(address _outputToken, uint256 _fee) external onlyManager(_outputToken) {
     require(_fee <= feeDenominator, "Wrong Fee");
     firstBuyRefereeFee[_outputToken] = _fee;
@@ -139,6 +153,7 @@ contract SummitReferral is Ownable {
     isManager[_outputToken][_manager] = _isManager;
   }
 
+  // Don't use WBNB as a outputToken
   function setFeeInfo(
     address _outputToken,
     address _rewardToken,
@@ -220,54 +235,105 @@ contract SummitReferral is Ownable {
     influencers[_outputToken][_user].isActive = false;
   }
 
-  function claimReward(address _rewardToken) public {
-    uint256 balance = balances[_rewardToken][msg.sender];
+  // TODO: contraint claiming in uknown token
+  function claimRewardIn(address _outputToken, address _claimToken) public {
+    uint256 balance = balances[_outputToken][msg.sender];
 
     require(balance > 0, "Insufficient balance");
 
-    balances[_rewardToken][msg.sender] = 0;
-    isBalanceIndex[_rewardToken][msg.sender] = false;
-    uint256 rewardTokenIndex = hasBalanceIndex[_rewardToken][msg.sender];
+    balances[_outputToken][msg.sender] = 0;
+    isBalanceIndex[_outputToken][msg.sender] = false;
+    uint256 rewardTokenIndex = hasBalanceIndex[_outputToken][msg.sender];
     address lastToken = hasBalance[msg.sender][hasBalance[msg.sender].length - 1];
     hasBalanceIndex[lastToken][msg.sender] = rewardTokenIndex;
     hasBalance[msg.sender][rewardTokenIndex] = lastToken;
     hasBalance[msg.sender].pop();
-    totalReward[_rewardToken] -= balance;
+    totalReward[_outputToken] -= balance;
 
-    IERC20(_rewardToken).transfer(msg.sender, balance);
-  }
+    uint256 rewardInClaimingTokenAmount = convertOutputToReward(_outputToken, balance, _claimToken);
+    uint256 rewardInClaimingTokenAmountWithFees = rewardInClaimingTokenAmount.sub(
+      rewardInClaimingTokenAmount.mul(claimingFee[_claimToken]).div(feeDenominator)
+    );
 
-  function claimAllRewards() external {
-    uint256 hasBalanceLength = hasBalance[msg.sender].length;
-    for (uint256 i = 0; i < hasBalanceLength; i++) {
-      claimReward(hasBalance[msg.sender][0]);
+    if (_claimToken == ISummitswapRouter02(summitswapRouter).WETH()) {
+      payable(msg.sender).transfer(rewardInClaimingTokenAmountWithFees);
+    } else {
+      IERC20(_claimToken).transfer(msg.sender, rewardInClaimingTokenAmountWithFees);
     }
   }
 
-  // // TODO: Add ability to convert automatically to BNB, BUSD
-  // function getReward(
-  //   address _outputToken,
-  //   uint256 _outputTokenAmount,
-  //   address _rewardToken
-  // ) internal view returns (uint256) {
-  //   if (_outputToken == _rewardToken) {
-  //     return _outputTokenAmount;
-  //   }
-
-  //   address[] memory path = new address[](3);
-
-  //   path[0] = _outputToken;
-  //   path[1] = ISummitswapRouter02(summitswapRouter).WETH();
-  //   path[2] = _rewardToken;
-  //   uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
-
-  //   path[0] = _outputToken;
-  //   path[1] = ISummitswapRouter02(pancakeswapRouter).WETH();
-  //   path[2] = _rewardToken;
-  //   uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
-
-  //   return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+  // function claimReward(address _outputToken) public {
+  //   claimRewardIn(_outputToken, _outputToken);
   // }
+
+  function claimAllRewardsIn(address _claimToken) external {
+    uint256 hasBalanceLength = hasBalance[msg.sender].length;
+    for (uint256 i = 0; i < hasBalanceLength; i++) {
+      claimRewardIn(hasBalance[msg.sender][0], _claimToken);
+    }
+  }
+
+  function claimAllRewardsInOutput() external {
+    uint256 hasBalanceLength = hasBalance[msg.sender].length;
+    for (uint256 i = 0; i < hasBalanceLength; i++) {
+      claimRewardIn(hasBalance[msg.sender][0], hasBalance[msg.sender][0]);
+    }
+  }
+
+  // function claimAllRewards() external {
+  //   uint256 hasBalanceLength = hasBalance[msg.sender].length;
+  //   for (uint256 i = 0; i < hasBalanceLength; i++) {
+  //     claimReward(hasBalance[msg.sender][0]);
+  //   }
+  // }
+
+  function convertOutputToReward(
+    address _outputToken,
+    uint256 _outputTokenAmount,
+    address _claimToken
+  ) internal view returns (uint256) {
+    if (_outputToken == _claimToken) {
+      return _outputTokenAmount;
+    }
+
+    address wbnb = ISummitswapRouter02(summitswapRouter).WETH();
+
+    if (_claimToken == wbnb) {
+      address[] memory path = new address[](2);
+
+      path[0] = _outputToken;
+      path[1] = wbnb;
+      uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
+
+      if (summitswapRouter == pancakeswapRouter) {
+        return summitswapAmountsOut;
+      }
+
+      path[0] = _outputToken;
+      path[1] = wbnb;
+      uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
+
+      return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+    }
+
+    address[] memory path = new address[](3);
+
+    path[0] = _outputToken;
+    path[1] = wbnb;
+    path[2] = _claimToken;
+    uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
+
+    if (summitswapRouter == pancakeswapRouter) {
+      return summitswapAmountsOut;
+    }
+
+    path[0] = _outputToken;
+    path[1] = wbnb;
+    path[2] = _claimToken;
+    uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
+
+    return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+  }
 
   function increaseBalance(
     address _user,

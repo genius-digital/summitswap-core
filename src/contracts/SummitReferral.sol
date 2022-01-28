@@ -289,28 +289,28 @@ contract SummitReferral is Ownable {
     address _outputToken,
     uint256 _outputTokenAmount,
     address _claimToken
-  ) internal view returns (uint256) {
+  ) internal returns (uint256) {
     if (_outputToken == _claimToken) {
       return _outputTokenAmount;
     }
 
-    if (_claimToken == wbnb) {
-      address[] memory path = new address[](2);
+    // if (_claimToken == wbnb) {
+    //   address[] memory path = new address[](2);
 
-      path[0] = _outputToken;
-      path[1] = wbnb;
-      uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
+    //   path[0] = _outputToken;
+    //   path[1] = wbnb;
+    //   uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
 
-      if (summitswapRouter == pancakeswapRouter) {
-        return summitswapAmountsOut;
-      }
+    //   if (summitswapRouter == pancakeswapRouter) {
+    //     return summitswapAmountsOut;
+    //   }
 
-      path[0] = _outputToken;
-      path[1] = wbnb;
-      uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
+    //   path[0] = _outputToken;
+    //   path[1] = wbnb;
+    //   uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
 
-      return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
-    }
+    //   return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+    // }
 
     address[] memory path = new address[](3);
 
@@ -319,16 +319,26 @@ contract SummitReferral is Ownable {
     path[2] = _claimToken;
     uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
 
+    IERC20(_outputToken).approve(summitswapRouter, _outputTokenAmount);
+
+    ISummitswapRouter02(summitswapRouter).swapExactTokensForTokens(
+      _outputTokenAmount,
+      summitswapAmountsOut,
+      path,
+      address(this),
+      block.timestamp
+    );
+
     if (summitswapRouter == pancakeswapRouter) {
       return summitswapAmountsOut;
     }
 
-    path[0] = _outputToken;
-    path[1] = wbnb;
-    path[2] = _claimToken;
-    uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
+    // path[0] = _outputToken;
+    // path[1] = wbnb;
+    // path[2] = _claimToken;
+    // uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
 
-    return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+    // return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
   }
 
   function increaseBalance(
@@ -336,6 +346,10 @@ contract SummitReferral is Ownable {
     address _rewardToken,
     uint256 _amount
   ) internal {
+    if (_amount == 0) {
+      return;
+    }
+
     if (isBalanceIndex[_rewardToken][_user] == false) {
       hasBalanceIndex[_rewardToken][_user] = hasBalance[_user].length;
       isBalanceIndex[_rewardToken][_user] = true;

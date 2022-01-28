@@ -16,7 +16,7 @@ describe("Summitswap Middleman", () => {
   let weth: Contract;
   let summitswapFactory: Contract;
   let summitswapRouter02: Contract;
-  let summitReferral: Contract;
+  // let summitReferral: Contract;
   let summitswapMiddleman: Contract;
   let tokenA: Contract;
   let tokenB: Contract;
@@ -29,12 +29,12 @@ describe("Summitswap Middleman", () => {
     tokenR = await deployContract(owner, Token, []);
     summitswapFactory = await deployContract(owner, SummitswapFactory, [owner.address]);
     summitswapRouter02 = await deployContract(owner, SummitswapRouter02, [summitswapFactory.address, weth.address]);
-    summitReferral = await deployContract(owner, SummitReferral, []);
+    // summitReferral = await deployContract(owner, SummitReferral, []);
     summitswapMiddleman = await deployContract(owner, SummitswapMiddleman, []);
 
     await summitswapFactory.setFeeTo(owner.address);
-    await summitswapRouter02.setSummitReferral(summitReferral.address);
-    await summitReferral.setRouter(summitswapMiddleman.address);
+    // await summitswapRouter02.setSummitReferral(summitReferral.address);
+    // await summitReferral.setRouter(summitswapMiddleman.address);
   });
 
   describe("owner() should be owner.address", async () => {
@@ -56,6 +56,55 @@ describe("Summitswap Middleman", () => {
       assert.equal(await summitswapMiddleman.owner(), owner.address);
       await summitswapMiddleman.transferOwnership(otherWallet.address);
       assert.equal(await summitswapMiddleman.owner(), otherWallet.address);
+    });
+  });
+
+  describe("swap()", () => {
+    beforeEach(async () => {
+      await tokenA.approve(summitswapRouter02.address, utils.parseEther("5").toString());
+      await tokenR.approve(summitswapRouter02.address, utils.parseEther("5").toString());
+
+      await summitswapRouter02.addLiquidityETH(
+        tokenA.address, // address token,
+        utils.parseEther("5"), // uint amountTokenDesired,
+        utils.parseEther("5"), // uint amountTokenMin,
+        utils.parseEther("0.1"), // uint amountETHMin,
+        owner.address, // address to
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+        { value: utils.parseEther("0.1") }
+      );
+
+      await summitswapRouter02.addLiquidityETH(
+        tokenR.address, // address token,
+        utils.parseEther("5"), // uint amountTokenDesired,
+        utils.parseEther("5"), // uint amountTokenMin,
+        utils.parseEther("0.1"), // uint amountETHMin,
+        owner.address, // address to
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+        { value: utils.parseEther("0.1") }
+      );
+    });
+    describe("swapETHForExactTokens()", () => {
+      it("should be able to swap", async () => {
+        const amount = await summitswapRouter02.getAmountsOut(utils.parseEther("0.1"), [weth.address, tokenA.address]);
+        const amountOut = amount[0];
+        const amountIn = amount[1];
+
+        let otherWalletTokenACount = await tokenA.balanceOf(otherWallet.address);
+        assert.equal(otherWalletTokenACount.toString(), "0");
+
+        await summitswapMiddleman.connect(otherWallet).swapETHForExactTokens(
+          summitswapFactory.address,
+          weth.address,
+          amountOut, // uint amountOut
+          [weth.address, tokenA.address], // address[] calldata path
+          otherWallet.address, // address to
+          Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+          { value: amountIn }
+        );
+        otherWalletTokenACount = await tokenA.balanceOf(otherWallet.address);
+        assert.equal(otherWalletTokenACount.toString(), amountOut.toString());
+      });
     });
   });
 });

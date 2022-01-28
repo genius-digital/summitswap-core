@@ -84,7 +84,7 @@ describe("Summitswap Middleman", () => {
         { value: utils.parseEther("0.1") }
       );
     });
-    describe("swapETHForExactTokens()", () => {
+    describe("swap() without reward", () => {
       it("should be able to swap", async () => {
         const amount = await summitswapRouter02.getAmountsOut(utils.parseEther("0.1"), [weth.address, tokenA.address]);
         const amountOut = amount[0];
@@ -106,5 +106,6 @@ describe("Summitswap Middleman", () => {
         assert.equal(otherWalletTokenACount.toString(), amountOut.toString());
       });
     });
+    describe("swap() with reward", () => {});
   });
 });

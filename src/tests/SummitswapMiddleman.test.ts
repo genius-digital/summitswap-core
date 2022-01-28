@@ -61,7 +61,11 @@ describe("Summitswap Middleman", () => {
     ])) as SummitswapRouter02;
 
     summitswapMiddleman = (await deployContract(owner, SummitswapMiddlemanArtifact, [])) as SummitswapMiddleman;
-    summitReferral = (await deployContract(owner, SummitReferralArtifact, [])) as SummitReferral;
+    summitReferral = (await deployContract(owner, SummitReferralArtifact, [
+      owner.address,
+      summitswapRouter.address,
+      otherswapRouter.address,
+    ])) as SummitReferral;
 
     await summitswapFactory.setFeeTo(owner.address);
 

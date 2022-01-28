@@ -133,6 +133,10 @@ contract SummitReferral is Ownable {
     pancakeswapRouter = _pancakeswapRouter;
   }
 
+  function setKapex(address _kapex) external onlyOwner {
+    kapex = _kapex;
+  }
+
   function getBalancesLength(address _user) external view returns (uint256) {
     return hasBalance[_user].length;
   }

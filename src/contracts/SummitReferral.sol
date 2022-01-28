@@ -121,7 +121,7 @@ contract SummitReferral is Ownable {
     wbnb = ISummitswapRouter02(_summitswapRouter).WETH();
   }
 
-  function() external payable {}
+  receive() external payable {}
 
   function setDevAddress(address _devAddr) external onlyOwner {
     devAddr = _devAddr;

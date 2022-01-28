@@ -7,13 +7,13 @@ import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json
 import SummitswapFactoryArtifact from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
 import SummitswapRouter02Artifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
 import { DummyToken, SummitReferral, SummitswapFactory, SummitswapRouter02, WBNB } from "build/typechain";
+import { ZERO_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
 describe("summitReferral", () => {
   const [owner, leadInfluencer, subInfluencer, otherWallet, otherWallet2, dev, manager] = provider.getWallets();
   const feeDenominator = 10 ** 9;
-  const nullAddress = "0x0000000000000000000000000000000000000000";
   let weth: WBNB;
   let summitswapFactory: SummitswapFactory;
   let summitswapRouter02: SummitswapRouter02;
@@ -234,7 +234,7 @@ describe("summitReferral", () => {
 
   describe("recordReferral", async () => {
     it("should return address(0) if user wasn't referred", async () => {
-      assert.equal(await summitReferral.referrers(tokenA.address, otherWallet.address), nullAddress);
+      assert.equal(await summitReferral.referrers(tokenA.address, otherWallet.address), ZERO_ADDRESS);
     });
     it("should revert if user reffered himself", async () => {
       await expect(
@@ -242,7 +242,7 @@ describe("summitReferral", () => {
       ).to.be.revertedWith("You can't refer yourself");
     });
     it("should revert referrer was burn address", async () => {
-      await expect(summitReferral.connect(otherWallet).recordReferral(tokenA.address, nullAddress)).to.be.revertedWith(
+      await expect(summitReferral.connect(otherWallet).recordReferral(tokenA.address, ZERO_ADDRESS)).to.be.revertedWith(
         "You can't use burn address as a refferer"
       );
     });
@@ -316,7 +316,7 @@ describe("summitReferral", () => {
         .setLeadInfluencer(tokenA.address, subInfluencer.address, (5 * feeDenominator) / 100);
       currentSubInfluencer = await summitReferral.influencers(tokenA.address, subInfluencer.address);
       assert.equal(currentSubInfluencer.isLead, true);
-      assert.equal(currentSubInfluencer.lead, nullAddress);
+      assert.equal(currentSubInfluencer.lead, ZERO_ADDRESS);
       assert.equal(currentSubInfluencer.leadFee.toString(), String((5 * feeDenominator) / 100));
     });
   });
@@ -767,9 +767,7 @@ describe("summitReferral", () => {
       });
       it("should revert if claiming in unknown token", async () => {
         await expect(
-          summitReferral
-            .connect(otherWallet)
-            .claimRewardIn(tokenA.address, "0x0000000000000000000000000000000000000000")
+          summitReferral.connect(otherWallet).claimRewardIn(tokenA.address, ZERO_ADDRESS)
         ).to.be.revertedWith("You can't claim in that token");
       });
       it("should be able claim rewards in outputToken", async () => {

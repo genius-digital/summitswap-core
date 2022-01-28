@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { SummitswapRouter02 } from "../../build/typechain";
-import { environment } from "../environment";
+import { environment, ZERO_ADDRESS } from "../environment";
 import { deploySummitswapRouter02 } from "./deploySummitswapRouter02";
 import { tryVerify } from "./utils/verify";
 
@@ -26,11 +26,19 @@ export async function deploySummitReferral() {
   const summitReferral = await SummitReferral.deploy(
     wallet1.address,
     summitswapRouter02Address,
-    summitswapRouter02Address
+    summitswapRouter02Address,
+    ZERO_ADDRESS,
+    ZERO_ADDRESS
   );
   await summitReferral.deployed();
 
-  await tryVerify(summitReferral.address, [wallet1.address, summitswapRouter02Address, summitswapRouter02Address]);
+  await tryVerify(summitReferral.address, [
+    wallet1.address,
+    summitswapRouter02Address,
+    summitswapRouter02Address,
+    ZERO_ADDRESS,
+    ZERO_ADDRESS,
+  ]);
 
   await summitswapRouter02.setSummitReferral(summitReferral.address);
 

@@ -60,12 +60,17 @@ describe("Summitswap Middleman", () => {
       wbnb.address,
     ])) as SummitswapRouter02;
 
-    summitswapMiddleman = (await deployContract(owner, SummitswapMiddlemanArtifact, [])) as SummitswapMiddleman;
     summitReferral = (await deployContract(owner, SummitReferralArtifact, [
       owner.address,
       summitswapRouter.address,
       otherswapRouter.address,
     ])) as SummitReferral;
+
+    summitswapMiddleman = (await deployContract(owner, SummitswapMiddlemanArtifact, [
+      summitswapFactory.address,
+      summitswapRouter.address,
+      summitReferral.address,
+    ])) as SummitswapMiddleman;
 
     await summitswapFactory.setFeeTo(owner.address);
 
@@ -96,23 +101,16 @@ describe("Summitswap Middleman", () => {
     });
   });
 
-  describe("swap()", () => {
+  describe("swap() without reward", () => {
     beforeEach(async () => {
       await tokenA.approve(summitswapRouter.address, utils.parseEther("5").toString());
-      await tokenR.approve(summitswapRouter.address, utils.parseEther("5").toString());
+
+      await tokenA.approve(otherswapRouter.address, utils.parseEther("5").toString());
+      await tokenB.approve(otherswapRouter.address, utils.parseEther("5").toString());
 
       // add liquidity for summitswap
       await summitswapRouter.addLiquidityETH(
         tokenA.address, // address token,
-        utils.parseEther("5"), // uint amountTokenDesired,
-        utils.parseEther("5"), // uint amountTokenMin,
-        utils.parseEther("0.1"), // uint amountETHMin,
-        owner.address, // address to
-        Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
-        { value: utils.parseEther("0.1") }
-      );
-      await summitswapRouter.addLiquidityETH(
-        tokenR.address, // address token,
         utils.parseEther("5"), // uint amountTokenDesired,
         utils.parseEther("5"), // uint amountTokenMin,
         utils.parseEther("0.1"), // uint amountETHMin,
@@ -131,29 +129,77 @@ describe("Summitswap Middleman", () => {
         Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
         { value: utils.parseEther("0.1") }
       );
+      await otherswapRouter.addLiquidityETH(
+        tokenB.address, // address token,
+        utils.parseEther("5"), // uint amountTokenDesired,
+        utils.parseEther("5"), // uint amountTokenMin,
+        utils.parseEther("0.1"), // uint amountETHMin,
+        owner.address, // address to
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+        { value: utils.parseEther("0.1") }
+      );
     });
-    //   describe("swap() without reward", () => {
-    //     it("should be able to swap", async () => {
-    //       const amount = await summitswapRouter.getAmountsOut(utils.parseEther("0.1"), [wbnb.address, tokenA.address]);
-    //       const amountOut = amount[0];
-    //       const amountIn = amount[1];
+    describe("swapETHForExactTokens()", () => {
+      it("should be reverted, swap with otherswap and summitswap has liquidity", async () => {
+        const amount = await otherswapRouter.getAmountsOut(utils.parseEther("0.1"), [wbnb.address, tokenA.address]);
+        const amountOut = amount[0];
+        const amountIn = amount[1];
 
-    //       let otherWalletTokenACount = await tokenA.balanceOf(otherWallet.address);
-    //       assert.equal(otherWalletTokenACount.toString(), "0");
+        const otherWalletTokenACount = await tokenA.balanceOf(otherWallet.address);
+        assert.equal(otherWalletTokenACount.toString(), "0");
 
-    //       await summitswapMiddleman.connect(otherWallet).swapETHForExactTokens(
-    //         summitswapFactory.address,
-    //         wbnb.address,
-    //         amountOut, // uint amountOut
-    //         [wbnb.address, tokenA.address], // address[] calldata path
-    //         otherWallet.address, // address to
-    //         Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
-    //         { value: amountIn }
-    //       );
-    //       otherWalletTokenACount = await tokenA.balanceOf(otherWallet.address);
-    //       assert.equal(otherWalletTokenACount.toString(), amountOut.toString());
-    //     });
-    //   });
-    //   describe("swap() with reward", () => {});
+        await expect(
+          summitswapMiddleman.connect(otherWallet).swapETHForExactTokens(
+            otherswapFactory.address,
+            wbnb.address,
+            amountOut, // uint amountOut
+            [wbnb.address, tokenA.address], // address[] calldata path
+            otherWallet.address, // address to
+            Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+            { value: amountIn }
+          )
+        ).to.be.revertedWith("Should use Summitswap for swapping");
+      });
+      it("should be able to swap with otherswap, if summitswap dont have the liquidity", async () => {
+        const amount = await otherswapRouter.getAmountsOut(utils.parseEther("0.1"), [wbnb.address, tokenB.address]);
+        const amountOut = amount[0];
+        const amountIn = amount[1];
+
+        let otherWalletTokenBCount = await tokenB.balanceOf(otherWallet.address);
+        assert.equal(otherWalletTokenBCount.toString(), "0");
+
+        await summitswapMiddleman.connect(otherWallet).swapETHForExactTokens(
+          otherswapFactory.address,
+          wbnb.address,
+          amountOut, // uint amountOut
+          [wbnb.address, tokenB.address], // address[] calldata path
+          otherWallet.address, // address to
+          Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+          { value: amountIn }
+        );
+        otherWalletTokenBCount = await tokenB.balanceOf(otherWallet.address);
+        assert.equal(otherWalletTokenBCount.toString(), amountOut.toString());
+      });
+      it("should be able to swap with summitswap", async () => {
+        const amount = await summitswapRouter.getAmountsOut(utils.parseEther("0.1"), [wbnb.address, tokenA.address]);
+        const amountOut = amount[0];
+        const amountIn = amount[1];
+
+        let otherWalletTokenACount = await tokenA.balanceOf(otherWallet.address);
+        assert.equal(otherWalletTokenACount.toString(), "0");
+
+        await summitswapMiddleman.connect(otherWallet).swapETHForExactTokens(
+          summitswapFactory.address,
+          wbnb.address,
+          amountOut, // uint amountOut
+          [wbnb.address, tokenA.address], // address[] calldata path
+          otherWallet.address, // address to
+          Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+          { value: amountIn }
+        );
+        otherWalletTokenACount = await tokenA.balanceOf(otherWallet.address);
+        assert.equal(otherWalletTokenACount.toString(), amountOut.toString());
+      });
+    });
   });
 });

@@ -18,6 +18,8 @@ import "./shared/Ownable.sol";
 contract SummitswapMiddleman is Ownable {
   using SafeMath for uint256;
 
+  address public summitswapFactory;
+  address public summitswapRouter;
   address public summitReferral;
 
   modifier ensure(uint256 deadline) {
@@ -25,10 +27,32 @@ contract SummitswapMiddleman is Ownable {
     _;
   }
 
+  modifier onlyNoLiquidityExists(address factory, address[] memory path) {
+    uint256 pairCount;
+    for (uint256 i; i < path.length - 1; i++) {
+      address pairAddress = ISummitswapFactory(summitswapFactory).getPair(path[i], path[i + 1]);
+      if (pairAddress == address(0)) break;
+      pairCount += 1;
+    }
+    require(factory == summitswapFactory || pairCount != path.length - 1, "Should use Summitswap for swapping");
+    _;
+  }
+
+  constructor(
+    address _summitswapFactory,
+    address _summitswapRouter,
+    address _summitReferral
+  ) public {
+    summitswapFactory = _summitswapFactory;
+    summitswapRouter = _summitswapRouter;
+    summitReferral = _summitReferral;
+  }
+
   function setSummitReferral(address _summitReferral) public onlyOwner {
     summitReferral = _summitReferral;
   }
 
+  // **** SWAP ****
   function _swap(
     address factory,
     uint256[] memory amounts,
@@ -52,7 +76,7 @@ contract SummitswapMiddleman is Ownable {
     address[] calldata path,
     address to,
     uint256 deadline
-  ) external payable virtual ensure(deadline) returns (uint256[] memory amounts) {
+  ) external payable virtual ensure(deadline) onlyNoLiquidityExists(factory, path) returns (uint256[] memory amounts) {
     require(path[0] == WETH, "SummitswapRouter02: INVALID_PATH");
     amounts = SummitswapLibrary.getAmountsIn(factory, amountOut, path);
     require(amounts[0] <= msg.value, "SummitswapRouter02: EXCESSIVE_INPUT_AMOUNT");

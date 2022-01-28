@@ -83,21 +83,6 @@ contract SummitReferral is Ownable {
     uint256 devReward
   );
 
-  constructor(
-    address _devAddr,
-    address _summitswapRouter,
-    address _pancakeswapRouter,
-    address _kapex,
-    address _busd
-  ) public {
-    devAddr = _devAddr;
-    summitswapRouter = _summitswapRouter;
-    pancakeswapRouter = _pancakeswapRouter;
-    kapex = _kapex;
-    busd = _busd;
-    wbnb = ISummitswapRouter02(_summitswapRouter).WETH();
-  }
-
   modifier onlySummitswapRouter() {
     require(msg.sender == summitswapRouter, "Caller is not the router");
     _;
@@ -120,6 +105,23 @@ contract SummitReferral is Ownable {
     );
     _;
   }
+
+  constructor(
+    address _devAddr,
+    address _summitswapRouter,
+    address _pancakeswapRouter,
+    address _kapex,
+    address _busd
+  ) public {
+    devAddr = _devAddr;
+    summitswapRouter = _summitswapRouter;
+    pancakeswapRouter = _pancakeswapRouter;
+    kapex = _kapex;
+    busd = _busd;
+    wbnb = ISummitswapRouter02(_summitswapRouter).WETH();
+  }
+
+  function() external payable {}
 
   function setDevAddress(address _devAddr) external onlyOwner {
     devAddr = _devAddr;
@@ -259,15 +261,23 @@ contract SummitReferral is Ownable {
     totalReward[_outputToken] -= balance;
 
     // TODO: Test claiming fee
+
     uint256 rewardInClaimingTokenAmount = convertOutputToReward(_outputToken, balance, _claimToken);
-    uint256 rewardInClaimingTokenAmountWithFees = rewardInClaimingTokenAmount.sub(
-      rewardInClaimingTokenAmount.mul(claimingFee[_claimToken]).div(feeDenominator)
-    );
+    uint256 claimFee = rewardInClaimingTokenAmount.mul(claimingFee[_claimToken]).div(feeDenominator);
+    uint256 totalClaimableAmount = rewardInClaimingTokenAmount - claimFee;
 
     if (_claimToken == ISummitswapRouter02(summitswapRouter).WETH()) {
-      payable(msg.sender).transfer(rewardInClaimingTokenAmountWithFees);
+      payable(msg.sender).transfer(totalClaimableAmount);
+
+      if (claimFee != 0) {
+        payable(devAddr).transfer(claimFee);
+      }
     } else {
-      IERC20(_claimToken).transfer(msg.sender, rewardInClaimingTokenAmountWithFees);
+      IERC20(_claimToken).transfer(msg.sender, totalClaimableAmount);
+
+      if (claimFee != 0) {
+        IERC20(_claimToken).transfer(devAddr, claimFee);
+      }
     }
   }
 
@@ -294,23 +304,33 @@ contract SummitReferral is Ownable {
       return _outputTokenAmount;
     }
 
-    // if (_claimToken == wbnb) {
-    //   address[] memory path = new address[](2);
+    if (_claimToken == wbnb) {
+      address[] memory path = new address[](2);
 
-    //   path[0] = _outputToken;
-    //   path[1] = wbnb;
-    //   uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
+      path[0] = _outputToken;
+      path[1] = wbnb;
+      uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
 
-    //   if (summitswapRouter == pancakeswapRouter) {
-    //     return summitswapAmountsOut;
-    //   }
+      IERC20(_outputToken).approve(summitswapRouter, _outputTokenAmount);
 
-    //   path[0] = _outputToken;
-    //   path[1] = wbnb;
-    //   uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
+      ISummitswapRouter02(summitswapRouter).swapExactTokensForETH(
+        _outputTokenAmount,
+        summitswapAmountsOut,
+        path,
+        address(this),
+        block.timestamp
+      );
 
-    //   return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
-    // }
+      if (summitswapRouter == pancakeswapRouter) {
+        return summitswapAmountsOut;
+      }
+
+      // path[0] = _outputToken;
+      // path[1] = wbnb;
+      // uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
+
+      // return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+    }
 
     address[] memory path = new address[](3);
 

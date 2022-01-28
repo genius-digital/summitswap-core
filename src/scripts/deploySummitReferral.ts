@@ -5,6 +5,8 @@ import { deploySummitswapRouter02 } from "./deploySummitswapRouter02";
 import { tryVerify } from "./utils/verify";
 
 export async function deploySummitReferral() {
+  const [wallet1] = await ethers.getSigners();
+
   const SummitswapRouter02 = await ethers.getContractFactory("SummitswapRouter02");
 
   let summitswapRouter02Address = process.env.ROUTER_ADDRESS ?? environment.SUMMITSWAP_ROUTER;
@@ -21,12 +23,15 @@ export async function deploySummitReferral() {
   console.log("Starting to deploy SummitReferral");
 
   const SummitReferral = await ethers.getContractFactory("SummitReferral");
-  const summitReferral = await SummitReferral.deploy();
+  const summitReferral = await SummitReferral.deploy(
+    wallet1.address,
+    summitswapRouter02Address,
+    summitswapRouter02Address
+  );
   await summitReferral.deployed();
 
-  await tryVerify(summitReferral.address);
+  await tryVerify(summitReferral.address, [wallet1.address, summitswapRouter02Address, summitswapRouter02Address]);
 
-  await summitReferral.setRouter(summitswapRouter02Address);
   await summitswapRouter02.setSummitReferral(summitReferral.address);
 
   console.log("SummitReferral deployed to:", summitReferral.address);

@@ -336,7 +336,7 @@ contract SummitReferral is Ownable {
     address _rewardToken,
     uint256 _amount
   ) internal {
-    if (balances[_rewardToken][_user] == 0) {
+    if (isBalanceIndex[_rewardToken][_user] == false) {
       hasBalanceIndex[_rewardToken][_user] = hasBalance[_user].length;
       isBalanceIndex[_rewardToken][_user] = true;
       hasBalance[_user].push(_rewardToken);

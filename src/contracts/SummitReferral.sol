@@ -7,8 +7,6 @@ import "./interfaces/ISummitswapRouter02.sol";
 
 import "./shared/Ownable.sol";
 
-import "hardhat/console.sol";
-
 // TODO: Explain scheme - and maybe simplify a little bit
 // TODO: Ask - promotions only work for noninfluencers
 // TODO: Add functions to simply set 1 field in feeInfo

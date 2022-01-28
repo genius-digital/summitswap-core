@@ -20,6 +20,7 @@ const { deployContract, provider } = waffle;
 
 describe("Summitswap Middleman", () => {
   const [owner, leadInfluencer, subInfluencer, otherWallet, otherWallet2] = provider.getWallets();
+  const nullAddress = "0x0000000000000000000000000000000000000000";
 
   // tokens
   let wbnb: WBNB;
@@ -67,9 +68,10 @@ describe("Summitswap Middleman", () => {
     ])) as SummitReferral;
 
     summitswapMiddleman = (await deployContract(owner, SummitswapMiddlemanArtifact, [
+      wbnb.address,
       summitswapFactory.address,
       summitswapRouter.address,
-      summitReferral.address,
+      nullAddress,
     ])) as SummitswapMiddleman;
 
     await summitswapFactory.setFeeTo(owner.address);
@@ -151,7 +153,6 @@ describe("Summitswap Middleman", () => {
         await expect(
           summitswapMiddleman.connect(otherWallet).swapETHForExactTokens(
             otherswapFactory.address,
-            wbnb.address,
             amountOut, // uint amountOut
             [wbnb.address, tokenA.address], // address[] calldata path
             otherWallet.address, // address to
@@ -170,7 +171,6 @@ describe("Summitswap Middleman", () => {
 
         await summitswapMiddleman.connect(otherWallet).swapETHForExactTokens(
           otherswapFactory.address,
-          wbnb.address,
           amountOut, // uint amountOut
           [wbnb.address, tokenB.address], // address[] calldata path
           otherWallet.address, // address to
@@ -190,7 +190,6 @@ describe("Summitswap Middleman", () => {
 
         await summitswapMiddleman.connect(otherWallet).swapETHForExactTokens(
           summitswapFactory.address,
-          wbnb.address,
           amountOut, // uint amountOut
           [wbnb.address, tokenA.address], // address[] calldata path
           otherWallet.address, // address to

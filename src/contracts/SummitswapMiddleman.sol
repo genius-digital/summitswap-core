@@ -18,6 +18,7 @@ import "./shared/Ownable.sol";
 contract SummitswapMiddleman is Ownable {
   using SafeMath for uint256;
 
+  address public immutable WETH;
   address public summitswapFactory;
   address public summitswapRouter;
   address public summitReferral;
@@ -39,10 +40,12 @@ contract SummitswapMiddleman is Ownable {
   }
 
   constructor(
+    address _WETH,
     address _summitswapFactory,
     address _summitswapRouter,
     address _summitReferral
   ) public {
+    WETH = _WETH;
     summitswapFactory = _summitswapFactory;
     summitswapRouter = _summitswapRouter;
     summitReferral = _summitReferral;
@@ -50,6 +53,10 @@ contract SummitswapMiddleman is Ownable {
 
   function setSummitReferral(address _summitReferral) public onlyOwner {
     summitReferral = _summitReferral;
+  }
+
+  receive() external payable {
+    assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract
   }
 
   // **** SWAP ****
@@ -64,14 +71,113 @@ contract SummitswapMiddleman is Ownable {
       (address token0, ) = SummitswapLibrary.sortTokens(input, output);
       uint256 amountOut = amounts[i + 1];
       (uint256 amount0Out, uint256 amount1Out) = input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
+      if (summitReferral != address(0)) {
+        ISummitReferral(summitReferral).swap(msg.sender, input, output, amounts[i], amountOut);
+      }
       address to = i < path.length - 2 ? SummitswapLibrary.pairFor(factory, output, path[i + 2]) : _to;
       ISummitswapPair(SummitswapLibrary.pairFor(factory, input, output)).swap(amount0Out, amount1Out, to, new bytes(0));
     }
   }
 
+  function swapExactTokensForTokens(
+    address factory,
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external virtual ensure(deadline) onlyNoLiquidityExists(factory, path) returns (uint256[] memory amounts) {
+    amounts = SummitswapLibrary.getAmountsOut(factory, amountIn, path);
+    require(amounts[amounts.length - 1] >= amountOutMin, "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT");
+    TransferHelper.safeTransferFrom(
+      path[0],
+      msg.sender,
+      SummitswapLibrary.pairFor(factory, path[0], path[1]),
+      amounts[0]
+    );
+    _swap(factory, amounts, path, to);
+  }
+
+  function swapTokensForExactTokens(
+    address factory,
+    uint256 amountOut,
+    uint256 amountInMax,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external virtual ensure(deadline) onlyNoLiquidityExists(factory, path) returns (uint256[] memory amounts) {
+    amounts = SummitswapLibrary.getAmountsIn(factory, amountOut, path);
+    require(amounts[0] <= amountInMax, "SummitswapRouter02: EXCESSIVE_INPUT_AMOUNT");
+    TransferHelper.safeTransferFrom(
+      path[0],
+      msg.sender,
+      SummitswapLibrary.pairFor(factory, path[0], path[1]),
+      amounts[0]
+    );
+    _swap(factory, amounts, path, to);
+  }
+
+  function swapExactETHForTokens(
+    address factory,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external payable virtual ensure(deadline) onlyNoLiquidityExists(factory, path) returns (uint256[] memory amounts) {
+    require(path[0] == WETH, "SummitswapRouter02: INVALID_PATH");
+    amounts = SummitswapLibrary.getAmountsOut(factory, msg.value, path);
+    require(amounts[amounts.length - 1] >= amountOutMin, "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT");
+    IWETH(WETH).deposit{value: amounts[0]}();
+    assert(IWETH(WETH).transfer(SummitswapLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
+    _swap(factory, amounts, path, to);
+  }
+
+  function swapTokensForExactETH(
+    address factory,
+    uint256 amountOut,
+    uint256 amountInMax,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external virtual ensure(deadline) onlyNoLiquidityExists(factory, path) returns (uint256[] memory amounts) {
+    require(path[path.length - 1] == WETH, "SummitswapRouter02: INVALID_PATH");
+    amounts = SummitswapLibrary.getAmountsIn(factory, amountOut, path);
+    require(amounts[0] <= amountInMax, "SummitswapRouter02: EXCESSIVE_INPUT_AMOUNT");
+    TransferHelper.safeTransferFrom(
+      path[0],
+      msg.sender,
+      SummitswapLibrary.pairFor(factory, path[0], path[1]),
+      amounts[0]
+    );
+    _swap(factory, amounts, path, address(this));
+    IWETH(WETH).withdraw(amounts[amounts.length - 1]);
+    TransferHelper.safeTransferBNB(to, amounts[amounts.length - 1]);
+  }
+
+  function swapExactTokensForETH(
+    address factory,
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external virtual ensure(deadline) onlyNoLiquidityExists(factory, path) returns (uint256[] memory amounts) {
+    require(path[path.length - 1] == WETH, "SummitswapRouter02: INVALID_PATH");
+    amounts = SummitswapLibrary.getAmountsOut(factory, amountIn, path);
+    require(amounts[amounts.length - 1] >= amountOutMin, "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT");
+    TransferHelper.safeTransferFrom(
+      path[0],
+      msg.sender,
+      SummitswapLibrary.pairFor(factory, path[0], path[1]),
+      amounts[0]
+    );
+    _swap(factory, amounts, path, address(this));
+    IWETH(WETH).withdraw(amounts[amounts.length - 1]);
+    TransferHelper.safeTransferBNB(to, amounts[amounts.length - 1]);
+  }
+
   function swapETHForExactTokens(
     address factory,
-    address WETH,
     uint256 amountOut,
     address[] calldata path,
     address to,

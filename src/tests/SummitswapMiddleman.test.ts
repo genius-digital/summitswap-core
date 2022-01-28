@@ -101,6 +101,7 @@ describe("Summitswap Middleman", () => {
       await tokenA.approve(summitswapRouter.address, utils.parseEther("5").toString());
       await tokenR.approve(summitswapRouter.address, utils.parseEther("5").toString());
 
+      // add liquidity for summitswap
       await summitswapRouter.addLiquidityETH(
         tokenA.address, // address token,
         utils.parseEther("5"), // uint amountTokenDesired,
@@ -110,9 +111,19 @@ describe("Summitswap Middleman", () => {
         Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
         { value: utils.parseEther("0.1") }
       );
-
       await summitswapRouter.addLiquidityETH(
         tokenR.address, // address token,
+        utils.parseEther("5"), // uint amountTokenDesired,
+        utils.parseEther("5"), // uint amountTokenMin,
+        utils.parseEther("0.1"), // uint amountETHMin,
+        owner.address, // address to
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60, // uint deadline
+        { value: utils.parseEther("0.1") }
+      );
+
+      // add liquidity for otherswap
+      await otherswapRouter.addLiquidityETH(
+        tokenA.address, // address token,
         utils.parseEther("5"), // uint amountTokenDesired,
         utils.parseEther("5"), // uint amountTokenMin,
         utils.parseEther("0.1"), // uint amountETHMin,

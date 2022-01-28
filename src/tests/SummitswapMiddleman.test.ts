@@ -12,28 +12,47 @@ const { deployContract, provider } = waffle;
 
 describe("Summitswap Middleman", () => {
   const [owner, leadInfluencer, subInfluencer, otherWallet, otherWallet2] = provider.getWallets();
-  const feeDenominator = 10 ** 9;
+
+  // tokens
   let weth: Contract;
-  let summitswapFactory: Contract;
-  let summitswapRouter02: Contract;
-  // let summitReferral: Contract;
-  let summitswapMiddleman: Contract;
   let tokenA: Contract;
   let tokenB: Contract;
   let tokenR: Contract;
 
+  // summitswap
+  let summitswapFactory: Contract;
+  let summitswapRouter: Contract;
+
+  // otherswap
+  let otherswapFactory: Contract;
+  let otherswapRouter: Contract;
+
+  // middleman & referral
+  let summitswapMiddleman: Contract;
+  let summitReferral: Contract;
+
   beforeEach(async () => {
+    // deploy tokens
     weth = await deployContract(owner, WETH, []);
     tokenA = await deployContract(owner, Token, []);
     tokenB = await deployContract(owner, Token, []);
     tokenR = await deployContract(owner, Token, []);
+
+    // deploy summitswap
     summitswapFactory = await deployContract(owner, SummitswapFactory, [owner.address]);
-    summitswapRouter02 = await deployContract(owner, SummitswapRouter02, [summitswapFactory.address, weth.address]);
-    // summitReferral = await deployContract(owner, SummitReferral, []);
+    summitswapRouter = await deployContract(owner, SummitswapRouter02, [summitswapFactory.address, weth.address]);
+
+    // deploy otherswap
+    otherswapFactory = await deployContract(owner, SummitswapFactory, [owner.address]);
+    otherswapRouter = await deployContract(owner, SummitswapRouter02, [otherswapRouter.address, weth.address]);
+
     summitswapMiddleman = await deployContract(owner, SummitswapMiddleman, []);
+    summitReferral = await deployContract(owner, SummitReferral, []);
 
     await summitswapFactory.setFeeTo(owner.address);
-    // await summitswapRouter02.setSummitReferral(summitReferral.address);
+
+    // set referral
+    // await summitswapRouter.setSummitReferral(summitReferral.address);
     // await summitReferral.setRouter(summitswapMiddleman.address);
   });
 
@@ -61,10 +80,10 @@ describe("Summitswap Middleman", () => {
 
   describe("swap()", () => {
     beforeEach(async () => {
-      await tokenA.approve(summitswapRouter02.address, utils.parseEther("5").toString());
-      await tokenR.approve(summitswapRouter02.address, utils.parseEther("5").toString());
+      await tokenA.approve(summitswapRouter.address, utils.parseEther("5").toString());
+      await tokenR.approve(summitswapRouter.address, utils.parseEther("5").toString());
 
-      await summitswapRouter02.addLiquidityETH(
+      await summitswapRouter.addLiquidityETH(
         tokenA.address, // address token,
         utils.parseEther("5"), // uint amountTokenDesired,
         utils.parseEther("5"), // uint amountTokenMin,
@@ -74,7 +93,7 @@ describe("Summitswap Middleman", () => {
         { value: utils.parseEther("0.1") }
       );
 
-      await summitswapRouter02.addLiquidityETH(
+      await summitswapRouter.addLiquidityETH(
         tokenR.address, // address token,
         utils.parseEther("5"), // uint amountTokenDesired,
         utils.parseEther("5"), // uint amountTokenMin,
@@ -86,7 +105,7 @@ describe("Summitswap Middleman", () => {
     });
     describe("swap() without reward", () => {
       it("should be able to swap", async () => {
-        const amount = await summitswapRouter02.getAmountsOut(utils.parseEther("0.1"), [weth.address, tokenA.address]);
+        const amount = await summitswapRouter.getAmountsOut(utils.parseEther("0.1"), [weth.address, tokenA.address]);
         const amountOut = amount[0];
         const amountIn = amount[1];
 

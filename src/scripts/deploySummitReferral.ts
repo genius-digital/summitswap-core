@@ -28,7 +28,7 @@ export async function deploySummitReferral() {
     summitswapRouter02Address,
     summitswapRouter02Address,
     ZERO_ADDRESS,
-    ZERO_ADDRESS
+    environment.BUSD
   );
   await summitReferral.deployed();
 
@@ -37,7 +37,7 @@ export async function deploySummitReferral() {
     summitswapRouter02Address,
     summitswapRouter02Address,
     ZERO_ADDRESS,
-    ZERO_ADDRESS,
+    environment.BUSD,
   ]);
 
   await summitswapRouter02.setSummitReferral(summitReferral.address);

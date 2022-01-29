@@ -192,4 +192,97 @@ contract SummitswapMiddleman is Ownable {
     // refund dust eth, if any
     if (msg.value > amounts[0]) TransferHelper.safeTransferBNB(msg.sender, msg.value - amounts[0]);
   }
+
+  // **** SWAP (supporting fee-on-transfer tokens) ****
+  function _swapSupportingFeeOnTransferTokens(
+    address factory,
+    address[] memory path,
+    address _to
+  ) internal virtual {
+    for (uint256 i; i < path.length - 1; i++) {
+      (address input, address output) = (path[i], path[i + 1]);
+      (address token0, ) = SummitswapLibrary.sortTokens(input, output);
+      ISummitswapPair pair = ISummitswapPair(SummitswapLibrary.pairFor(factory, input, output));
+      uint256 amountInput;
+      uint256 amountOutput;
+      {
+        // scope to avoid stack too deep errors
+        (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
+        (uint256 reserveInput, uint256 reserveOutput) = input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
+        amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);
+        amountOutput = SummitswapLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
+      }
+      if (summitReferral != address(0)) {
+        ISummitReferral(summitReferral).swap(msg.sender, input, output, amountInput, amountOutput);
+      }
+      (uint256 amount0Out, uint256 amount1Out) = input == token0
+        ? (uint256(0), amountOutput)
+        : (amountOutput, uint256(0));
+      address to = i < path.length - 2 ? SummitswapLibrary.pairFor(factory, output, path[i + 2]) : _to;
+      pair.swap(amount0Out, amount1Out, to, new bytes(0));
+    }
+  }
+
+  function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+    address factory,
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external virtual ensure(deadline) {
+    TransferHelper.safeTransferFrom(
+      path[0],
+      msg.sender,
+      SummitswapLibrary.pairFor(factory, path[0], path[1]),
+      amountIn
+    );
+    uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
+    _swapSupportingFeeOnTransferTokens(factory, path, to);
+    require(
+      IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
+      "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT"
+    );
+  }
+
+  function swapExactETHForTokensSupportingFeeOnTransferTokens(
+    address factory,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external payable virtual ensure(deadline) {
+    require(path[0] == WETH, "SummitswapRouter02: INVALID_PATH");
+    uint256 amountIn = msg.value;
+    IWETH(WETH).deposit{value: amountIn}();
+    assert(IWETH(WETH).transfer(SummitswapLibrary.pairFor(factory, path[0], path[1]), amountIn));
+    uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
+    _swapSupportingFeeOnTransferTokens(factory, path, to);
+    require(
+      IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
+      "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT"
+    );
+  }
+
+  function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    address factory,
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external virtual ensure(deadline) {
+    require(path[path.length - 1] == WETH, "SummitswapRouter02: INVALID_PATH");
+    TransferHelper.safeTransferFrom(
+      path[0],
+      msg.sender,
+      SummitswapLibrary.pairFor(factory, path[0], path[1]),
+      amountIn
+    );
+    _swapSupportingFeeOnTransferTokens(factory, path, address(this));
+    uint256 amountOut = IERC20(WETH).balanceOf(address(this));
+    require(amountOut >= amountOutMin, "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT");
+    IWETH(WETH).withdraw(amountOut);
+    TransferHelper.safeTransferBNB(to, amountOut);
+  }
 }

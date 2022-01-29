@@ -26,7 +26,7 @@ export async function deploySummitReferral() {
   const summitReferral = await SummitReferral.deploy(
     wallet1.address,
     summitswapRouter02Address,
-    summitswapRouter02Address,
+    ZERO_ADDRESS,
     ZERO_ADDRESS,
     environment.BUSD
   );
@@ -35,7 +35,7 @@ export async function deploySummitReferral() {
   await tryVerify(summitReferral.address, [
     wallet1.address,
     summitswapRouter02Address,
-    summitswapRouter02Address,
+    ZERO_ADDRESS,
     ZERO_ADDRESS,
     environment.BUSD,
   ]);

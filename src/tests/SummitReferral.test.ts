@@ -45,13 +45,12 @@ describe("summitReferral", () => {
     summitReferral = (await deployContract(owner, SummitReferralArtifact, [
       dev.address,
       summitswapRouter02.address,
-      summitswapRouter02.address,
+      ZERO_ADDRESS,
       tokenR.address,
       tokenB.address,
     ])) as SummitReferral;
 
     await summitReferral.setManager(tokenA.address, manager.address, true);
-
     await summitswapFactory.setFeeTo(owner.address);
     await summitswapRouter02.setSummitReferral(summitReferral.address);
   });

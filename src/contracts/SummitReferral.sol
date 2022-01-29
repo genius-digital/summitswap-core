@@ -297,6 +297,34 @@ contract SummitReferral is Ownable {
     }
   }
 
+  function swap(
+    address _outputToken,
+    uint256 _outputTokenAmount,
+    uint256 amountOut,
+    address router,
+    address[] memory path
+  ) internal {
+    IERC20(_outputToken).approve(router, _outputTokenAmount);
+
+    if (path[path.length - 1] == wbnb) {
+      ISummitswapRouter02(router).swapExactTokensForETH(
+        _outputTokenAmount,
+        amountOut,
+        path,
+        address(this),
+        block.timestamp
+      );
+    } else {
+      ISummitswapRouter02(router).swapExactTokensForTokens(
+        _outputTokenAmount,
+        amountOut,
+        path,
+        address(this),
+        block.timestamp
+      );
+    }
+  }
+
   function convertOutputToReward(
     address _outputToken,
     uint256 _outputTokenAmount,
@@ -307,60 +335,58 @@ contract SummitReferral is Ownable {
     }
 
     if (_claimToken == wbnb) {
-      address[] memory path = new address[](2);
+      address[] memory summitPath = new address[](2);
+      summitPath[0] = _outputToken;
+      summitPath[1] = wbnb;
+      uint256 summitAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, summitPath)[1];
 
-      path[0] = _outputToken;
-      path[1] = wbnb;
-      uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
-
-      IERC20(_outputToken).approve(summitswapRouter, _outputTokenAmount);
-
-      ISummitswapRouter02(summitswapRouter).swapExactTokensForETH(
-        _outputTokenAmount,
-        summitswapAmountsOut,
-        path,
-        address(this),
-        block.timestamp
-      );
-
-      if (summitswapRouter == pancakeswapRouter) {
-        return summitswapAmountsOut;
+      if (pancakeswapRouter == address(0)) {
+        swap(_outputToken, _outputTokenAmount, summitAmountsOut, summitswapRouter, summitPath);
+        return summitAmountsOut;
       }
 
-      // path[0] = _outputToken;
-      // path[1] = wbnb;
-      // uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[1];
+      address[] memory pancakePath = new address[](2);
+      pancakePath[0] = _outputToken;
+      pancakePath[1] = wbnb;
+      uint256 pancakeAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, pancakePath)[
+        1
+      ];
 
-      // return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+      if (summitAmountsOut >= pancakeAmountsOut) {
+        swap(_outputToken, _outputTokenAmount, summitAmountsOut, summitswapRouter, summitPath);
+        return summitAmountsOut;
+      } else {
+        swap(_outputToken, _outputTokenAmount, pancakeAmountsOut, pancakeswapRouter, pancakePath);
+        return pancakeAmountsOut;
+      }
     }
 
-    address[] memory path = new address[](3);
+    address[] memory summitPath = new address[](3);
+    summitPath[0] = _outputToken;
+    summitPath[1] = wbnb;
+    summitPath[2] = _claimToken;
+    uint256 summitAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, summitPath)[2];
 
-    path[0] = _outputToken;
-    path[1] = wbnb;
-    path[2] = _claimToken;
-    uint256 summitswapAmountsOut = ISummitswapRouter02(summitswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
-
-    IERC20(_outputToken).approve(summitswapRouter, _outputTokenAmount);
-
-    ISummitswapRouter02(summitswapRouter).swapExactTokensForTokens(
-      _outputTokenAmount,
-      summitswapAmountsOut,
-      path,
-      address(this),
-      block.timestamp
-    );
-
-    if (summitswapRouter == pancakeswapRouter) {
-      return summitswapAmountsOut;
+    if (pancakeswapRouter == address(0)) {
+      swap(_outputToken, _outputTokenAmount, summitAmountsOut, summitswapRouter, summitPath);
+      return summitAmountsOut;
     }
 
-    // path[0] = _outputToken;
-    // path[1] = wbnb;
-    // path[2] = _claimToken;
-    // uint256 pancakeswapAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, path)[2];
+    address[] memory pancakePath = new address[](3);
+    pancakePath[0] = _outputToken;
+    pancakePath[1] = wbnb;
+    pancakePath[2] = _claimToken;
+    uint256 pancakeAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, pancakePath)[
+      2
+    ];
 
-    // return summitswapAmountsOut >= pancakeswapAmountsOut ? summitswapAmountsOut : pancakeswapAmountsOut;
+    if (summitAmountsOut >= pancakeAmountsOut) {
+      swap(_outputToken, _outputTokenAmount, summitAmountsOut, summitswapRouter, summitPath);
+      return summitAmountsOut;
+    } else {
+      swap(_outputToken, _outputTokenAmount, pancakeAmountsOut, pancakeswapRouter, pancakePath);
+      return pancakeAmountsOut;
+    }
   }
 
   function increaseBalance(

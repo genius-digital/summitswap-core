@@ -230,7 +230,7 @@ contract SummitswapMiddleman is Ownable {
     address[] calldata path,
     address to,
     uint256 deadline
-  ) external virtual ensure(deadline) {
+  ) external virtual ensure(deadline) onlyNoLiquidityExists(factory, path) {
     TransferHelper.safeTransferFrom(
       path[0],
       msg.sender,
@@ -251,7 +251,7 @@ contract SummitswapMiddleman is Ownable {
     address[] calldata path,
     address to,
     uint256 deadline
-  ) external payable virtual ensure(deadline) {
+  ) external payable virtual ensure(deadline) onlyNoLiquidityExists(factory, path) {
     require(path[0] == WETH, "SummitswapRouter02: INVALID_PATH");
     uint256 amountIn = msg.value;
     IWETH(WETH).deposit{value: amountIn}();
@@ -271,7 +271,7 @@ contract SummitswapMiddleman is Ownable {
     address[] calldata path,
     address to,
     uint256 deadline
-  ) external virtual ensure(deadline) {
+  ) external virtual ensure(deadline) onlyNoLiquidityExists(factory, path) {
     require(path[path.length - 1] == WETH, "SummitswapRouter02: INVALID_PATH");
     TransferHelper.safeTransferFrom(
       path[0],

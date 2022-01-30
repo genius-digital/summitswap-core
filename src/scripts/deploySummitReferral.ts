@@ -35,6 +35,8 @@ export async function deploySummitReferral() {
   await summitswapRouter02.setSummitReferral(summitReferral.address);
 
   console.log("SummitReferral deployed to:", summitReferral.address);
+
+  return summitReferral;
 }
 
 async function main() {

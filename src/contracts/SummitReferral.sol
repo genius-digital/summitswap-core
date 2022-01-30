@@ -49,6 +49,7 @@ contract SummitReferral is Ownable {
 
   address public summitswapRouter;
   address public pancakeswapRouter;
+  address public summitswapMiddleman;
   address public devAddr;
 
   mapping(address => mapping(address => bool)) public isManager; // output token => manager => is manager
@@ -98,8 +99,8 @@ contract SummitReferral is Ownable {
     pancakeswapRouter = _pancakeswapRouter;
   }
 
-  modifier onlySummitswapRouter() {
-    require(msg.sender == summitswapRouter, "Caller is not the router");
+  modifier onlySummitswapRouterAndMiddleman() {
+    require(msg.sender == summitswapRouter || msg.sender == summitswapMiddleman, "Caller is not the router");
     _;
   }
 
@@ -131,6 +132,10 @@ contract SummitReferral is Ownable {
 
   function setPancakeswapRouter(address _pancakeswapRouter) external onlyOwner {
     pancakeswapRouter = _pancakeswapRouter;
+  }
+
+  function setSummitswapMiddleman(address _summitswapMiddleman) external onlyOwner {
+    summitswapMiddleman = _summitswapMiddleman;
   }
 
   function getSwapListCount(address _referrer) external view returns (uint256) {
@@ -303,7 +308,7 @@ contract SummitReferral is Ownable {
     address _outputToken,
     uint256 _inputTokenAmount,
     uint256 _outputTokenAmount
-  ) external onlySummitswapRouter {
+  ) external onlySummitswapRouterAndMiddleman {
     address referrer = referrers[_outputToken][_user];
 
     if (referrer == address(0)) {

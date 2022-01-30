@@ -20,6 +20,7 @@ const { deployContract, provider } = waffle;
 
 describe("Summitswap Middleman", () => {
   const [owner, leadInfluencer, subInfluencer, otherWallet, otherWallet2] = provider.getWallets();
+  const feeDenominator = 10 ** 9;
   const nullAddress = "0x0000000000000000000000000000000000000000";
 
   // tokens
@@ -77,8 +78,7 @@ describe("Summitswap Middleman", () => {
     await summitswapFactory.setFeeTo(owner.address);
 
     // set referral
-    // await summitswapRouter.setSummitReferral(summitReferral.address);
-    // await summitReferral.setRouter(summitswapMiddleman.address);
+    await summitReferral.setSummitswapMiddleman(summitswapMiddleman.address);
   });
 
   describe("owner()", () => {
@@ -103,7 +103,20 @@ describe("Summitswap Middleman", () => {
     });
   });
 
-  describe("swap() without referral reward", () => {
+  describe("summitReferral()", () => {
+    it("should be nullAddress", async () => {
+      assert.equal((await summitswapMiddleman.summitReferral()).toString(), nullAddress);
+    });
+  });
+  describe("setSummitReferral()", () => {
+    it("should be able to setSummitReferral() to summitReferral.address", async () => {
+      assert.equal((await summitswapMiddleman.summitReferral()).toString(), nullAddress);
+      await summitswapMiddleman.setSummitReferral(summitReferral.address);
+      assert.equal((await summitswapMiddleman.summitReferral()).toString(), summitReferral.address);
+    });
+  });
+
+  describe("swap()", () => {
     beforeEach(async () => {
       await tokenA.approve(summitswapRouter.address, utils.parseEther("15").toString());
       await tokenB.approve(summitswapRouter.address, utils.parseEther("15").toString());
@@ -860,6 +873,74 @@ describe("Summitswap Middleman", () => {
           );
         otherWalletTokenACount = await tokenA.balanceOf(otherWallet.address);
         assert.equal(otherWalletTokenACount.toString(), "0");
+      });
+    });
+    describe("referralReward", () => {
+      beforeEach(async () => {
+        await summitswapMiddleman.setSummitReferral(summitReferral.address);
+        await summitReferral.connect(otherWallet).recordReferral(tokenA.address, leadInfluencer.address);
+        await summitReferral.setFeeInfo(
+          tokenA.address,
+          tokenB.address,
+          (5 * feeDenominator) / 100,
+          (5 * feeDenominator) / 100,
+          "0",
+          "0",
+          "0"
+        );
+        await summitswapRouter.addLiquidityETH(
+          tokenB.address,
+          utils.parseEther("5"),
+          utils.parseEther("5"),
+          utils.parseEther("0.1"),
+          owner.address,
+          Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+          { value: utils.parseEther("0.1") }
+        );
+      });
+      it("should not be able to get reward, if summitReferral is not set", async () => {
+        await summitswapMiddleman.setSummitReferral(nullAddress);
+
+        const amounts = await summitswapRouter.getAmountsOut(utils.parseEther("0.1"), [wbnb.address, tokenA.address]);
+        const amountOut = amounts[0];
+        const amountIn = amounts[1];
+
+        await summitswapMiddleman
+          .connect(otherWallet)
+          .swapETHForExactTokens(
+            summitswapFactory.address,
+            amountOut.toString(),
+            [wbnb.address, tokenA.address],
+            owner.address,
+            Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+            { value: amountIn }
+          );
+        const balancesLength = await summitReferral.getBalancesLength(leadInfluencer.address);
+        assert.equal(balancesLength.toString(), "0");
+      });
+      it("should be able to get reward", async () => {
+        const amounts = await summitswapRouter.getAmountsOut(utils.parseEther("0.1"), [wbnb.address, tokenA.address]);
+        const amountOut = amounts[0];
+        const amountIn = amounts[1];
+
+        const path = [tokenA.address, wbnb.address, tokenB.address];
+        const secondRewardAmount = (await summitswapRouter.getAmountsOut(amountOut.toString(), path))[2];
+
+        await summitswapMiddleman
+          .connect(otherWallet)
+          .swapETHForExactTokens(
+            summitswapFactory.address,
+            amountOut.toString(),
+            [wbnb.address, tokenA.address],
+            owner.address,
+            Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+            { value: amountIn }
+          );
+        const balancesLength = await summitReferral.getBalancesLength(leadInfluencer.address);
+        assert.equal(balancesLength.toString(), "1");
+
+        const rewardBalance = await summitReferral.balances(tokenB.address, leadInfluencer.address);
+        assert.equal(rewardBalance.toString(), secondRewardAmount.mul(5).div(100).toString());
       });
     });
   });

@@ -245,6 +245,7 @@ contract SummitReferral is Ownable {
       _claimToken == _outputToken ||
         _claimToken == busd ||
         _claimToken == wbnb ||
+        _claimToken == kapex ||
         _claimToken == feeInfo[_outputToken].tokenR,
       "You can't claim in that token"
     );

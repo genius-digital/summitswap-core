@@ -348,9 +348,12 @@ contract SummitReferral is Ownable {
       address[] memory pancakePath = new address[](2);
       pancakePath[0] = _outputToken;
       pancakePath[1] = wbnb;
-      uint256 pancakeAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, pancakePath)[
-        1
-      ];
+      uint256 pancakeAmountsOut;
+      try ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, pancakePath) returns (
+        uint256[] memory amounts
+      ) {
+        pancakeAmountsOut = amounts[1];
+      } catch {}
 
       if (summitAmountsOut >= pancakeAmountsOut) {
         swap(_outputToken, _outputTokenAmount, summitAmountsOut, summitswapRouter, summitPath);
@@ -376,9 +379,12 @@ contract SummitReferral is Ownable {
     pancakePath[0] = _outputToken;
     pancakePath[1] = wbnb;
     pancakePath[2] = _claimToken;
-    uint256 pancakeAmountsOut = ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, pancakePath)[
-      2
-    ];
+    uint256 pancakeAmountsOut;
+    try ISummitswapRouter02(pancakeswapRouter).getAmountsOut(_outputTokenAmount, pancakePath) returns (
+      uint256[] memory amounts
+    ) {
+      pancakeAmountsOut = amounts[2];
+    } catch {}
 
     if (summitAmountsOut >= pancakeAmountsOut) {
       swap(_outputToken, _outputTokenAmount, summitAmountsOut, summitswapRouter, summitPath);

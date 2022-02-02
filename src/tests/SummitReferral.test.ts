@@ -663,8 +663,7 @@ describe("summitReferral", () => {
         { value: amountIn }
       );
 
-      const leadFee = amountOut.mul(20).div(100);
-      const leadReward = leadFee.mul(20).div(100).add(amountOut.mul(5).div(100));
+      const leadReward = amountOut.mul(20).div(100).add(amountOut.mul(5).div(100));
       const devReward = amountOut.mul(5).div(100);
 
       // Balances

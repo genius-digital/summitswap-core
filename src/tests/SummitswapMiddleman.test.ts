@@ -66,6 +66,8 @@ describe("Summitswap Middleman", () => {
       owner.address,
       summitswapRouter.address,
       otherswapRouter.address,
+      tokenR.address,
+      tokenB.address,
     ])) as SummitReferral;
 
     summitswapMiddleman = (await deployContract(owner, SummitswapMiddlemanArtifact, [
@@ -939,8 +941,8 @@ describe("Summitswap Middleman", () => {
         const balancesLength = await summitReferral.getBalancesLength(leadInfluencer.address);
         assert.equal(balancesLength.toString(), "1");
 
-        const rewardBalance = await summitReferral.balances(tokenB.address, leadInfluencer.address);
-        assert.equal(rewardBalance.toString(), secondRewardAmount.mul(5).div(100).toString());
+        const rewardBalance = await summitReferral.balances(tokenA.address, leadInfluencer.address);
+        assert.equal(rewardBalance.toString(), amountOut.mul(5).div(100).toString());
       });
     });
   });

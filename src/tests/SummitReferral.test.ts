@@ -33,14 +33,10 @@ describe("summitReferral", () => {
 
     summitswapFactory = (await deployContract(owner, SummitswapFactoryArtifact, [owner.address])) as SummitswapFactory;
 
-    summitswapRouter02 = (await deployContract(
-      owner,
-      SummitswapRouter02Artifact,
-      [summitswapFactory.address, weth.address],
-      {
-        gasLimit: 4600000,
-      }
-    )) as SummitswapRouter02;
+    summitswapRouter02 = (await deployContract(owner, SummitswapRouter02Artifact, [
+      summitswapFactory.address,
+      weth.address,
+    ])) as SummitswapRouter02;
 
     summitReferral = (await deployContract(owner, SummitReferralArtifact, [
       dev.address,

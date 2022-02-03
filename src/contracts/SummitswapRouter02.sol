@@ -264,10 +264,10 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
   function swapExactTokensForTokens(
     uint256 amountIn,
     uint256 amountOutMin,
-    address[] calldata path,
+    address[] memory path,
     address to,
     uint256 deadline
-  ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
+  ) public virtual override ensure(deadline) returns (uint256[] memory amounts) {
     amounts = SummitswapLibrary.getAmountsOut(factory, amountIn, path);
     require(amounts[amounts.length - 1] >= amountOutMin, "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT");
     TransferHelper.safeTransferFrom(
@@ -279,13 +279,25 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     _swap(amounts, path, to);
   }
 
+  function swapExactTokensForTokensReferral(
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline,
+    address referrer
+  ) external virtual returns (uint256[] memory amounts) {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    amounts = swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline);
+  }
+
   function swapTokensForExactTokens(
     uint256 amountOut,
     uint256 amountInMax,
-    address[] calldata path,
+    address[] memory path,
     address to,
     uint256 deadline
-  ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
+  ) public virtual override ensure(deadline) returns (uint256[] memory amounts) {
     amounts = SummitswapLibrary.getAmountsIn(factory, amountOut, path);
     require(amounts[0] <= amountInMax, "SummitswapRouter02: EXCESSIVE_INPUT_AMOUNT");
     TransferHelper.safeTransferFrom(
@@ -297,12 +309,24 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     _swap(amounts, path, to);
   }
 
-  function swapExactETHForTokens(
-    uint256 amountOutMin,
+  function swapTokensForExactTokensReferral(
+    uint256 amountOut,
+    uint256 amountInMax,
     address[] calldata path,
     address to,
+    uint256 deadline,
+    address referrer
+  ) external virtual returns (uint256[] memory amounts) {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    amounts = swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
+  }
+
+  function swapExactETHForTokens(
+    uint256 amountOutMin,
+    address[] memory path,
+    address to,
     uint256 deadline
-  ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
+  ) public payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
     require(path[0] == WETH, "SummitswapRouter02: INVALID_PATH");
     amounts = SummitswapLibrary.getAmountsOut(factory, msg.value, path);
     require(amounts[amounts.length - 1] >= amountOutMin, "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT");
@@ -311,13 +335,24 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     _swap(amounts, path, to);
   }
 
+  function swapExactETHForTokensReferral(
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline,
+    address referrer
+  ) external payable virtual returns (uint256[] memory amounts) {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    amounts = swapExactETHForTokens(amountOutMin, path, to, deadline);
+  }
+
   function swapTokensForExactETH(
     uint256 amountOut,
     uint256 amountInMax,
-    address[] calldata path,
+    address[] memory path,
     address to,
     uint256 deadline
-  ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
+  ) public virtual override ensure(deadline) returns (uint256[] memory amounts) {
     require(path[path.length - 1] == WETH, "SummitswapRouter02: INVALID_PATH");
     amounts = SummitswapLibrary.getAmountsIn(factory, amountOut, path);
     require(amounts[0] <= amountInMax, "SummitswapRouter02: EXCESSIVE_INPUT_AMOUNT");
@@ -332,13 +367,25 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     TransferHelper.safeTransferBNB(to, amounts[amounts.length - 1]);
   }
 
+  function swapTokensForExactETHReferral(
+    uint256 amountOut,
+    uint256 amountInMax,
+    address[] calldata path,
+    address to,
+    uint256 deadline,
+    address referrer
+  ) external virtual returns (uint256[] memory amounts) {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    amounts = swapTokensForExactETH(amountOut, amountInMax, path, to, deadline);
+  }
+
   function swapExactTokensForETH(
     uint256 amountIn,
     uint256 amountOutMin,
-    address[] calldata path,
+    address[] memory path,
     address to,
     uint256 deadline
-  ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
+  ) public virtual override ensure(deadline) returns (uint256[] memory amounts) {
     require(path[path.length - 1] == WETH, "SummitswapRouter02: INVALID_PATH");
     amounts = SummitswapLibrary.getAmountsOut(factory, amountIn, path);
     require(amounts[amounts.length - 1] >= amountOutMin, "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT");
@@ -353,12 +400,24 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     TransferHelper.safeTransferBNB(to, amounts[amounts.length - 1]);
   }
 
-  function swapETHForExactTokens(
-    uint256 amountOut,
+  function swapExactTokensForETHReferral(
+    uint256 amountIn,
+    uint256 amountOutMin,
     address[] calldata path,
     address to,
+    uint256 deadline,
+    address referrer
+  ) external virtual returns (uint256[] memory amounts) {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    amounts = swapExactTokensForETH(amountIn, amountOutMin, path, to, deadline);
+  }
+
+  function swapETHForExactTokens(
+    uint256 amountOut,
+    address[] memory path,
+    address to,
     uint256 deadline
-  ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
+  ) public payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
     require(path[0] == WETH, "SummitswapRouter02: INVALID_PATH");
     amounts = SummitswapLibrary.getAmountsIn(factory, amountOut, path);
     require(amounts[0] <= msg.value, "SummitswapRouter02: EXCESSIVE_INPUT_AMOUNT");
@@ -367,6 +426,17 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     _swap(amounts, path, to);
     // refund dust eth, if any
     if (msg.value > amounts[0]) TransferHelper.safeTransferBNB(msg.sender, msg.value - amounts[0]);
+  }
+
+  function swapETHForExactTokensReferral(
+    uint256 amountOut,
+    address[] calldata path,
+    address to,
+    uint256 deadline,
+    address referrer
+  ) external payable virtual returns (uint256[] memory amounts) {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    amounts = swapETHForExactTokens(amountOut, path, to, deadline);
   }
 
   // **** SWAP (supporting fee-on-transfer tokens) ****
@@ -399,10 +469,10 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
   function swapExactTokensForTokensSupportingFeeOnTransferTokens(
     uint256 amountIn,
     uint256 amountOutMin,
-    address[] calldata path,
+    address[] memory path,
     address to,
     uint256 deadline
-  ) external virtual override ensure(deadline) {
+  ) public virtual override ensure(deadline) {
     TransferHelper.safeTransferFrom(
       path[0],
       msg.sender,
@@ -417,12 +487,24 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     );
   }
 
-  function swapExactETHForTokensSupportingFeeOnTransferTokens(
+  function swapExactTokensForTokensSupportingFeeOnTransferTokensReferral(
+    uint256 amountIn,
     uint256 amountOutMin,
     address[] calldata path,
     address to,
+    uint256 deadline,
+    address referrer
+  ) external virtual {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin, path, to, deadline);
+  }
+
+  function swapExactETHForTokensSupportingFeeOnTransferTokens(
+    uint256 amountOutMin,
+    address[] memory path,
+    address to,
     uint256 deadline
-  ) external payable virtual override ensure(deadline) {
+  ) public payable virtual override ensure(deadline) {
     require(path[0] == WETH, "SummitswapRouter02: INVALID_PATH");
     uint256 amountIn = msg.value;
     IWETH(WETH).deposit{value: amountIn}();
@@ -435,13 +517,24 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     );
   }
 
-  function swapExactTokensForETHSupportingFeeOnTransferTokens(
-    uint256 amountIn,
+  function swapExactETHForTokensSupportingFeeOnTransferTokensReferral(
     uint256 amountOutMin,
     address[] calldata path,
     address to,
+    uint256 deadline,
+    address referrer
+  ) external payable virtual {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin, path, to, deadline);
+  }
+
+  function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] memory path,
+    address to,
     uint256 deadline
-  ) external virtual override ensure(deadline) {
+  ) public virtual override ensure(deadline) {
     require(path[path.length - 1] == WETH, "SummitswapRouter02: INVALID_PATH");
     TransferHelper.safeTransferFrom(
       path[0],
@@ -454,6 +547,18 @@ contract SummitswapRouter02 is ISummitswapRouter02, Ownable {
     require(amountOut >= amountOutMin, "SummitswapRouter02: INSUFFICIENT_OUTPUT_AMOUNT");
     IWETH(WETH).withdraw(amountOut);
     TransferHelper.safeTransferBNB(to, amountOut);
+  }
+
+  function swapExactTokensForETHSupportingFeeOnTransferTokensReferral(
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline,
+    address referrer
+  ) external virtual {
+    ISummitReferral(summitReferral).recordReferral(path[path.length - 1], referrer);
+    swapExactTokensForETHSupportingFeeOnTransferTokens(amountIn, amountOutMin, path, to, deadline);
   }
 
   // **** LIBRARY FUNCTIONS ****

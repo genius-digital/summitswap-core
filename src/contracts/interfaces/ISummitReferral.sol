@@ -8,4 +8,6 @@ interface ISummitReferral {
     uint256 amountInput,
     uint256 amountOutput
   ) external;
+
+  function recordReferral(address _outputToken, address _referrer) external;
 }

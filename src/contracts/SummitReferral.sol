@@ -64,10 +64,8 @@ contract SummitReferral is Ownable {
   // mapping(address => bool) private rewardEnabled;
   // address[] private rewardTokens;
 
-  // TODO: Add ReferralRecorded into unit tests
   event ReferralRecorded(address indexed referee, address indexed referrer, address indexed outputToken);
 
-  // TODO: Add ReferralReward into unit tests
   event ReferralReward(
     address indexed referrer,
     address indexed lead,
@@ -262,8 +260,6 @@ contract SummitReferral is Ownable {
     hasBalance[msg.sender][rewardTokenIndex] = lastToken;
     hasBalance[msg.sender].pop();
     totalReward[_outputToken] -= balance;
-
-    // TODO: Test claiming fee
 
     uint256 rewardInClaimingTokenAmount = convertOutputToReward(_outputToken, balance, _claimToken);
     uint256 claimFee = rewardInClaimingTokenAmount.mul(claimingFee[_claimToken]).div(feeDenominator);

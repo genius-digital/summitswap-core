@@ -885,7 +885,7 @@ describe("summitReferral", () => {
         assert.equal((await summitReferral.totalReward(tokenA.address)).toString(), refReward.toString());
         assert.equal((await summitReferral.totalReward(tokenA.address)).toString(), devReward.toString());
       });
-      it("should able to claim rewards with fee", async () => {
+      it("should able to claim rewards with claiming fee", async () => {
         await summitReferral.setClaimingFee(tokenR.address, (5 * feeDenominator) / 100);
 
         const shouldGetRewardTokenAmount = await summitswapRouter02

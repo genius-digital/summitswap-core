@@ -17,12 +17,25 @@ library SummitswapLibrary {
     require(token0 != address(0), "SummitswapLibrary: ZERO_ADDRESS");
   }
 
+  // calculates the CREATE2 address for a pair without making any external calls
   function pairFor(
     address factory,
     address tokenA,
     address tokenB
-  ) internal view returns (address pair) {
-    pair = IFactory(factory).getPair(tokenA, tokenB);
+  ) internal pure returns (address pair) {
+    (address token0, address token1) = sortTokens(tokenA, tokenB);
+    pair = address(
+      uint256(
+        keccak256(
+          abi.encodePacked(
+            hex"ff",
+            factory,
+            keccak256(abi.encodePacked(token0, token1)),
+            hex"62107283605281eee5af96c604a5ce1219d62f714a93ce98f5837b27c19b698c" // init code hash
+          )
+        )
+      )
+    );
   }
 
   // fetches and sorts the reserves for a pair

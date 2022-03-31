@@ -16,7 +16,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
   using SafeERC20 for IERC20;
   using EnumerableSet for EnumerableSet.UintSet;
 
-  ISummitswapFactory public pancakeFactory;
+  ISummitswapFactory public summitSwapFactory;
   IFeesCalculator public feesCalculator;
 
   IERC20 public feeToken;
@@ -55,12 +55,12 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
   }
 
   constructor(
-    ISummitswapFactory _pancakeFactory,
+    ISummitswapFactory _summitSwapFactory,
     address _feesCalculator,
     address payable _feesReceiver,
     address _feeToken
   ) {
-    pancakeFactory = _pancakeFactory;
+    summitSwapFactory = _summitSwapFactory;
     feesCalculator = IFeesCalculator(_feesCalculator);
     feeReceiver = _feesReceiver;
     feeToken = IERC20(_feeToken);
@@ -125,7 +125,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
 
   function checkLpTokenIsPancake(address lpToken) private view returns (bool) {
     ISummitswapPair pair = ISummitswapPair(lpToken);
-    address factoryPair = pancakeFactory.getPair(pair.token0(), pair.token1());
+    address factoryPair = summitSwapFactory.getPair(pair.token0(), pair.token1());
     return factoryPair == lpToken;
   }
 

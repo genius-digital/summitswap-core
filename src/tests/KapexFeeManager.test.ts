@@ -97,6 +97,41 @@ describe.only("KapexFeeManager", () => {
     });
   });
 
+  describe("getSwapPercentToBNB", () => {
+    beforeEach(async () => {
+      await feeManager.setFeeBurn(1);
+      await feeManager.setFeeDev(2);
+      await feeManager.setFeeKapexLiquidity(3);
+      await feeManager.setFeeKodaBurn(4);
+      await feeManager.setFeeKodaKapexLiquidity(5);
+      await feeManager.setFeeKodaLiquidity(6);
+      await feeManager.setFeeMarketing(7);
+      await feeManager.setFeeRoyalty(8);
+      await feeManager.setFeeStakingPool(9);
+    });
+
+    it("should calculate correct swapPercentToBNB", async () => {
+      const feeKodaBurn = await feeManager.feeKodaBurn();
+      const feeKodaLiquidity = await feeManager.feeKodaLiquidity();
+      const feeKodaKapexLiquidity = await feeManager.feeKodaKapexLiquidity(); // 50% Summit
+      const feeKapexLiquidity = await feeManager.feeKapexLiquidity(); // 50% Pancake
+      const feeMarketing = await feeManager.feeMarketing();
+      const feeDev = await feeManager.feeDev();
+      const feeBurn = await feeManager.feeBurn();
+
+      const expectedSwapPercentToBNB = feeKodaBurn
+        .add(feeKodaLiquidity)
+        .add(feeKodaKapexLiquidity.div(2))
+        .add(feeKapexLiquidity.div(2))
+        .add(feeMarketing)
+        .add(feeDev);
+
+      const actualSwapPercentToBNB = await feeManager.getSwapPercentToBNB();
+
+      expect(expectedSwapPercentToBNB).equal(actualSwapPercentToBNB);
+    });
+  });
+
   describe("disburseSwapAndLiquifyTokens", () => {
     beforeEach(async () => {
       await kapex.transfer(feeManager.address, utils.parseEther("100"));

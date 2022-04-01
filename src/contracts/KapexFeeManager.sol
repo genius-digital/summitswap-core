@@ -973,6 +973,14 @@ contract KAPEX_Fee_Manager is Context, Ownable {
 
   receive() external payable {}
 
+  // TODO change to private later
+  function getSwapPercentToBNB() public view returns (uint256) {
+    return
+      feeMarketing.add(feeDev).add(feeKodaBurn).add(feeKodaLiquidity).add(feeKodaKapexLiquidity.div(2)).add(
+        feeKapexLiquidity.div(2)
+      );
+  }
+
   // TODO check the lockTheSwap
   function disburseSwapAndLiquifyTokens(uint256 kapexToSpend) public onlyOwner {
     require(kapexToSpend <= kapexToken.balanceOf(address(this)), "Amount is greater than contract kapex balance");
@@ -993,13 +1001,8 @@ contract KAPEX_Fee_Manager is Context, Ownable {
       kapexToken.transfer(stakingPoolAddress, stakingPoolAmount);
     }
 
-    // uint256 swapPercentToBNB = feeMarketing
-    //   .add(feeDev)
-    //   .add(feeKodaBurn)
-    //   .add(feeKodaLiquidity)
-    //   .add(feeKodaKapexLiquidity.div(2))
-    //   .add(feeKapexLiquidity.div(2));
-    // uint256 swapTokensToBNB = kapexToSpend.mul(swapPercentToBNB).div(feeTotal);
+    uint256 swapPercentToBNB = getSwapPercentToBNB();
+    uint256 swapTokensToBNB = kapexToSpend.mul(swapPercentToBNB).div(feeTotal);
 
     // uint256 initialBNBBalance = address(this).balance;
     // swapKapexForBNB(swapTokensToBNB);

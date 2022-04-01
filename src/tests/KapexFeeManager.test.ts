@@ -61,7 +61,7 @@ describe.only("KapexFeeManager", () => {
     await feeManager.setStakingPoolAddress(stakingPoolWallet.address);
     await feeManager.setLpTokensLockAddress(lpTokensLockWallet.address);
     await feeManager.setMarketingAddress(marketingWallet.address);
-    await feeManager.setDevAddress("0x000000000000000000000000000000000000dEaD");
+    await feeManager.setDevAddress(devWallet.address);
     await feeManager.setBurnAddress("0x000000000000000000000000000000000000dEaD");
     await feeManager.setKapex(kapex.address);
     await feeManager.setKoda(koda.address);
@@ -103,37 +103,57 @@ describe.only("KapexFeeManager", () => {
     });
 
     it("should burn correct amount of kapex", async () => {
-      await feeManager.setFeeBurn(100);
+      const newBurnFee = 100;
+      await feeManager.setFeeBurn(newBurnFee);
       const burnFee = await feeManager.feeBurn();
       const feeTotal = await feeManager.feeTotal();
       const kapexBalance = await kapex.balanceOf(feeManager.address);
 
-      const shouldBurnAmount = kapexBalance.mul(burnFee).div(feeTotal);
+      const shouldTransferAmount = kapexBalance.mul(burnFee).div(feeTotal);
 
       let balanceOfBurnAddress = await kapex.balanceOf(await feeManager.burnAddress());
-      expect(balanceOfBurnAddress).equal(BigNumber.from("0"), "before transfer");
+      expect(balanceOfBurnAddress).equal(BigNumber.from("0"));
 
       await feeManager.disburseSwapAndLiquifyTokens(kapexBalance);
 
       balanceOfBurnAddress = await kapex.balanceOf(await feeManager.burnAddress());
-      expect(balanceOfBurnAddress).equal(shouldBurnAmount, "after transfer");
+      expect(balanceOfBurnAddress).equal(shouldTransferAmount);
     });
 
     it("should transfer correct amount of kapex to royalty", async () => {
-      await feeManager.setFeeRoyalty(100);
+      const newRoyaltyFee = 100;
+      await feeManager.setFeeRoyalty(newRoyaltyFee);
       const royaltyFee = await feeManager.feeRoyalty();
       const feeTotal = await feeManager.feeTotal();
       const kapexBalance = await kapex.balanceOf(feeManager.address);
 
-      const shouldTransfer = kapexBalance.mul(royaltyFee).div(feeTotal);
+      const shouldTransferAmount = kapexBalance.mul(royaltyFee).div(feeTotal);
 
       let balanceOfRoyalty = await kapex.balanceOf(await feeManager.royaltyAddress());
-      expect(balanceOfRoyalty).equal(BigNumber.from("0"), "before transfer");
+      expect(balanceOfRoyalty).equal(BigNumber.from("0"));
 
       await feeManager.disburseSwapAndLiquifyTokens(kapexBalance);
 
       balanceOfRoyalty = await kapex.balanceOf(await feeManager.royaltyAddress());
-      expect(balanceOfRoyalty).equal(shouldTransfer, "after transfer");
+      expect(balanceOfRoyalty).equal(shouldTransferAmount);
+    });
+
+    it("should transfer correct amunt of kapex to stakingPool", async () => {
+      const newStakingPoolFee = 100;
+      await feeManager.setFeeStakingPool(newStakingPoolFee);
+      const feeStakingPool = await feeManager.feeStakingPool();
+      const feeTotal = await feeManager.feeTotal();
+      const kapexBalance = await kapex.balanceOf(feeManager.address);
+
+      const shouldTransferAmount = kapexBalance.mul(feeStakingPool).div(feeTotal);
+
+      let balanceOfStakingPool = await kapex.balanceOf(await feeManager.stakingPoolAddress());
+      expect(balanceOfStakingPool).equal(BigNumber.from("0"));
+
+      await feeManager.disburseSwapAndLiquifyTokens(kapexBalance);
+
+      balanceOfStakingPool = await kapex.balanceOf(await feeManager.stakingPoolAddress());
+      expect(balanceOfStakingPool).equal(shouldTransferAmount);
     });
   });
 });

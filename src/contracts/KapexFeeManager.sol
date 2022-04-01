@@ -988,10 +988,10 @@ contract KAPEX_Fee_Manager is Context, Ownable {
       kapexToken.transfer(royaltyAddress, royaltyKapexAmount);
     }
 
-    // if (feeStakingPool > 0) {
-    //   uint256 stakingPoolAmount = kapexToSpend.mul(feeStakingPool).div(feeTotal);
-    //   kapexToken.transfer(stakingPoolAddress, stakingPoolAmount);
-    // }
+    if (feeStakingPool > 0) {
+      uint256 stakingPoolAmount = kapexToSpend.mul(feeStakingPool).div(feeTotal);
+      kapexToken.transfer(stakingPoolAddress, stakingPoolAmount);
+    }
 
     // uint256 swapPercentToBNB = feeMarketing
     //   .add(feeDev)

@@ -67,7 +67,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
   }
 
   /**
-   * @notice locks pancake liquidity token until specified time
+   * @notice locks summitSwap liquidity token until specified time
    * @param lpToken token address to lock
    * @param amount amount of tokens to lock
    * @param unlockTime unix time in seconds after that tokens can be withdrawn
@@ -88,7 +88,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
     require(lpToken != address(0), "ZERO TOKEN");
     require(unlockTime > block.timestamp, "UNLOCK TIME IN THE PAST");
     require(unlockTime < 10000000000, "INVALID UNLOCK TIME, MUST BE UNIX TIME IN SECONDS");
-    require(checkLpTokenIsPancake(lpToken), "NOT PANCAKE PAIR");
+    require(checkLpTokenIsSummitSwap(lpToken), "NOT SUMMIT PAIR");
 
     //pay fees
     (uint256 ethFee, uint256 tokenFee, uint256 lpTokenFee) = feesCalculator.calculateFees(
@@ -123,7 +123,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
     return lockId;
   }
 
-  function checkLpTokenIsPancake(address lpToken) private view returns (bool) {
+  function checkLpTokenIsSummitSwap(address lpToken) private view returns (bool) {
     ISummitswapPair pair = ISummitswapPair(lpToken);
     address factoryPair = summitSwapFactory.getPair(pair.token0(), pair.token1());
     return factoryPair == lpToken;

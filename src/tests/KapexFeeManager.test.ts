@@ -18,17 +18,20 @@ import { BigNumber, utils } from "ethers";
 
 const { deployContract, provider } = waffle;
 
+const burnAddress = "0x000000000000000000000000000000000000dEaD";
+
 describe.only("KapexFeeManager", () => {
   const [owner, royaltyWallet, marketingWallet, devWallet, stakingPoolWallet, lpTokensLockWallet] =
     provider.getWallets();
 
-  const burnAddress = "0x000000000000000000000000000000000000dEaD";
   let weth: WBNB;
   let summitswapRouter: SummitswapRouter02;
   let pancakeswapRouter: SummitswapRouter02;
   let kapex: DummyToken; // TODO test with real KAPEX
   let koda: DummyToken; // TODO test with real KODA
   let feeManager: KAPEXFeeManager;
+  let summitswapFactory: SummitswapFactory;
+  let pancakeswapFactory: SummitswapFactory;
 
   beforeEach(async () => {
     weth = (await deployContract(owner, WETHArtifact, [])) as WBNB;
@@ -37,18 +40,14 @@ describe.only("KapexFeeManager", () => {
 
     koda = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
 
-    const summitswapFactory = (await deployContract(owner, SummitswapFactoryArtifact, [
-      owner.address,
-    ])) as SummitswapFactory;
+    summitswapFactory = (await deployContract(owner, SummitswapFactoryArtifact, [owner.address])) as SummitswapFactory;
 
     summitswapRouter = (await deployContract(owner, SummitswapRouter02Artifact, [
       summitswapFactory.address,
       weth.address,
     ])) as SummitswapRouter02;
 
-    const pancakeswapFactory = (await deployContract(owner, SummitswapFactoryArtifact, [
-      owner.address,
-    ])) as SummitswapFactory;
+    pancakeswapFactory = (await deployContract(owner, SummitswapFactoryArtifact, [owner.address])) as SummitswapFactory;
 
     pancakeswapRouter = (await deployContract(owner, SummitswapRouter02Artifact, [
       pancakeswapFactory.address,
@@ -62,7 +61,7 @@ describe.only("KapexFeeManager", () => {
     await feeManager.setLpTokensLockAddress(lpTokensLockWallet.address);
     await feeManager.setMarketingAddress(marketingWallet.address);
     await feeManager.setDevAddress(devWallet.address);
-    await feeManager.setBurnAddress("0x000000000000000000000000000000000000dEaD");
+    await feeManager.setBurnAddress(burnAddress);
     await feeManager.setKapex(kapex.address);
     await feeManager.setKoda(koda.address);
     await feeManager.setSummitSwapRouter(summitswapRouter.address);
@@ -137,7 +136,6 @@ describe.only("KapexFeeManager", () => {
       await kapex.transfer(feeManager.address, utils.parseEther("100"));
 
       await kapex.approve(pancakeswapRouter.address, utils.parseEther("100"));
-
       await pancakeswapRouter.addLiquidityETH(
         kapex.address,
         utils.parseEther("100"),
@@ -148,9 +146,18 @@ describe.only("KapexFeeManager", () => {
         { value: utils.parseEther("5") }
       );
 
-      await kapex.approve(summitswapRouter.address, utils.parseEther("100"));
-      await koda.approve(summitswapRouter.address, utils.parseEther("200"));
+      await koda.approve(pancakeswapRouter.address, utils.parseEther("100"));
+      await pancakeswapRouter.addLiquidityETH(
+        koda.address,
+        utils.parseEther("100"),
+        0,
+        0,
+        owner.address,
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+        { value: utils.parseEther("5") }
+      );
 
+      await koda.approve(summitswapRouter.address, utils.parseEther("200"));
       await summitswapRouter.addLiquidityETH(
         koda.address,
         utils.parseEther("100"),
@@ -161,6 +168,7 @@ describe.only("KapexFeeManager", () => {
         { value: utils.parseEther("5") }
       );
 
+      await kapex.approve(summitswapRouter.address, utils.parseEther("100"));
       await summitswapRouter.addLiquidity(
         koda.address,
         kapex.address,
@@ -269,7 +277,6 @@ describe.only("KapexFeeManager", () => {
         const pancakeBNBAmountOut = await pancakeswapRouter
           .getAmountsOut(sellingKapexAmount, [kapex.address, weth.address])
           .then((o) => o[o.length - 1]);
-
         const maxBNBAmountOut = summitBNBAmountOut.gte(pancakeBNBAmountOut) ? summitBNBAmountOut : pancakeBNBAmountOut;
 
         const initialBNBBalance = await marketingWallet.getBalance();
@@ -278,6 +285,42 @@ describe.only("KapexFeeManager", () => {
         await feeManager.disburseSwapAndLiquifyTokens(kapexBalance);
 
         expect(expectedBalance).equal(await marketingWallet.getBalance());
+      });
+
+      it.only("should add correct kapex liquidity", async () => {
+        const newKapexLiquidityFee = 100;
+        await feeManager.setFeeKapexLiquidity(newKapexLiquidityFee);
+        const kapexLiquidityFee = await feeManager.feeKapexLiquidity();
+        const kapexBalance = await kapex.balanceOf(feeManager.address);
+        const feeTotal = await feeManager.feeTotal();
+
+        const swapPercentToBNB = await feeManager.getSwapPercentToBNB();
+        const sellingKapexAmount = kapexBalance.mul(swapPercentToBNB).div(feeTotal);
+        const summitBNBAmountOut = await summitswapRouter
+          .getAmountsOut(sellingKapexAmount, [kapex.address, koda.address, weth.address])
+          .then((o) => o[o.length - 1]);
+        const pancakeBNBAmountOut = await pancakeswapRouter
+          .getAmountsOut(sellingKapexAmount, [kapex.address, weth.address])
+          .then((o) => o[o.length - 1]);
+        const maxBNBAmountOut = summitBNBAmountOut.gte(pancakeBNBAmountOut) ? summitBNBAmountOut : pancakeBNBAmountOut;
+
+        const pairAddress = await pancakeswapFactory.getPair(kapex.address, weth.address);
+
+        const initialPairBNBBalance = await weth.balanceOf(pairAddress);
+        const initialPairKapexBalance = await kapex.balanceOf(pairAddress);
+
+        await feeManager.disburseSwapAndLiquifyTokens(kapexBalance);
+
+        const pairBNBBalance = await weth.balanceOf(pairAddress);
+        const pairKapexBalance = await kapex.balanceOf(pairAddress);
+
+        const bnbAdded = pairBNBBalance.sub(initialPairBNBBalance);
+        const kapexAdded = pairKapexBalance.sub(initialPairKapexBalance);
+
+        // const expectedBNBAmountToAdd = maxBNBAmountOut.mul(kapexLiquidityFee.div(2)).div(swapPercentToBNB);
+        // const expectedKapexAmountToAdd = kapexBalance.mul(kapexLiquidityFee.div(2)).div(feeTotal);
+
+        // TODO add expect
       });
     });
   });

@@ -1018,44 +1018,42 @@ contract KAPEX_Fee_Manager is Context, Ownable {
       marketingAddress.transfer(marketingAmount);
     }
 
-    // if (feeKapexLiquidity > 0) {
-    //   uint256 kapexLiquidityAmountInBNB = boughtBNBAmount.mul(feeKapexLiquidity.div(2)).div(swapPercentToBNB);
-    //   uint256 kapexLiquidtyAmountInKapex = kapexToSpend.mul(feeKapexLiquidity.div(2)).div(feeTotal);
-    //   addLiquidityBNB(address(kapexToken), kapexLiquidtyAmountInKapex, kapexLiquidityAmountInBNB);
-    // }
+    if (feeKapexLiquidity > 0) {
+      uint256 kapexLiquidityAmountInBNB = boughtBNBAmount.mul(feeKapexLiquidity.div(2)).div(swapPercentToBNB);
+      uint256 kapexLiquidtyAmountInKapex = kapexToSpend.mul(feeKapexLiquidity.div(2)).div(feeTotal);
+      addLiquidityKapexOnPancakeswap(kapexLiquidtyAmountInKapex, kapexLiquidityAmountInBNB);
+    }
 
-    // if (feeKodaBurn.add(feeKodaLiquidity).add(feeKodaKapexLiquidity) > 0) {
-    //   uint256 swapPercentToKoda = feeKodaBurn.add(feeKodaLiquidity.div(2)).add(feeKodaKapexLiquidity.div(2));
-    //   uint256 swapTokensToKoda = boughtBNBAmount.mul(swapPercentToKoda).div(swapPercentToBNB);
+    uint256 swapPercentToKoda = feeKodaBurn.add(feeKodaLiquidity.div(2)).add(feeKodaKapexLiquidity.div(2));
+    uint256 swapTokensToKoda = boughtBNBAmount.mul(swapPercentToKoda).div(swapPercentToBNB);
 
-    //   uint256 kodaInitialBalance = kodaToken.balanceOf(address(this));
-    //   swapBNBForKoda(swapTokensToKoda);
-    //   uint256 boughtKodaAmount = kodaToken.balanceOf(address(this)).sub(kodaInitialBalance);
+    uint256 kodaInitialBalance = kodaToken.balanceOf(address(this));
+    swapBNBForKoda(swapTokensToKoda);
+    uint256 boughtKodaAmount = kodaToken.balanceOf(address(this)).sub(kodaInitialBalance);
 
-    //   if (feeKodaBurn > 0) {
-    //     uint256 burnKodaAmount = boughtKodaAmount.mul(feeKodaBurn).div(swapPercentToKoda);
-    //     kodaToken.transfer(burnAddress, burnKodaAmount);
-    //   }
+    if (feeKodaBurn > 0) {
+      uint256 burnKodaAmount = boughtKodaAmount.mul(feeKodaBurn).div(swapPercentToKoda);
+      kodaToken.transfer(burnAddress, burnKodaAmount);
+    }
 
-    //   if (feeKodaLiquidity > 0) {
-    //     uint256 kodaLiquidityAmount = boughtKodaAmount.mul(feeKodaLiquidity.div(2)).div(swapPercentToKoda);
-    //     uint256 kodaLiquidityAmountInBNB = boughtBNBAmount.mul(feeKodaLiquidity.div(2)).div(swapPercentToBNB);
-    //     addLiquidityBNB(address(kodaToken), kodaLiquidityAmount, kodaLiquidityAmountInBNB);
-    //   }
+    if (feeKodaLiquidity > 0) {
+      uint256 kodaLiquidityAmount = boughtKodaAmount.mul(feeKodaLiquidity.div(2)).div(swapPercentToKoda);
+      uint256 kodaLiquidityAmountInBNB = boughtBNBAmount.mul(feeKodaLiquidity.div(2)).div(swapPercentToBNB);
+      addLiquidityBNB(kodaToken, kodaLiquidityAmount, kodaLiquidityAmountInBNB);
+    }
 
-    //   if (feeKodaKapexLiquidity > 0) {
-    //     uint256 kodaKapexLiquidityAmountInKapex = kapexToSpend.mul(feeKodaKapexLiquidity.div(2)).div(feeTotal);
-    //     uint256 kodaKapexLiquidityAmountInKoda = boughtKodaAmount.mul(feeKodaKapexLiquidity.div(2)).div(
-    //       swapPercentToKoda
-    //     );
-    //     addLiquidityTokensOnSummitswap(
-    //       address(kapexToken),
-    //       kodaKapexLiquidityAmountInKapex,
-    //       address(kodaToken),
-    //       kodaKapexLiquidityAmountInKoda
-    //     );
-    //   }
-    // }
+    if (feeKodaKapexLiquidity > 0) {
+      uint256 kodaKapexLiquidityAmountInKapex = kapexToSpend.mul(feeKodaKapexLiquidity.div(2)).div(feeTotal);
+      uint256 kodaKapexLiquidityAmountInKoda = boughtKodaAmount.mul(feeKodaKapexLiquidity.div(2)).div(
+        swapPercentToKoda
+      );
+      addLiquidityTokensOnSummitswap(
+        kapexToken,
+        kodaKapexLiquidityAmountInKapex,
+        kodaToken,
+        kodaKapexLiquidityAmountInKoda
+      );
+    }
   }
 
   function swapKapexForBNB(uint256 tokenAmount) private {
@@ -1099,14 +1097,12 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     address[] memory pancakeSwapPath = new address[](2);
     pancakeSwapPath[0] = pancakeSwapRouter.WETH();
     pancakeSwapPath[1] = address(kodaToken);
-
     uint256 pancakeSwapTokenOut = pancakeSwapRouter.getAmountsOut(bnbAmount, pancakeSwapPath)[1];
 
     address[] memory summitSwapPath = new address[](2);
     summitSwapPath[0] = summitSwapRouter.WETH();
     summitSwapPath[1] = address(kodaToken);
-
-    uint256 summitSwapTokenOut = summitSwapRouter.getAmountsOut(bnbAmount, pancakeSwapPath)[2];
+    uint256 summitSwapTokenOut = summitSwapRouter.getAmountsOut(bnbAmount, summitSwapPath)[1];
 
     if (pancakeSwapTokenOut > summitSwapTokenOut) {
       pancakeSwapRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: bnbAmount}(
@@ -1126,12 +1122,14 @@ contract KAPEX_Fee_Manager is Context, Ownable {
   }
 
   function addLiquidityBNB(
-    address tokenAddress,
+    IBEP20 tokenAddress,
     uint256 tokenAmount,
     uint256 bnbAmount
   ) private {
+    tokenAddress.approve(address(pancakeSwapRouter), tokenAmount.div(2));
+
     pancakeSwapRouter.addLiquidityETH{value: bnbAmount.div(2)}(
-      tokenAddress,
+      address(tokenAddress),
       tokenAmount.div(2),
       0, // slippage is unavoidable
       0, // slippage is unavoidable
@@ -1139,8 +1137,10 @@ contract KAPEX_Fee_Manager is Context, Ownable {
       block.timestamp
     );
 
+    tokenAddress.approve(address(summitSwapRouter), tokenAmount.div(2));
+
     summitSwapRouter.addLiquidityETH{value: bnbAmount.div(2)}(
-      tokenAddress,
+      address(tokenAddress),
       tokenAmount.div(2),
       0, // slippage is unavoidable
       0, // slippage is unavoidable
@@ -1149,15 +1149,31 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     );
   }
 
+  function addLiquidityKapexOnPancakeswap(uint256 tokenAmount, uint256 bnbAmount) private {
+    kapexToken.approve(address(pancakeSwapRouter), tokenAmount);
+
+    pancakeSwapRouter.addLiquidityETH{value: bnbAmount.div(2)}(
+      address(kapexToken),
+      tokenAmount,
+      0, // slippage is unavoidable
+      0, // slippage is unavoidable
+      lpTokensLockAddress,
+      block.timestamp
+    );
+  }
+
   function addLiquidityTokensOnSummitswap(
-    address tokenAAddress,
+    IBEP20 tokenA,
     uint256 tokenAAmount,
-    address tokenBAddress,
+    IBEP20 tokenB,
     uint256 tokenBAmount
   ) private {
+    tokenA.approve(address(summitSwapRouter), tokenAAmount);
+    tokenB.approve(address(summitSwapRouter), tokenBAmount);
+
     summitSwapRouter.addLiquidity(
-      tokenAAddress,
-      tokenBAddress,
+      address(tokenA),
+      address(tokenB),
       tokenAAmount,
       tokenBAmount,
       0, // slippage is unavoidable

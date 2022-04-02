@@ -883,6 +883,29 @@ contract KAPEX_Fee_Manager is Context, Ownable {
       .add(feeBurn);
   }
 
+  function resetFees(
+    uint256 _feeRoyalty,
+    uint256 _feeKodaBurn,
+    uint256 _feeKodaLiquidity,
+    uint256 _feeKodaKapexLiquidity,
+    uint256 _feeKapexLiquidity,
+    uint256 _feeStakingPool,
+    uint256 _feeBurn,
+    uint256 _feeMarketing,
+    uint256 _feeDev
+  ) external onlyOwner {
+    feeRoyalty = _feeRoyalty;
+    feeRoyalty = _feeKodaBurn;
+    feeRoyalty = _feeKodaLiquidity;
+    feeRoyalty = _feeKodaKapexLiquidity;
+    feeRoyalty = _feeKapexLiquidity;
+    feeRoyalty = _feeStakingPool;
+    feeRoyalty = _feeBurn;
+    feeRoyalty = _feeMarketing;
+    feeRoyalty = _feeDev;
+    updateTotalFee();
+  }
+
   function setFeeRoyalty(uint256 fee) external onlyOwner {
     feeRoyalty = fee;
     updateTotalFee();

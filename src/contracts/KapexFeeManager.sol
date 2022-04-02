@@ -80,6 +80,10 @@ interface IBEP20 {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+interface Kapex is IBEP20 {
+  function burn(uint256 amount) external;
+}
+
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
  * checks.
@@ -854,18 +858,12 @@ contract KAPEX_Fee_Manager is Context, Ownable {
   address payable public lpTokensLockAddress = payable(0);
 
   IBEP20 public kodaToken = IBEP20(0x8094e772fA4A60bdEb1DfEC56AB040e17DD608D5);
-  IBEP20 public kapexToken = IBEP20(0x11441AFb1D10E3Ce4E39666FC4F4A2A5d6d8C0Da);
+  Kapex public kapexToken = Kapex(0x11441AFb1D10E3Ce4E39666FC4F4A2A5d6d8C0Da);
 
   ISummitSwapRouter02 public summitSwapRouter = ISummitSwapRouter02(0x2e8C54d980D930C16eFeb28f7061b0f3A78c0A87);
   ISummitSwapRouter02 public pancakeSwapRouter = ISummitSwapRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
 
   bool private inSwapAndLiquify; // after each successfull swapandliquify disable the swapandliquify
-
-  modifier lockTheSwap() {
-    inSwapAndLiquify = true;
-    _;
-    inSwapAndLiquify = false;
-  } // modifier to after each successfull swapandliquify disable the swapandliquify
 
   event SwapAndLiquify(uint256 tokensSwapped, uint256 bnbReceived, uint256 tokensIntoLiqiudity); // fire event how many tokens were swapedandLiquified
 
@@ -934,7 +932,7 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     kodaToken = newKodaToken;
   }
 
-  function setKapex(IBEP20 newKapexToken) external onlyOwner {
+  function setKapex(Kapex newKapexToken) external onlyOwner {
     kapexToken = newKapexToken;
   }
 
@@ -980,14 +978,13 @@ contract KAPEX_Fee_Manager is Context, Ownable {
       );
   }
 
-  // TODO check the lockTheSwap
   function disburseSwapAndLiquifyTokens(uint256 kapexToSpend) public onlyOwner {
     require(kapexToSpend <= kapexToken.balanceOf(address(this)), "Amount is greater than contract kapex balance");
 
     // TODO call kapex burn function instead of just sending to dead address
     if (feeBurn > 0) {
       uint256 burnKapexAmount = kapexToSpend.mul(feeBurn).div(feeTotal);
-      kapexToken.transfer(burnAddress, burnKapexAmount);
+      kapexToken.burn(burnKapexAmount);
     }
 
     if (feeRoyalty > 0) {

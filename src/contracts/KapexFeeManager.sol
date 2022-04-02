@@ -1004,19 +1004,19 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     uint256 swapPercentToBNB = getSwapPercentToBNB();
     uint256 swapTokensToBNB = kapexToSpend.mul(swapPercentToBNB).div(feeTotal);
 
-    // uint256 initialBNBBalance = address(this).balance;
-    // swapKapexForBNB(swapTokensToBNB);
-    // uint256 boughtBNBAmount = address(this).balance.sub(initialBNBBalance);
+    uint256 initialBNBBalance = address(this).balance;
+    swapKapexForBNB(swapTokensToBNB);
+    uint256 boughtBNBAmount = address(this).balance.sub(initialBNBBalance);
 
-    // if (feeDev > 0) {
-    //   uint256 devAmount = boughtBNBAmount.mul(feeDev).div(swapPercentToBNB);
-    //   devAddress.transfer(devAmount);
-    // }
+    if (feeDev > 0) {
+      uint256 devAmount = boughtBNBAmount.mul(feeDev).div(swapPercentToBNB);
+      devAddress.transfer(devAmount);
+    }
 
-    // if (feeMarketing > 0) {
-    //   uint256 marketingAmount = boughtBNBAmount.mul(feeMarketing).div(swapPercentToBNB);
-    //   marketingAddress.transfer(marketingAmount);
-    // }
+    if (feeMarketing > 0) {
+      uint256 marketingAmount = boughtBNBAmount.mul(feeMarketing).div(swapPercentToBNB);
+      marketingAddress.transfer(marketingAmount);
+    }
 
     // if (feeKapexLiquidity > 0) {
     //   uint256 kapexLiquidityAmountInBNB = boughtBNBAmount.mul(feeKapexLiquidity.div(2)).div(swapPercentToBNB);
@@ -1070,10 +1070,10 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     summitSwapPath[1] = address(kodaToken);
     summitSwapPath[2] = summitSwapRouter.WETH();
 
-    uint256 summitSwapBNBOut = summitSwapRouter.getAmountsOut(tokenAmount, pancakeSwapPath)[2];
+    uint256 summitSwapBNBOut = summitSwapRouter.getAmountsOut(tokenAmount, summitSwapPath)[2];
 
     if (pancakeSwapBNBOut > summitSwapBNBOut) {
-      kodaToken.approve(address(pancakeSwapRouter), tokenAmount);
+      kapexToken.approve(address(pancakeSwapRouter), tokenAmount);
 
       pancakeSwapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
         tokenAmount,
@@ -1083,7 +1083,7 @@ contract KAPEX_Fee_Manager is Context, Ownable {
         block.timestamp
       );
     } else {
-      kodaToken.approve(address(summitSwapRouter), tokenAmount);
+      kapexToken.approve(address(summitSwapRouter), tokenAmount);
 
       summitSwapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
         tokenAmount,

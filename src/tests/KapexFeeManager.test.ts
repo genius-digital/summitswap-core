@@ -135,6 +135,42 @@ describe.only("KapexFeeManager", () => {
   describe("disburseSwapAndLiquifyTokens", () => {
     beforeEach(async () => {
       await kapex.transfer(feeManager.address, utils.parseEther("100"));
+
+      await kapex.approve(pancakeswapRouter.address, utils.parseEther("100"));
+
+      await pancakeswapRouter.addLiquidityETH(
+        kapex.address,
+        utils.parseEther("100"),
+        0,
+        0,
+        owner.address,
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+        { value: utils.parseEther("5") }
+      );
+
+      await kapex.approve(summitswapRouter.address, utils.parseEther("100"));
+      await koda.approve(summitswapRouter.address, utils.parseEther("200"));
+
+      await summitswapRouter.addLiquidityETH(
+        koda.address,
+        utils.parseEther("100"),
+        0,
+        0,
+        owner.address,
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+        { value: utils.parseEther("5") }
+      );
+
+      await summitswapRouter.addLiquidity(
+        koda.address,
+        kapex.address,
+        utils.parseEther("100"),
+        utils.parseEther("100"),
+        0,
+        0,
+        owner.address,
+        Math.floor(Date.now() / 1000) + 24 * 60 * 60
+      );
     });
 
     it("should burn correct amount of kapex", async () => {
@@ -189,6 +225,60 @@ describe.only("KapexFeeManager", () => {
 
       balanceOfStakingPool = await kapex.balanceOf(await feeManager.stakingPoolAddress());
       expect(balanceOfStakingPool).equal(shouldTransferAmount);
+    });
+
+    describe("swapAndLiquifyToBNB", () => {
+      it("should transfer correct amount of bnb to dev", async () => {
+        const newDevFee = 100;
+        await feeManager.setFeeDev(newDevFee);
+        const devFee = await feeManager.feeDev();
+        const kapexBalance = await kapex.balanceOf(feeManager.address);
+        const feeTotal = await feeManager.feeTotal();
+
+        const swapPercentToBNB = await feeManager.getSwapPercentToBNB();
+        const sellingKapexAmount = kapexBalance.mul(swapPercentToBNB).div(feeTotal);
+        const summitBNBAmountOut = await summitswapRouter
+          .getAmountsOut(sellingKapexAmount, [kapex.address, koda.address, weth.address])
+          .then((o) => o[o.length - 1]);
+        const pancakeBNBAmountOut = await pancakeswapRouter
+          .getAmountsOut(sellingKapexAmount, [kapex.address, weth.address])
+          .then((o) => o[o.length - 1]);
+
+        const maxBNBAmountOut = summitBNBAmountOut.gte(pancakeBNBAmountOut) ? summitBNBAmountOut : pancakeBNBAmountOut;
+
+        const initialBNBBalance = await devWallet.getBalance();
+        const expectedBalance = initialBNBBalance.add(maxBNBAmountOut.mul(devFee).div(swapPercentToBNB));
+
+        await feeManager.disburseSwapAndLiquifyTokens(kapexBalance);
+
+        expect(expectedBalance).equal(await devWallet.getBalance());
+      });
+
+      it("should transfer correct amount of bnb to marketing", async () => {
+        const newMarketingFee = 100;
+        await feeManager.setFeeMarketing(newMarketingFee);
+        const marketingFee = await feeManager.feeMarketing();
+        const kapexBalance = await kapex.balanceOf(feeManager.address);
+        const feeTotal = await feeManager.feeTotal();
+
+        const swapPercentToBNB = await feeManager.getSwapPercentToBNB();
+        const sellingKapexAmount = kapexBalance.mul(swapPercentToBNB).div(feeTotal);
+        const summitBNBAmountOut = await summitswapRouter
+          .getAmountsOut(sellingKapexAmount, [kapex.address, koda.address, weth.address])
+          .then((o) => o[o.length - 1]);
+        const pancakeBNBAmountOut = await pancakeswapRouter
+          .getAmountsOut(sellingKapexAmount, [kapex.address, weth.address])
+          .then((o) => o[o.length - 1]);
+
+        const maxBNBAmountOut = summitBNBAmountOut.gte(pancakeBNBAmountOut) ? summitBNBAmountOut : pancakeBNBAmountOut;
+
+        const initialBNBBalance = await marketingWallet.getBalance();
+        const expectedBalance = initialBNBBalance.add(maxBNBAmountOut.mul(marketingFee).div(swapPercentToBNB));
+
+        await feeManager.disburseSwapAndLiquifyTokens(kapexBalance);
+
+        expect(expectedBalance).equal(await marketingWallet.getBalance());
+      });
     });
   });
 });

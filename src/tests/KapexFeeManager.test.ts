@@ -287,7 +287,7 @@ describe.only("KapexFeeManager", () => {
         expect(expectedBalance).equal(await marketingWallet.getBalance());
       });
 
-      it.only("should add correct kapex liquidity", async () => {
+      it("should add correct kapex liquidity", async () => {
         const newKapexLiquidityFee = 100;
         await feeManager.setFeeKapexLiquidity(newKapexLiquidityFee);
         const kapexLiquidityFee = await feeManager.feeKapexLiquidity();

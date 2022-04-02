@@ -970,30 +970,104 @@ contract KAPEX_Fee_Manager is Context, Ownable {
 
   receive() external payable {}
 
-  function getSwapPercentToBNB() private view returns (uint256) {
+  function getSwapPercentToBNB() public view returns (uint256) {
     return
       feeMarketing.add(feeDev).add(feeKodaBurn).add(feeKodaLiquidity).add(feeKodaKapexLiquidity.div(2)).add(
         feeKapexLiquidity.div(2)
       );
   }
 
-  function disburseSwapAndLiquifyTokens(uint256 kapexToSpend) public onlyOwner {
-    require(kapexToSpend <= kapexToken.balanceOf(address(this)), "Amount is greater than contract kapex balance");
-
+  function distributeBurnFee(uint256 kapexToSpend) private {
     if (feeBurn > 0) {
       uint256 burnKapexAmount = kapexToSpend.mul(feeBurn).div(feeTotal);
       kapexToken.burn(burnKapexAmount);
+      // kapexToken.transfer(burnAddress, burnKapexAmount);
     }
+  }
 
+  function distributeRoyaltyFee(uint256 kapexToSpend) private {
     if (feeRoyalty > 0) {
       uint256 royaltyKapexAmount = kapexToSpend.mul(feeRoyalty).div(feeTotal);
       kapexToken.transfer(royaltyAddress, royaltyKapexAmount);
     }
+  }
 
+  function distributeStakingPoolFee(uint256 kapexToSpend) private {
     if (feeStakingPool > 0) {
       uint256 stakingPoolAmount = kapexToSpend.mul(feeStakingPool).div(feeTotal);
       kapexToken.transfer(stakingPoolAddress, stakingPoolAmount);
     }
+  }
+
+  function distributeDevFee(uint256 swapPercentToBNB, uint256 bnbToSpend) private {
+    if (feeDev > 0) {
+      uint256 devAmount = bnbToSpend.mul(feeDev).div(swapPercentToBNB);
+      devAddress.transfer(devAmount);
+    }
+  }
+
+  function distributeMarketingFee(uint256 swapPercentToBNB, uint256 bnbToSpend) private {
+    if (feeMarketing > 0) {
+      uint256 marketingAmount = bnbToSpend.mul(feeMarketing).div(swapPercentToBNB);
+      marketingAddress.transfer(marketingAmount);
+    }
+  }
+
+  function distributeKapexLiquidityFee(
+    uint256 swapPercentToBNB,
+    uint256 bnbToSpend,
+    uint256 kapexToSpend
+  ) private {
+    if (feeKapexLiquidity > 0) {
+      uint256 kapexLiquidityAmountInBNB = bnbToSpend.mul(feeKapexLiquidity.div(2)).div(swapPercentToBNB);
+      uint256 kapexLiquidtyAmountInKapex = kapexToSpend.mul(feeKapexLiquidity.div(2)).div(feeTotal);
+      addLiquidityKapexOnPancakeswap(kapexLiquidtyAmountInKapex, kapexLiquidityAmountInBNB);
+    }
+  }
+
+  function distributeKodaBurnFee(uint256 swapPercentToKoda, uint256 kodaToSpend) private {
+    if (feeKodaBurn > 0) {
+      uint256 burnKodaAmount = kodaToSpend.mul(feeKodaBurn).div(swapPercentToKoda);
+      kodaToken.transfer(burnAddress, burnKodaAmount);
+    }
+  }
+
+  function distributeKodaLiquidityFee(
+    uint256 swapPercentToKoda,
+    uint256 kodaToSpend,
+    uint256 swapPercentToBNB,
+    uint256 bnbToSpend
+  ) private {
+    if (feeKodaLiquidity > 0) {
+      uint256 kodaLiquidityAmount = kodaToSpend.mul(feeKodaLiquidity.div(2)).div(swapPercentToKoda);
+      uint256 kodaLiquidityAmountInBNB = bnbToSpend.mul(feeKodaLiquidity.div(2)).div(swapPercentToBNB);
+      addLiquidityBNB(kodaToken, kodaLiquidityAmount, kodaLiquidityAmountInBNB);
+    }
+  }
+
+  function distributeKodaKapexLiquidityFee(
+    uint256 swapPercentToKoda,
+    uint256 kodaToSpend,
+    uint256 kapexToSpend
+  ) private {
+    if (feeKodaKapexLiquidity > 0) {
+      uint256 kodaKapexLiquidityAmountInKapex = kapexToSpend.mul(feeKodaKapexLiquidity.div(2)).div(feeTotal);
+      uint256 kodaKapexLiquidityAmountInKoda = kodaToSpend.mul(feeKodaKapexLiquidity.div(2)).div(swapPercentToKoda);
+      addLiquidityTokensOnSummitswap(
+        kapexToken,
+        kodaKapexLiquidityAmountInKapex,
+        kodaToken,
+        kodaKapexLiquidityAmountInKoda
+      );
+    }
+  }
+
+  function disburseSwapAndLiquifyTokens(uint256 kapexToSpend) public onlyOwner {
+    require(kapexToSpend <= kapexToken.balanceOf(address(this)), "Amount is greater than contract kapex balance");
+
+    distributeBurnFee(kapexToSpend);
+    distributeRoyaltyFee(kapexToSpend);
+    distributeStakingPoolFee(kapexToSpend);
 
     uint256 swapPercentToBNB = getSwapPercentToBNB();
     uint256 swapTokensToBNB = kapexToSpend.mul(swapPercentToBNB).div(feeTotal);
@@ -1002,21 +1076,9 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     swapKapexForBNB(swapTokensToBNB);
     uint256 boughtBNBAmount = address(this).balance.sub(initialBNBBalance);
 
-    if (feeDev > 0) {
-      uint256 devAmount = boughtBNBAmount.mul(feeDev).div(swapPercentToBNB);
-      devAddress.transfer(devAmount);
-    }
-
-    if (feeMarketing > 0) {
-      uint256 marketingAmount = boughtBNBAmount.mul(feeMarketing).div(swapPercentToBNB);
-      marketingAddress.transfer(marketingAmount);
-    }
-
-    if (feeKapexLiquidity > 0) {
-      uint256 kapexLiquidityAmountInBNB = boughtBNBAmount.mul(feeKapexLiquidity.div(2)).div(swapPercentToBNB);
-      uint256 kapexLiquidtyAmountInKapex = kapexToSpend.mul(feeKapexLiquidity.div(2)).div(feeTotal);
-      addLiquidityKapexOnPancakeswap(kapexLiquidtyAmountInKapex, kapexLiquidityAmountInBNB);
-    }
+    distributeDevFee(swapPercentToBNB, boughtBNBAmount);
+    distributeMarketingFee(swapPercentToBNB, boughtBNBAmount);
+    distributeKapexLiquidityFee(swapPercentToBNB, boughtBNBAmount, kapexToSpend);
 
     uint256 swapPercentToKoda = feeKodaBurn.add(feeKodaLiquidity.div(2)).add(feeKodaKapexLiquidity.div(2));
     uint256 swapTokensToKoda = boughtBNBAmount.mul(swapPercentToKoda).div(swapPercentToBNB);
@@ -1025,29 +1087,9 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     swapBNBForKoda(swapTokensToKoda);
     uint256 boughtKodaAmount = kodaToken.balanceOf(address(this)).sub(kodaInitialBalance);
 
-    if (feeKodaBurn > 0) {
-      uint256 burnKodaAmount = boughtKodaAmount.mul(feeKodaBurn).div(swapPercentToKoda);
-      kodaToken.transfer(burnAddress, burnKodaAmount);
-    }
-
-    if (feeKodaLiquidity > 0) {
-      uint256 kodaLiquidityAmount = boughtKodaAmount.mul(feeKodaLiquidity.div(2)).div(swapPercentToKoda);
-      uint256 kodaLiquidityAmountInBNB = boughtBNBAmount.mul(feeKodaLiquidity.div(2)).div(swapPercentToBNB);
-      addLiquidityBNB(kodaToken, kodaLiquidityAmount, kodaLiquidityAmountInBNB);
-    }
-
-    if (feeKodaKapexLiquidity > 0) {
-      uint256 kodaKapexLiquidityAmountInKapex = kapexToSpend.mul(feeKodaKapexLiquidity.div(2)).div(feeTotal);
-      uint256 kodaKapexLiquidityAmountInKoda = boughtKodaAmount.mul(feeKodaKapexLiquidity.div(2)).div(
-        swapPercentToKoda
-      );
-      addLiquidityTokensOnSummitswap(
-        kapexToken,
-        kodaKapexLiquidityAmountInKapex,
-        kodaToken,
-        kodaKapexLiquidityAmountInKoda
-      );
-    }
+    distributeKodaBurnFee(swapPercentToKoda, boughtKodaAmount);
+    distributeKodaLiquidityFee(swapPercentToKoda, boughtKodaAmount, swapPercentToBNB, boughtBNBAmount);
+    distributeKodaKapexLiquidityFee(swapPercentToKoda, boughtKodaAmount, kapexToSpend);
   }
 
   function swapKapexForBNB(uint256 tokenAmount) private {

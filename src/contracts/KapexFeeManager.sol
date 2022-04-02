@@ -970,8 +970,7 @@ contract KAPEX_Fee_Manager is Context, Ownable {
 
   receive() external payable {}
 
-  // TODO change to private later
-  function getSwapPercentToBNB() public view returns (uint256) {
+  function getSwapPercentToBNB() private view returns (uint256) {
     return
       feeMarketing.add(feeDev).add(feeKodaBurn).add(feeKodaLiquidity).add(feeKodaKapexLiquidity.div(2)).add(
         feeKapexLiquidity.div(2)
@@ -981,7 +980,6 @@ contract KAPEX_Fee_Manager is Context, Ownable {
   function disburseSwapAndLiquifyTokens(uint256 kapexToSpend) public onlyOwner {
     require(kapexToSpend <= kapexToken.balanceOf(address(this)), "Amount is greater than contract kapex balance");
 
-    // TODO call kapex burn function instead of just sending to dead address
     if (feeBurn > 0) {
       uint256 burnKapexAmount = kapexToSpend.mul(feeBurn).div(feeTotal);
       kapexToken.burn(burnKapexAmount);

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Developed by: dxsoftware.net
 
-import "hardhat/console.sol";
-
 pragma solidity 0.8.13;
 
 interface IBEP20 {

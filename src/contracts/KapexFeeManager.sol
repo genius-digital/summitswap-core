@@ -1075,7 +1075,7 @@ contract KAPEX_Fee_Manager is Context, Ownable {
       uint256 kodaLiquidityAmount = kodaToSpend.mul(feeKodaLiquidity.div(2)).div(swapPercentToKoda);
       uint256 kodaLiquidityAmountInBNB = bnbToSpend.mul(feeKodaLiquidity.div(2)).div(swapPercentToBNB);
 
-      kodaToken.approve(address(pancakeSwapRouter), kodaLiquidityAmount);
+      kodaToken.approve(address(summitSwapRouter), kodaLiquidityAmount);
 
       summitSwapRouter.addLiquidityETH{value: kodaLiquidityAmountInBNB}(
         address(kodaToken),

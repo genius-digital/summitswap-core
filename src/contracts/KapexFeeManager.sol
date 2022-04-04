@@ -1064,7 +1064,17 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     if (feeKodaLiquidity > 0) {
       uint256 kodaLiquidityAmount = kodaToSpend.mul(feeKodaLiquidity.div(2)).div(swapPercentToKoda);
       uint256 kodaLiquidityAmountInBNB = bnbToSpend.mul(feeKodaLiquidity.div(2)).div(swapPercentToBNB);
-      addLiquidityBNB(kodaToken, kodaLiquidityAmount, kodaLiquidityAmountInBNB);
+
+      kodaToken.approve(address(pancakeSwapRouter), kodaLiquidityAmount);
+
+      summitSwapRouter.addLiquidityETH{value: kodaLiquidityAmountInBNB}(
+        address(kodaToken),
+        kodaLiquidityAmount,
+        0, // slippage is unavoidable
+        0, // slippage is unavoidable
+        lpTokensLockAddress,
+        block.timestamp
+      );
     }
   }
 
@@ -1184,29 +1194,7 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     IBEP20 tokenAddress,
     uint256 tokenAmount,
     uint256 bnbAmount
-  ) private {
-    tokenAddress.approve(address(pancakeSwapRouter), tokenAmount.div(2));
-
-    pancakeSwapRouter.addLiquidityETH{value: bnbAmount.div(2)}(
-      address(tokenAddress),
-      tokenAmount.div(2),
-      0, // slippage is unavoidable
-      0, // slippage is unavoidable
-      lpTokensLockAddress,
-      block.timestamp
-    );
-
-    tokenAddress.approve(address(summitSwapRouter), tokenAmount.div(2));
-
-    summitSwapRouter.addLiquidityETH{value: bnbAmount.div(2)}(
-      address(tokenAddress),
-      tokenAmount.div(2),
-      0, // slippage is unavoidable
-      0, // slippage is unavoidable
-      lpTokensLockAddress,
-      block.timestamp
-    );
-  }
+  ) private {}
 
   function addLiquidityKapexOnPancakeswap(uint256 tokenAmount, uint256 bnbAmount) private {
     kapexToken.approve(address(pancakeSwapRouter), tokenAmount);

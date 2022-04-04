@@ -895,14 +895,14 @@ contract KAPEX_Fee_Manager is Context, Ownable {
     uint256 _feeDev
   ) external onlyOwner {
     feeRoyalty = _feeRoyalty;
-    feeRoyalty = _feeKodaBurn;
-    feeRoyalty = _feeKodaLiquidity;
-    feeRoyalty = _feeKodaKapexLiquidity;
-    feeRoyalty = _feeKapexLiquidity;
-    feeRoyalty = _feeStakingPool;
-    feeRoyalty = _feeBurn;
-    feeRoyalty = _feeMarketing;
-    feeRoyalty = _feeDev;
+    feeKodaBurn = _feeKodaBurn;
+    feeKodaLiquidity = _feeKodaLiquidity;
+    feeKodaKapexLiquidity = _feeKodaKapexLiquidity;
+    feeKapexLiquidity = _feeKapexLiquidity;
+    feeStakingPool = _feeStakingPool;
+    feeBurn = _feeBurn;
+    feeMarketing = _feeMarketing;
+    feeDev = _feeDev;
     updateTotalFee();
   }
 

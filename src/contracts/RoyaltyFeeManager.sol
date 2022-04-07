@@ -529,7 +529,7 @@ contract Royalty_Fee_Manager is Context, Ownable {
 
     for (uint256 i = 0; i < missedRewards.length; i++) {
       currentTotalShares += sharesAmountHistories[i];
-      if (sharesAddressHistories[i] == _msgSender()) {
+      if (sharesAddressHistories[i] == whaleAddress) {
         mShares += sharesAmountHistories[i];
       }
 
@@ -539,7 +539,7 @@ contract Royalty_Fee_Manager is Context, Ownable {
       } else {
         nextMissedRewards = missedRewards[i + 1];
       }
-      claimableReward += (nextMissedRewards - missedRewards[i - 1]) * (mShares / currentTotalShares);
+      claimableReward += nextMissedRewards.sub(missedRewards[i]).mul(mShares).div(currentTotalShares);
     }
 
     return claimableReward - claimedRewards[whaleAddress];

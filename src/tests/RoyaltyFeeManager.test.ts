@@ -105,4 +105,33 @@ describe("royaltyFeeManager", () => {
       assert.equal((await royaltyFeeManager.walletShares(otherWallet.address)).toString(), "25");
     });
   });
+
+  describe("getRemainingRewards", async () => {
+    it("should have remainings rewards", async () => {
+      // Test otherWallet
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "0");
+      await royaltyFeeManager.setAllowance(otherWallet.address, "25");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "0");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "50");
+
+      // Test otherWallet2 & otherWallet1
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "0");
+      await royaltyFeeManager.setAllowance(otherWallet1.address, "10");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "0");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "14");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "14"); // 50 * 14 / 35 = 14
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "85"); // 50 + (50 * 25 / 35) = 85
+
+      // Test otherWallet3 & otherWallet2 & otherWallet1
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "0");
+      await royaltyFeeManager.setAllowance(otherWallet2.address, "15");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "0");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "15"); // 50 * 15 / 50 = 15
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "24"); // 14 + (50 * 10 / 50) = 28
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "110"); // 85 + (50 * 25 / 50) = 110
+    });
+  });
 });

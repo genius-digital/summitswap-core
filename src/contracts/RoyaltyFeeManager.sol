@@ -568,6 +568,10 @@ contract Royalty_Fee_Manager is Context, Ownable {
     kapexToken.transfer(whaleAddress, claimAmount);
   }
 
+  function historyCount() public view returns (uint256) {
+    return sharesAddressHistories.length;
+  }
+
   //////////////////
   // Owner functions
 

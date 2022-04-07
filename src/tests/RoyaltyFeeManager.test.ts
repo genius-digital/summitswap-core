@@ -172,28 +172,43 @@ describe("royaltyFeeManager", () => {
     });
   });
 
-  // describe("claim", async () => {
-  //   beforeEach(async () => {
-  //     await royaltyFeeManager.setAllowance(otherWallet.address, "25");
-  //     await kapexToken.transfer(royaltyFeeManager.address, "50");
-  //     await royaltyFeeManager.setAllowance(otherWallet1.address, "10");
-  //     await kapexToken.transfer(royaltyFeeManager.address, "50");
-  //     await royaltyFeeManager.setAllowance(otherWallet2.address, "15");
-  //     await kapexToken.transfer(royaltyFeeManager.address, "50");
-  //   });
+  describe("claim", async () => {
+    beforeEach(async () => {
+      await royaltyFeeManager.setAllowance(otherWallet.address, "25");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+      await royaltyFeeManager.setAllowance(otherWallet1.address, "10");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+      await royaltyFeeManager.setAllowance(otherWallet2.address, "15");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
 
-  //   it("should able to claim all rewards", async () => {
-  //     await royaltyFeeManager.claim(otherWallet.address);
-  //     assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "0");
-  //     assert.equal((await kapexToken.balanceOf(otherWallet.address)).toString(), "50");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "15");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "24");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "110");
+    });
 
-  //     await royaltyFeeManager.claim(otherWallet1.address);
-  //     assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "0");
-  //     assert.equal((await kapexToken.balanceOf(otherWallet1.address)).toString(), "50");
-
-  //     await royaltyFeeManager.claim(otherWallet2.address);
-  //     assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "0");
-  //     assert.equal((await kapexToken.balanceOf(otherWallet2.address)).toString(), "50");
-  //   });
-  // });
+    it("otherWallet should be able to claim rewards", async () => {
+      await royaltyFeeManager.connect(otherWallet).claim("100");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "10");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "24");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "15");
+      assert.equal((await kapexToken.balanceOf(otherWallet.address)).toString(), "100");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "35");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "34");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "30");
+    });
+    it("otherWallet2 should be able to claim rewards", async () => {
+      await royaltyFeeManager.connect(otherWallet1).claim("23");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "110");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "1");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "15");
+      assert.equal((await kapexToken.balanceOf(otherWallet1.address)).toString(), "23");
+      await royaltyFeeManager.connect(otherWallet1).claim("1");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "0");
+      assert.equal((await kapexToken.balanceOf(otherWallet1.address)).toString(), "24");
+      await expect(royaltyFeeManager.connect(otherWallet1).claim("1")).to.be.revertedWith(
+        "Royalty_Fee_Manager: Whale address can not claim more than remaining rewards"
+      );
+    });
+  });
 });

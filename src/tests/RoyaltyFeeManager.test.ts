@@ -134,4 +134,66 @@ describe("royaltyFeeManager", () => {
       assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "110"); // 85 + (50 * 25 / 50) = 110
     });
   });
+
+  describe("claimAllRewards", async () => {
+    beforeEach("should have remaining rewards", async () => {
+      await royaltyFeeManager.setAllowance(otherWallet.address, "25");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+      await royaltyFeeManager.setAllowance(otherWallet1.address, "10");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+      await royaltyFeeManager.setAllowance(otherWallet2.address, "15");
+      await kapexToken.transfer(royaltyFeeManager.address, "50");
+
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "15");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "24");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "110");
+    });
+
+    it("otherWallet should be able to claim all rewards", async () => {
+      await royaltyFeeManager.connect(otherWallet).claimAllRewards();
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "0");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "24");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "15");
+      assert.equal((await kapexToken.balanceOf(otherWallet.address)).toString(), "110");
+    });
+    it("otherWallet2 should be able to claim all rewards", async () => {
+      await royaltyFeeManager.connect(otherWallet1).claimAllRewards();
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "110");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "0");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "15");
+      assert.equal((await kapexToken.balanceOf(otherWallet1.address)).toString(), "24");
+    });
+    it("otherWallet3 should be able to claim all rewards", async () => {
+      await royaltyFeeManager.connect(otherWallet2).claimAllRewards();
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "110");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "24");
+      assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "0");
+      assert.equal((await kapexToken.balanceOf(otherWallet2.address)).toString(), "15");
+    });
+  });
+
+  // describe("claim", async () => {
+  //   beforeEach(async () => {
+  //     await royaltyFeeManager.setAllowance(otherWallet.address, "25");
+  //     await kapexToken.transfer(royaltyFeeManager.address, "50");
+  //     await royaltyFeeManager.setAllowance(otherWallet1.address, "10");
+  //     await kapexToken.transfer(royaltyFeeManager.address, "50");
+  //     await royaltyFeeManager.setAllowance(otherWallet2.address, "15");
+  //     await kapexToken.transfer(royaltyFeeManager.address, "50");
+  //   });
+
+  //   it("should able to claim all rewards", async () => {
+  //     await royaltyFeeManager.claim(otherWallet.address);
+  //     assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "0");
+  //     assert.equal((await kapexToken.balanceOf(otherWallet.address)).toString(), "50");
+
+  //     await royaltyFeeManager.claim(otherWallet1.address);
+  //     assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "0");
+  //     assert.equal((await kapexToken.balanceOf(otherWallet1.address)).toString(), "50");
+
+  //     await royaltyFeeManager.claim(otherWallet2.address);
+  //     assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "0");
+  //     assert.equal((await kapexToken.balanceOf(otherWallet2.address)).toString(), "50");
+  //   });
+  // });
 });

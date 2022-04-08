@@ -549,7 +549,7 @@ contract Royalty_Fee_Manager is Context, Ownable {
     }
 
     if (claimableReward > walletShares[whaleAddress]) {
-      return walletShares[whaleAddress];
+      return walletShares[whaleAddress] - claimedRewards[whaleAddress];
     }
     return claimableReward - claimedRewards[whaleAddress];
   }

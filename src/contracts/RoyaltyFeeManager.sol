@@ -3,8 +3,6 @@
 
 pragma solidity 0.8.13;
 
-import "hardhat/console.sol";
-
 interface IBEP20 {
   /**
    * @dev Returns the total tokens supply
@@ -606,7 +604,7 @@ contract Royalty_Fee_Manager is Context, Ownable {
     shareHistories.pop();
   }
 
-  function historyCount() public view returns (uint256) {
+  function shareHistoryCount() public view returns (uint256) {
     return shareHistories.length;
   }
 
@@ -615,7 +613,6 @@ contract Royalty_Fee_Manager is Context, Ownable {
 
   function setAllowance(address whaleAddress, uint256 sharesAmount) external onlyOwner {
     require(whaleAddress != address(0), "Royalty_Fee_Manager: Whale address is the zero address");
-    require(sharesAmount > 0, "Royalty_Fee_Manager: shares amount is zero");
     require(
       sharesAmount != walletShares[whaleAddress],
       "Royalty_Fee_Manager: shares amount is the same as the current amount"
@@ -624,17 +621,16 @@ contract Royalty_Fee_Manager is Context, Ownable {
       sharesAmount >= claimedRewards[whaleAddress],
       "Royalty_Fee_Manager: shares amount is lower than claimed rewards"
     );
-
     if (walletShares[whaleAddress] > sharesAmount) {
-      for (uint256 i = shareHistories.length - 1; i >= 0; i--) {
-        uint256 decreasedAmount = walletShares[whaleAddress] - sharesAmount;
-        if (shareHistories[i].sharesAddress != whaleAddress || decreasedAmount == 0) continue;
-        if (shareHistories[i].sharesAmount > decreasedAmount) {
-          shareHistories[i].sharesAmount -= decreasedAmount;
+      uint256 decreasedAmount = walletShares[whaleAddress] - sharesAmount;
+      for (uint256 i = shareHistories.length; i > 0; i--) {
+        if (shareHistories[i - 1].sharesAddress != whaleAddress || decreasedAmount == 0) continue;
+        if (shareHistories[i - 1].sharesAmount > decreasedAmount) {
+          shareHistories[i - 1].sharesAmount -= decreasedAmount;
           break;
         } else {
-          shareHistories[i].sharesAmount = 0;
-          decreasedAmount -= shareHistories[i].sharesAmount;
+          shareHistories[i - 1].sharesAmount = 0;
+          decreasedAmount -= shareHistories[i - 1].sharesAmount;
         }
       }
     } else {
@@ -652,6 +648,9 @@ contract Royalty_Fee_Manager is Context, Ownable {
 
     totalShares = totalShares - walletShares[whaleAddress] + sharesAmount;
     walletShares[whaleAddress] = sharesAmount;
+    if (claimedRewards[whaleAddress] == sharesAmount) {
+      resetWhaleShares(whaleAddress);
+    }
   }
 
   function setKapexToken(address kapexAddress) external onlyOwner {
@@ -671,17 +670,20 @@ contract Royalty_Fee_Manager is Context, Ownable {
     uint256 amountToRecover,
     uint256 recoverFeePercentage
   ) external onlyOwner {
-    if (IBEP20(tokenAddress) == kapexToken) {
-      require(getTotalRewards() > totalShares, "Royalty_Fee_Manager: Total Rewards is greater than KAPEX amount");
+    IBEP20 token = IBEP20(tokenAddress);
+    uint256 balance = token.balanceOf(address(this));
+
+    require(balance >= amountToRecover, "Royalty_Fee_Manager: Not Enough Tokens in contract to recover");
+    if (token == kapexToken) {
+      require(
+        getTotalRewards() > totalShares,
+        "Royalty_Fee_Manager: No Available KAPEX to recover. KAPEX amount will be used for rewards"
+      );
       require(
         amountToRecover <= getTotalRewards() - totalShares,
         "Royalty_Fee_Manager: Total Claim is greater than available KAPEX amount to claim"
       );
     }
-    IBEP20 token = IBEP20(tokenAddress);
-    uint256 balance = token.balanceOf(address(this));
-
-    require(balance >= amountToRecover, "Royalty_Fee_Manager: Not Enough Tokens in contract to recover");
 
     address feeRecipient = _msgSender();
     uint256 feeAmount = amountToRecover.mul(recoverFeePercentage).div(10000);

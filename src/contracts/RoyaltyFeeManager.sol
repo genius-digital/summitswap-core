@@ -3,6 +3,8 @@
 
 pragma solidity 0.8.13;
 
+import "hardhat/console.sol";
+
 interface IBEP20 {
   /**
    * @dev Returns the total tokens supply
@@ -546,6 +548,9 @@ contract Royalty_Fee_Manager is Context, Ownable {
       claimableReward += nextMissedRewards.sub(shareHistories[i].missedRewards).mul(mShares).div(currentTotalShares);
     }
 
+    if (claimableReward > walletShares[whaleAddress]) {
+      return walletShares[whaleAddress];
+    }
     return claimableReward - claimedRewards[whaleAddress];
   }
 
@@ -576,21 +581,29 @@ contract Royalty_Fee_Manager is Context, Ownable {
   }
 
   function resetWhaleShares(address whaleAddress) private {
-    // totalShares -= walletShares[whaleAddress];
-    // totalClaimedRewards -= claimedRewards[whaleAddress];
-    // claimedRewards[whaleAddress] = 0;
-    // walletShares[whaleAddress] = 0;
-    // uint256 decreasedMissedRewards = 0;
-    // for (uint256 i = 0; i < missedRewards.length; i++) {
-    //   if (sharesAddressHistories[i] == whaleAddress) {
-    //     decreasedMissedRewards += missedRewards[i];
-    //     missedRewards[i] = 0;
-    //     sharesAddressHistories[i] = address(0);
-    //     sharesAmountHistories[i] = 0;
-    //   } else {
-    //     missedRewards[i] -= decreasedMissedRewards;
-    //   }
-    // }
+    totalShares -= walletShares[whaleAddress];
+    totalClaimedRewards -= claimedRewards[whaleAddress];
+    claimedRewards[whaleAddress] = 0;
+    walletShares[whaleAddress] = 0;
+    uint256 decreasedMissedRewards = 0;
+
+    for (uint256 i = 0; i < shareHistories.length; i++) {
+      if (shareHistories[i].sharesAddress == whaleAddress) {
+        decreasedMissedRewards += shareHistories[i].missedRewards;
+        removeSharesHistories(i);
+      } else {
+        shareHistories[i].missedRewards -= decreasedMissedRewards;
+      }
+    }
+  }
+
+  function removeSharesHistories(uint256 index) private {
+    if (index >= shareHistories.length) return;
+
+    for (uint256 i = index; i < shareHistories.length - 1; i++) {
+      shareHistories[i] = shareHistories[i + 1];
+    }
+    shareHistories.pop();
   }
 
   function historyCount() public view returns (uint256) {
@@ -652,23 +665,30 @@ contract Royalty_Fee_Manager is Context, Ownable {
    * NOTE! Contract's Address and Owner's address MUST NOT
    * be excluded from reflection reward
    */
-  // function recoverTokens(
-  //   address tokenAddress,
-  //   address recipient,
-  //   uint256 amountToRecover,
-  //   uint256 recoverFeePercentage
-  // ) external onlyOwner {
-  //   IBEP20 token = IBEP20(tokenAddress);
-  //   uint256 balance = token.balanceOf(address(this));
+  function recoverTokens(
+    address tokenAddress,
+    address recipient,
+    uint256 amountToRecover,
+    uint256 recoverFeePercentage
+  ) external onlyOwner {
+    if (IBEP20(tokenAddress) == kapexToken) {
+      require(getTotalRewards() > totalShares, "Royalty_Fee_Manager: Total Rewards is greater than KAPEX amount");
+      require(
+        amountToRecover <= getTotalRewards() - totalShares,
+        "Royalty_Fee_Manager: Total Claim is greater than available KAPEX amount to claim"
+      );
+    }
+    IBEP20 token = IBEP20(tokenAddress);
+    uint256 balance = token.balanceOf(address(this));
 
-  //   require(balance >= amountToRecover, "KODA Liquidity Provider: Not Enough Tokens in contract to recover");
+    require(balance >= amountToRecover, "Royalty_Fee_Manager: Not Enough Tokens in contract to recover");
 
-  //   address feeRecipient = _msgSender();
-  //   uint256 feeAmount = amountToRecover.mul(recoverFeePercentage).div(10000);
-  //   amountToRecover = amountToRecover.sub(feeAmount);
-  //   if (feeAmount > 0) token.transfer(feeRecipient, feeAmount);
-  //   if (amountToRecover > 0) token.transfer(recipient, amountToRecover);
-  // }
+    address feeRecipient = _msgSender();
+    uint256 feeAmount = amountToRecover.mul(recoverFeePercentage).div(10000);
+    amountToRecover = amountToRecover.sub(feeAmount);
+    if (feeAmount > 0) token.transfer(feeRecipient, feeAmount);
+    if (amountToRecover > 0) token.transfer(recipient, amountToRecover);
+  }
 
   function recoverBNB(
     address payable recipient,

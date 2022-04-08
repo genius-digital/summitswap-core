@@ -502,14 +502,18 @@ contract Ownable is Context {
   }
 }
 
+struct SharesHistory {
+  address sharesAddress;
+  uint256 missedRewards;
+  uint256 sharesAmount;
+}
+
 contract Royalty_Fee_Manager is Context, Ownable {
   using SafeMath for uint256;
   using Address for address;
 
   IBEP20 public kapexToken = IBEP20(0x11441AFb1D10E3Ce4E39666FC4F4A2A5d6d8C0Da);
-  uint256[] public missedRewards;
-  address[] public sharesAddressHistories;
-  uint256[] public sharesAmountHistories;
+  SharesHistory[] public shareHistories;
   mapping(address => uint256) public walletShares;
   uint256 public totalShares;
 
@@ -527,19 +531,19 @@ contract Royalty_Fee_Manager is Context, Ownable {
     uint256 currentTotalShares = 0;
     uint256 claimableReward = 0;
 
-    for (uint256 i = 0; i < missedRewards.length; i++) {
-      currentTotalShares += sharesAmountHistories[i];
-      if (sharesAddressHistories[i] == whaleAddress) {
-        mShares += sharesAmountHistories[i];
+    for (uint256 i = 0; i < shareHistories.length; i++) {
+      currentTotalShares += shareHistories[i].sharesAmount;
+      if (shareHistories[i].sharesAddress == whaleAddress) {
+        mShares += shareHistories[i].sharesAmount;
       }
 
       uint256 nextMissedRewards;
-      if (i + 1 == missedRewards.length) {
+      if (i + 1 == shareHistories.length) {
         nextMissedRewards = getTotalRewards();
       } else {
-        nextMissedRewards = missedRewards[i + 1];
+        nextMissedRewards = shareHistories[i + 1].missedRewards;
       }
-      claimableReward += nextMissedRewards.sub(missedRewards[i]).mul(mShares).div(currentTotalShares);
+      claimableReward += nextMissedRewards.sub(shareHistories[i].missedRewards).mul(mShares).div(currentTotalShares);
     }
 
     return claimableReward - claimedRewards[whaleAddress];
@@ -566,10 +570,31 @@ contract Royalty_Fee_Manager is Context, Ownable {
     totalClaimedRewards += claimAmount;
     claimedRewards[whaleAddress] += claimAmount;
     kapexToken.transfer(whaleAddress, claimAmount);
+    if (claimedRewards[whaleAddress] == walletShares[whaleAddress]) {
+      resetWhaleShares(whaleAddress);
+    }
+  }
+
+  function resetWhaleShares(address whaleAddress) private {
+    // totalShares -= walletShares[whaleAddress];
+    // totalClaimedRewards -= claimedRewards[whaleAddress];
+    // claimedRewards[whaleAddress] = 0;
+    // walletShares[whaleAddress] = 0;
+    // uint256 decreasedMissedRewards = 0;
+    // for (uint256 i = 0; i < missedRewards.length; i++) {
+    //   if (sharesAddressHistories[i] == whaleAddress) {
+    //     decreasedMissedRewards += missedRewards[i];
+    //     missedRewards[i] = 0;
+    //     sharesAddressHistories[i] = address(0);
+    //     sharesAmountHistories[i] = 0;
+    //   } else {
+    //     missedRewards[i] -= decreasedMissedRewards;
+    //   }
+    // }
   }
 
   function historyCount() public view returns (uint256) {
-    return sharesAddressHistories.length;
+    return shareHistories.length;
   }
 
   //////////////////
@@ -587,27 +612,29 @@ contract Royalty_Fee_Manager is Context, Ownable {
       "Royalty_Fee_Manager: shares amount is lower than claimed rewards"
     );
 
-    if (walletShares[whaleAddress] == 0) {
-      missedRewards.push(getTotalRewards());
-      sharesAddressHistories.push(whaleAddress);
-      sharesAmountHistories.push(sharesAmount);
-    } else if (sharesAmount > walletShares[whaleAddress]) {
-      uint256 increasedAmount = sharesAmount - walletShares[whaleAddress];
-      missedRewards.push(getTotalRewards());
-      sharesAddressHistories.push(whaleAddress);
-      sharesAmountHistories.push(increasedAmount);
-    } else if (walletShares[whaleAddress] > sharesAmount) {
-      for (uint256 i = sharesAmountHistories.length - 1; i >= 0; i--) {
+    if (walletShares[whaleAddress] > sharesAmount) {
+      for (uint256 i = shareHistories.length - 1; i >= 0; i--) {
         uint256 decreasedAmount = walletShares[whaleAddress] - sharesAmount;
-        if (sharesAddressHistories[i] != whaleAddress || decreasedAmount == 0) continue;
-        if (sharesAmountHistories[i] > decreasedAmount) {
-          sharesAmountHistories[i] -= decreasedAmount;
+        if (shareHistories[i].sharesAddress != whaleAddress || decreasedAmount == 0) continue;
+        if (shareHistories[i].sharesAmount > decreasedAmount) {
+          shareHistories[i].sharesAmount -= decreasedAmount;
           break;
         } else {
-          sharesAmountHistories[i] = 0;
-          decreasedAmount -= sharesAmountHistories[i];
+          shareHistories[i].sharesAmount = 0;
+          decreasedAmount -= shareHistories[i].sharesAmount;
         }
       }
+    } else {
+      uint256 newSharesAmount;
+      if (walletShares[whaleAddress] == 0) {
+        newSharesAmount = sharesAmount;
+      } else if (sharesAmount > walletShares[whaleAddress]) {
+        uint256 increasedAmount = sharesAmount - walletShares[whaleAddress];
+        newSharesAmount = increasedAmount;
+      }
+      shareHistories.push(
+        SharesHistory({sharesAddress: whaleAddress, missedRewards: getTotalRewards(), sharesAmount: newSharesAmount})
+      );
     }
 
     totalShares = totalShares - walletShares[whaleAddress] + sharesAmount;

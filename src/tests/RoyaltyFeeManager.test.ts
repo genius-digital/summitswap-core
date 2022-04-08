@@ -60,11 +60,15 @@ describe("royaltyFeeManager", () => {
       );
     });
     it("should be able to setAllowance", async () => {
+      let shareHistory;
+
       await royaltyFeeManager.setAllowance(otherWallet.address, "25");
       let sharesHistoryLastIndex = (await royaltyFeeManager.historyCount()).sub(1);
-      assert.equal((await royaltyFeeManager.missedRewards(sharesHistoryLastIndex)).toString(), "0");
-      assert.equal(await royaltyFeeManager.sharesAddressHistories(sharesHistoryLastIndex), otherWallet.address);
-      assert.equal((await royaltyFeeManager.sharesAmountHistories(sharesHistoryLastIndex)).toString(), "25");
+
+      shareHistory = await royaltyFeeManager.shareHistories(sharesHistoryLastIndex);
+      assert.equal(shareHistory.missedRewards.toString(), "0");
+      assert.equal(shareHistory.sharesAddress, otherWallet.address);
+      assert.equal(shareHistory.sharesAmount.toString(), "25");
       assert.equal((await royaltyFeeManager.walletShares(otherWallet.address)).toString(), "25");
       assert.equal((await royaltyFeeManager.totalShares()).toString(), "25");
 
@@ -72,9 +76,11 @@ describe("royaltyFeeManager", () => {
 
       await royaltyFeeManager.setAllowance(otherWallet1.address, "10");
       sharesHistoryLastIndex = (await royaltyFeeManager.historyCount()).sub(1);
-      assert.equal((await royaltyFeeManager.missedRewards(sharesHistoryLastIndex)).toString(), "50");
-      assert.equal(await royaltyFeeManager.sharesAddressHistories(sharesHistoryLastIndex), otherWallet1.address);
-      assert.equal((await royaltyFeeManager.sharesAmountHistories(sharesHistoryLastIndex)).toString(), "10");
+
+      shareHistory = await royaltyFeeManager.shareHistories(sharesHistoryLastIndex);
+      assert.equal(shareHistory.missedRewards.toString(), "50");
+      assert.equal(shareHistory.sharesAddress, otherWallet1.address);
+      assert.equal(shareHistory.sharesAmount.toString(), "10");
       assert.equal((await royaltyFeeManager.walletShares(otherWallet1.address)).toString(), "10");
       assert.equal((await royaltyFeeManager.totalShares()).toString(), "35");
 
@@ -82,9 +88,11 @@ describe("royaltyFeeManager", () => {
 
       await royaltyFeeManager.setAllowance(otherWallet2.address, "15");
       sharesHistoryLastIndex = (await royaltyFeeManager.historyCount()).sub(1);
-      assert.equal((await royaltyFeeManager.missedRewards(sharesHistoryLastIndex)).toString(), "100");
-      assert.equal(await royaltyFeeManager.sharesAddressHistories(sharesHistoryLastIndex), otherWallet2.address);
-      assert.equal((await royaltyFeeManager.sharesAmountHistories(sharesHistoryLastIndex)).toString(), "15");
+
+      shareHistory = await royaltyFeeManager.shareHistories(sharesHistoryLastIndex);
+      assert.equal(shareHistory.missedRewards.toString(), "100");
+      assert.equal(shareHistory.sharesAddress, otherWallet2.address);
+      assert.equal(shareHistory.sharesAmount.toString(), "15");
       assert.equal((await royaltyFeeManager.walletShares(otherWallet2.address)).toString(), "15");
       assert.equal((await royaltyFeeManager.totalShares()).toString(), "50");
 
@@ -92,17 +100,23 @@ describe("royaltyFeeManager", () => {
 
       await royaltyFeeManager.setAllowance(otherWallet.address, "35");
       sharesHistoryLastIndex = (await royaltyFeeManager.historyCount()).sub(1);
-      assert.equal((await royaltyFeeManager.missedRewards(sharesHistoryLastIndex)).toString(), "150");
-      assert.equal(await royaltyFeeManager.sharesAddressHistories(sharesHistoryLastIndex), otherWallet.address);
-      assert.equal((await royaltyFeeManager.sharesAmountHistories(sharesHistoryLastIndex)).toString(), "10");
+
+      shareHistory = await royaltyFeeManager.shareHistories(sharesHistoryLastIndex);
+      assert.equal(shareHistory.missedRewards.toString(), "150");
+      assert.equal(shareHistory.sharesAddress, otherWallet.address);
+      assert.equal(shareHistory.sharesAmount.toString(), "10");
       assert.equal((await royaltyFeeManager.walletShares(otherWallet.address)).toString(), "35");
+      assert.equal((await royaltyFeeManager.totalShares()).toString(), "60");
 
       await royaltyFeeManager.setAllowance(otherWallet.address, "25");
       sharesHistoryLastIndex = (await royaltyFeeManager.historyCount()).sub(1);
-      assert.equal((await royaltyFeeManager.missedRewards(sharesHistoryLastIndex)).toString(), "150");
-      assert.equal(await royaltyFeeManager.sharesAddressHistories(sharesHistoryLastIndex), otherWallet.address);
-      assert.equal((await royaltyFeeManager.sharesAmountHistories(sharesHistoryLastIndex)).toString(), "0");
+
+      shareHistory = await royaltyFeeManager.shareHistories(sharesHistoryLastIndex);
+      assert.equal(shareHistory.missedRewards.toString(), "150");
+      assert.equal(shareHistory.sharesAddress, otherWallet.address);
+      assert.equal(shareHistory.sharesAmount.toString(), "0");
       assert.equal((await royaltyFeeManager.walletShares(otherWallet.address)).toString(), "25");
+      assert.equal((await royaltyFeeManager.totalShares()).toString(), "50");
     });
   });
 
@@ -198,6 +212,7 @@ describe("royaltyFeeManager", () => {
       assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet2.address)).toString(), "30");
     });
     it("otherWallet2 should be able to claim rewards", async () => {
+      // let totalShares = await royaltyFeeManager.totalShares();
       await royaltyFeeManager.connect(otherWallet1).claim("23");
       assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet.address)).toString(), "110");
       assert.equal((await royaltyFeeManager.getRemainingRewards(otherWallet1.address)).toString(), "1");
@@ -209,6 +224,8 @@ describe("royaltyFeeManager", () => {
       await expect(royaltyFeeManager.connect(otherWallet1).claim("1")).to.be.revertedWith(
         "Royalty_Fee_Manager: Whale address can not claim more than remaining rewards"
       );
+      // totalShares = totalShares.sub(24);
+      // assert.equal((await royaltyFeeManager.totalShares()).toString(), totalShares.toString());
     });
   });
 });

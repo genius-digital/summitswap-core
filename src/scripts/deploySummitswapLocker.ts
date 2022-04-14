@@ -7,13 +7,13 @@ import { tryVerify } from "./utils/verify";
 export async function deploySummitswapLocker() {
   const [wallet1] = await ethers.getSigners();
 
-  console.log("Deploying FeesCalculator");
-  const FeesCalculator = await ethers.getContractFactory("FeesCalculator");
-  const feesCalculator = await FeesCalculator.deploy();
-  await feesCalculator.deployed();
-  console.log("FeesCalculator deployed to:", feesCalculator.address);
+  console.log("Deploying SummitswapLockerCalculator");
+  const SummitswapLockerCalculator = await ethers.getContractFactory("SummitswapLockerCalculator");
+  const summitswapLockerCalculator = await SummitswapLockerCalculator.deploy();
+  await summitswapLockerCalculator.deployed();
+  console.log("SummitswapLockerCalculator deployed to:", summitswapLockerCalculator.address);
 
-  await tryVerify(feesCalculator.address);
+  await tryVerify(summitswapLockerCalculator.address);
 
   console.log("Starting to deploy SummitswapLocker");
   const factory =
@@ -23,11 +23,16 @@ export async function deploySummitswapLocker() {
   const wbnb = process.env.WBNB_ADDRESS ?? environment.WBNB ?? (await deployWBNB()).address;
   console.log("Deploying SummitswapLocker");
   const SummitswapLocker = await ethers.getContractFactory("SummitswapLocker");
-  const summitswapLocker = await SummitswapLocker.deploy(factory, feesCalculator.address, wallet1.address, wbnb);
+  const summitswapLocker = await SummitswapLocker.deploy(
+    factory,
+    summitswapLockerCalculator.address,
+    wallet1.address,
+    wbnb
+  );
   await summitswapLocker.deployed();
   console.log(`SummitswapLocker deployed to: ${summitswapLocker.address}`);
 
-  await tryVerify(summitswapLocker.address, [factory, feesCalculator.address, wallet1.address, wbnb]);
+  await tryVerify(summitswapLocker.address, [factory, summitswapLockerCalculator.address, wallet1.address, wbnb]);
 
   return summitswapLocker;
 }

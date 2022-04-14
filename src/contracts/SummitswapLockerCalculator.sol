@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.7.6;
 
-import "./interfaces/IFeesCalculator.sol";
+import "./interfaces/ISummitswapLockerCalculator.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract FeesCalculator is Ownable, IFeesCalculator {
+contract SummitswapLockerCalculator is Ownable, ISummitswapLockerCalculator {
   using SafeMath for uint256;
 
   uint256 public ethMin = 0 ether;

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Developed by: dxsoftware.net
+
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -9,7 +12,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./interfaces/ISummitswapFactory.sol";
 import "./interfaces/ISummitswapPair.sol";
-import "./interfaces/IFeesCalculator.sol";
+import "./interfaces/ISummitswapLockerCalculator.sol";
 
 contract SummitswapLocker is Ownable, ReentrancyGuard {
   using SafeMath for uint256;
@@ -17,7 +20,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
   using EnumerableSet for EnumerableSet.UintSet;
 
   ISummitswapFactory public summitSwapFactory;
-  IFeesCalculator public feesCalculator;
+  ISummitswapLockerCalculator public summitswapLockerCalculator;
 
   IERC20 public feeToken;
   address payable public feeReceiver;
@@ -56,12 +59,12 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
 
   constructor(
     ISummitswapFactory _summitSwapFactory,
-    address _feesCalculator,
+    address _summitswapLockerCalculator,
     address payable _feesReceiver,
     address _feeToken
   ) {
     summitSwapFactory = _summitSwapFactory;
-    feesCalculator = IFeesCalculator(_feesCalculator);
+    summitswapLockerCalculator = ISummitswapLockerCalculator(_summitswapLockerCalculator);
     feeReceiver = _feesReceiver;
     feeToken = IERC20(_feeToken);
   }
@@ -73,9 +76,9 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
    * @param unlockTime unix time in seconds after that tokens can be withdrawn
    * @param withdrawer account that can withdraw tokens to it's balance
    * @param feePaymentMode 0 - pay fees in ETH + LP token,
-   *                       1 - pay fees in CRX + LP token,
+   *                       1 - pay fees in KODA + LP token,
    *                       2 - pay fees fully in BNB,
-   *                       3 - pay fees fully in CRX
+   *                       3 - pay fees fully in KODA
    */
   function lockTokens(
     address lpToken,
@@ -91,7 +94,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
     require(checkLpTokenIsSummitSwap(lpToken), "NOT SUMMIT PAIR");
 
     //pay fees
-    (uint256 ethFee, uint256 tokenFee, uint256 lpTokenFee) = feesCalculator.calculateFees(
+    (uint256 ethFee, uint256 tokenFee, uint256 lpTokenFee) = summitswapLockerCalculator.calculateFees(
       lpToken,
       amount,
       unlockTime,
@@ -155,7 +158,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
     require(amountToIncrement > 0, "ZERO AMOUNT");
     TokenLock storage lock = tokenLocks[lockId];
 
-    (uint256 ethFee, uint256 tokenFee, uint256 lpTokenFee) = feesCalculator.calculateIncreaseAmountFees(
+    (uint256 ethFee, uint256 tokenFee, uint256 lpTokenFee) = summitswapLockerCalculator.calculateIncreaseAmountFees(
       lock.lpToken,
       amountToIncrement,
       lock.unlockTime,
@@ -220,11 +223,11 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
 
   /**
    * @notice sets new contract to calculate fees
-   * @param newFeesCalculator address of new fees calculator contract
+   * @param newSummitswapLockerCalculator address of new fees calculator contract
    */
-  function setFeesCalculator(address newFeesCalculator) external onlyOwner {
-    require(newFeesCalculator != address(0), "ZERO ADDRESS");
-    feesCalculator = IFeesCalculator(newFeesCalculator);
+  function setSummitswapLockerCalculator(address newSummitswapLockerCalculator) external onlyOwner {
+    require(newSummitswapLockerCalculator != address(0), "ZERO ADDRESS");
+    summitswapLockerCalculator = ISummitswapLockerCalculator(newSummitswapLockerCalculator);
   }
 
   function transferFees(

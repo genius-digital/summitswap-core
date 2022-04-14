@@ -10,11 +10,18 @@ const BUSDs = {
   "97": "0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7",
 } as Record<string, string>;
 
+const KODAs = {
+  "56": "0x8094e772fA4A60bdEb1DfEC56AB040e17DD608D5",
+  "97": "0x063646d9C4eCB1c341bECdEE162958f072C43561",
+} as Record<string, string>;
+
 const SummitswapFactories = {
+  "56": "0x7067079bc460d2c5984cC89008786fE46839FCF0",
   "97": "0x765317D857df6BceA1B3489b8B66422B9967eF8B",
 } as Record<string, string>;
 
 const SummitswapRouters = {
+  "56": "0x2e8C54d980D930C16eFeb28f7061b0f3A78c0A87",
   "97": "0x1ebCD5e8a378F3b72900bF5BaEb073872f105B73",
 } as Record<string, string>;
 
@@ -32,6 +39,8 @@ export const environment = {
   WBNB: WBNBs[hre.network.name],
   BUSDS: BUSDs,
   BUSD: BUSDs[hre.network.name],
+  KODAs: KODAs,
+  KODA: KODAs[hre.network.name],
   SUMMITSWAP_FACTORIES: SummitswapFactories,
   SUMMITSWAP_FACTORY: SummitswapFactories[hre.network.name],
   SUMMITSWAP_ROUTERS: SummitswapRouters,

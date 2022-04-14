@@ -1,6 +1,6 @@
 pragma solidity 0.7.6;
 
-interface IFeesCalculator {
+interface ISummitswapLockerCalculator {
   function calculateFees(
     address lpToken,
     uint256 amount,

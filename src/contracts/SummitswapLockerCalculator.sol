@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+// Developed by: dxsoftware.net
+
 pragma solidity 0.7.6;
 
 import "./interfaces/ISummitswapLockerCalculator.sol";
@@ -15,9 +17,9 @@ contract SummitswapLockerCalculator is Ownable, ISummitswapLockerCalculator {
   uint256 public liquidityPercent = 0; // 0.3%
 
   uint8 public PAYMENT_MODE_BNB_LP_TOKEN = 0;
-  uint8 public PAYMENT_MODE_CRX_LP_TOKEN = 1;
+  uint8 public PAYMENT_MODE_KODA_LP_TOKEN = 1;
   uint8 public PAYMENT_MODE_BNB_MAX = 2;
-  uint8 public PAYMENT_MODE_CRX_MAX = 3;
+  uint8 public PAYMENT_MODE_KODA_MAX = 3;
 
   event OnFeeChanged(uint256 ethMin, uint256 tokenMin, uint256 ethMax, uint256 tokenMax, uint256 liquidityPercent);
 
@@ -25,9 +27,9 @@ contract SummitswapLockerCalculator is Ownable, ISummitswapLockerCalculator {
    * @notice Calculates lock fees based on input params
    * @param amount amount of tokens to lock
    * @param paymentMode    0 - pay fees in minBNB + LP token,
-   *                       1 - pay fees in minCRX + LP token,
+   *                       1 - pay fees in minKODA + LP token,
    *                       2 - pay fees fully in maxBNB,
-   *                       3 - pay fees fully in maxCRX
+   *                       3 - pay fees fully in maxKODA
    */
   function calculateFees(
     address, /* lpToken */
@@ -48,7 +50,7 @@ contract SummitswapLockerCalculator is Ownable, ISummitswapLockerCalculator {
     if (paymentMode == PAYMENT_MODE_BNB_LP_TOKEN) {
       return (ethMin, 0, liquidityPercent.mul(amount).div(1e4));
     }
-    if (paymentMode == PAYMENT_MODE_CRX_LP_TOKEN) {
+    if (paymentMode == PAYMENT_MODE_KODA_LP_TOKEN) {
       return (0, tokenMin, liquidityPercent.mul(amount).div(1e4));
     }
     if (paymentMode == PAYMENT_MODE_BNB_MAX) {
@@ -61,9 +63,9 @@ contract SummitswapLockerCalculator is Ownable, ISummitswapLockerCalculator {
    * @notice Calculates increase lock amount fees based on input params
    * @param amount amount of tokens to lock
    * @param paymentMode    0 - pay fees in minBNB + LP token,
-   *                       1 - pay fees in minCRX + LP token,
+   *                       1 - pay fees in minKODA + LP token,
    *                       2 - pay fees fully in maxBNB,
-   *                       3 - pay fees fully in maxCRX
+   *                       3 - pay fees fully in maxKODA
    */
   function calculateIncreaseAmountFees(
     address, /* lpToken */
@@ -84,7 +86,7 @@ contract SummitswapLockerCalculator is Ownable, ISummitswapLockerCalculator {
     if (paymentMode == PAYMENT_MODE_BNB_MAX) {
       return (ethMax, 0, 0);
     }
-    if (paymentMode == PAYMENT_MODE_CRX_MAX) {
+    if (paymentMode == PAYMENT_MODE_KODA_MAX) {
       return (0, tokenMax, 0);
     }
     return (0, 0, liquidityPercent.mul(amount).div(1e4));

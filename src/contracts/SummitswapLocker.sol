@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Developed by: dxsoftware.net
+
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -73,9 +76,9 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
    * @param unlockTime unix time in seconds after that tokens can be withdrawn
    * @param withdrawer account that can withdraw tokens to it's balance
    * @param feePaymentMode 0 - pay fees in ETH + LP token,
-   *                       1 - pay fees in CRX + LP token,
+   *                       1 - pay fees in KODA + LP token,
    *                       2 - pay fees fully in BNB,
-   *                       3 - pay fees fully in CRX
+   *                       3 - pay fees fully in KODA
    */
   function lockTokens(
     address lpToken,

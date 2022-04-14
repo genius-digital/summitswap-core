@@ -223,7 +223,7 @@ contract SummitswapLocker is Ownable, ReentrancyGuard {
    * @param newSummitswapLockerCalculator address of new fees calculator contract
    */
   function setSummitswapLockerCalculator(address newSummitswapLockerCalculator) external onlyOwner {
-    require(newsummitswapLockerCalculator != address(0), "ZERO ADDRESS");
+    require(newSummitswapLockerCalculator != address(0), "ZERO ADDRESS");
     summitswapLockerCalculator = ISummitswapLockerCalculator(newSummitswapLockerCalculator);
   }
 

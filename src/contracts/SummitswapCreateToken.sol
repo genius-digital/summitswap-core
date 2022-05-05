@@ -39,12 +39,15 @@ contract TokenFactory is Ownable {
     string memory _tokenSym,
     uint8 _decimals,
     uint256 _total_supply,
-    address _serviceFeeReceiver,
-    uint256 _serviceFee
+    address _serviceFeeReceiver
   ) public payable {
-    // require(msg.value >= 1 * 10**16);
+    require(msg.value >= 1 * 10**16, "Not enough eth");
     CustomToken newCustomToken = new CustomToken(_tokenName, _tokenSym, _decimals, _total_supply, msg.sender);
-    payable(_serviceFeeReceiver).transfer(_serviceFee);
+    if (_serviceFeeReceiver == address(this)) {
+      balance += msg.value;
+    } else {
+      payable(_serviceFeeReceiver).transfer(msg.value);
+    }
     customTokens.push(newCustomToken);
     tokensMade += 1;
   }

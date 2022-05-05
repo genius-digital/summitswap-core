@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { tryVerify } from "./utils/verify";
 
-async function deployTokenFactory() {
+export async function deployTokenFactory() {
   console.log("Starting to deploy TokenFactory");
 
   const TokenFactoryContract = await ethers.getContractFactory("TokenFactory");

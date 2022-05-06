@@ -11,17 +11,27 @@ import "./interfaces/IERC20.sol"; // for token functions
 contract SummitswapOnboarding {
   ISummitswapRouter02 public summitswapRouter02;
   ISummitswapLocker public summitswapLocker;
-  IERC20 public userToken;
-  IERC20 public lpToken;
   ISummitswapFactory public summitswapFactory;
 
-  address public kodaAddress = 0x063646d9C4eCB1c341bECdEE162958f072C43561;
-  address public summitReferralAddress = 0xDF8b4F4414aeB9598000666eF703E18A9aFfF47b;
-  address[] public pathForBnbToKoda = [
-    0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd,
-    0x063646d9C4eCB1c341bECdEE162958f072C43561
-  ]; // bnb to koda
-  address[] public pathForUserToken;
+  address public kodaAddress;
+  address public summitswapReferralAddress;
+  address[] public pathForBnbToKoda;
+
+  constructor(
+    ISummitswapRouter02 _summitswapRouter02,
+    ISummitswapLocker _summitswapLocker,
+    ISummitswapFactory _summitswapFactory,
+    address _bnbAddress,
+    address _kodaAddress,
+    address _summitswapReferralAddress
+  ) public {
+    summitswapRouter02 = _summitswapRouter02;
+    summitswapLocker = _summitswapLocker;
+    summitswapFactory = _summitswapFactory;
+    kodaAddress = _kodaAddress;
+    summitswapReferralAddress = _summitswapReferralAddress;
+    pathForBnbToKoda = [_bnbAddress, _kodaAddress];
+  }
 
   function onboardToken(
     uint256 bnbAmount,
@@ -30,27 +40,29 @@ contract SummitswapOnboarding {
     address userTokenAddress,
     uint256 kodaAmountDesired,
     uint256 userTokenAmountDesired,
-    uint256 kodaAmountMin,
-    uint256 userTokenAmountMin,
     uint256 amountForLockTokens,
     uint256 unlockTime,
     address payable withdrawer,
     uint256 amountForTransfer
   ) public {
     uint256 _deadline = deadline;
+    IERC20 kodaToken = IERC20(kodaAddress);
+    IERC20 userToken = IERC20(userTokenAddress);
     summitswapRouter02.swapExactETHForTokens{value: bnbAmount}(amountOutMin, pathForBnbToKoda, msg.sender, _deadline);
+    kodaToken.approve(address(summitswapRouter02), 2**256 - 1);
+    userToken.approve(address(summitswapRouter02), 2**256 - 1);
     summitswapRouter02.addLiquidity(
       kodaAddress,
       userTokenAddress,
       kodaAmountDesired,
       userTokenAmountDesired,
-      kodaAmountMin,
-      userTokenAmountMin,
+      0,
+      0,
       address(this),
       _deadline
     );
     address pairAddress = summitswapFactory.getPair(kodaAddress, userTokenAddress);
     summitswapLocker.lockTokens(pairAddress, amountForLockTokens, unlockTime, withdrawer, 2);
-    userToken.transfer(summitReferralAddress, amountForTransfer);
+    userToken.transfer(summitswapReferralAddress, amountForTransfer);
   }
 }

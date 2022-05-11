@@ -1,40 +1,24 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
-contract CustomToken is ERC20, Ownable {
-  uint8 internal tokenDecimals = 18;
-  uint256 public VERSION = 1;
-
-  constructor(
-    string memory _tokenName,
-    string memory _tokenSym,
-    uint8 _decimals,
-    uint256 _total_supply,
-    address _owner
-  ) ERC20(_tokenName, _tokenSym) Ownable() {
-    _mint(_owner, _total_supply);
-    tokenDecimals = _decimals;
-    transferOwnership(_owner);
-  }
-
-  function decimals() public view virtual override returns (uint8) {
-    return tokenDecimals;
-  }
-}
+import "./tokens/SummitstudiosStandardToken.sol";
+import "./tokens/SummitstudiosLiquidityToken.sol";
 
 contract TokenFactory is Ownable {
-  CustomToken[] public customTokens;
-  uint256 public tokensMade = 0;
+  StandardToken[] public customStandardTokens;
+  uint256 public customStandardTokensMade = 0;
+
+  LiquidityGeneratorToken[] public customLiquidityTokens;
+  uint256 public customLiquidityTokensMade = 0;
+
   uint256 public balance;
 
   constructor() Ownable() {
     transferOwnership(msg.sender);
   }
 
-  function create(
+  function createStandardToken(
     string memory _tokenName,
     string memory _tokenSym,
     uint8 _decimals,
@@ -42,14 +26,46 @@ contract TokenFactory is Ownable {
     address _serviceFeeReceiver
   ) public payable {
     require(msg.value >= 1 * 10**16, "Not enough eth");
-    CustomToken newCustomToken = new CustomToken(_tokenName, _tokenSym, _decimals, _total_supply, msg.sender);
+    StandardToken newToken = new StandardToken(_tokenName, _tokenSym, _decimals, _total_supply, msg.sender);
     if (_serviceFeeReceiver == address(this)) {
       balance += msg.value;
     } else {
       payable(_serviceFeeReceiver).transfer(msg.value);
     }
-    customTokens.push(newCustomToken);
-    tokensMade += 1;
+    customStandardTokens.push(newToken);
+    customStandardTokensMade += 1;
+  }
+
+  function createLiquidityToken(
+    string memory _name,
+    string memory _symbol,
+    uint256 _totalSupply,
+    address _router,
+    address _charityAddress,
+    uint16 _taxFeeBps,
+    uint16 _liquidityFeeBps,
+    uint16 _charityFeeBps,
+    address _serviceFeeReceiver
+  ) public payable {
+    require(msg.value >= 1 * 10**16, "Not enough eth");
+    LiquidityGeneratorToken newToken = new LiquidityGeneratorToken(
+      _name,
+      _symbol,
+      _totalSupply,
+      _router,
+      _charityAddress,
+      _taxFeeBps,
+      _liquidityFeeBps,
+      _charityFeeBps,
+      msg.sender
+    );
+    if (_serviceFeeReceiver == address(this)) {
+      balance += msg.value;
+    } else {
+      payable(_serviceFeeReceiver).transfer(msg.value);
+    }
+    customLiquidityTokens.push(newToken);
+    customLiquidityTokensMade += 1;
   }
 
   function receiveMoney() external payable {

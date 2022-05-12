@@ -8,7 +8,9 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/ISummitstudiosUniswapV2Router02.sol";
 import "../interfaces/ISummitstudiosUniswapV2Factory.sol";
 
-// 0xD99D1c33F9fC3444f8101754aBC46c52416550D1 PancakeSwap router address
+// 0x10ed43c718714eb63d5aa57b78b54704e256024e PancakeSwap router address
+// 0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B Summitswap router address
+
 enum TokenType {
   standard,
   antiBotStandard,

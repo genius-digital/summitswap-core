@@ -8,6 +8,7 @@ const WBNBs = {
 const BUSDs = {
   "56": "0xe9e7cea3dedca5984780bafc599bd69add087d56",
   "97": "0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7",
+  avalancheTest: "0x01339AeB76b8c582699f08D1f3CC7D922981f2eB",
 } as Record<string, string>;
 
 const KODAs = {

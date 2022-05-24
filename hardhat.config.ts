@@ -79,12 +79,25 @@ export default {
       accounts,
       timeout: 100000,
     },
+    avalancheTest: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      gasPrice: 225000000000,
+      chainId: 43113,
+      accounts,
+    },
+    avalanche: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      gasPrice: 225000000000,
+      chainId: 43114,
+      accounts,
+    },
   },
   gasReporter: {
     enabled: !!process.env.REPORT_GAS,
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.BSCSCAN_API_KEY,
+    // apiKey: process.env.BSCSCAN_API_KEY,
+    apiKey: process.env.AVALANCHE_API_KEY,
   },
 } as HardhatUserConfig;

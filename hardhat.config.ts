@@ -79,13 +79,13 @@ export default {
       accounts,
       timeout: 100000,
     },
-    avalancheTest: {
+    43113: {
       url: "https://api.avax-test.network/ext/bc/C/rpc",
       gasPrice: 225000000000,
       chainId: 43113,
       accounts,
     },
-    avalanche: {
+    43114: {
       url: "https://api.avax.network/ext/bc/C/rpc",
       gasPrice: 225000000000,
       chainId: 43114,

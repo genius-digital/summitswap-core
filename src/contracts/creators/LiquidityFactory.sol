@@ -1,39 +1,21 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.1;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./tokens/SummitstudiosStandardToken.sol";
-import "./tokens/SummitstudiosLiquidityToken.sol";
+import "../tokens/SummitstudiosLiquidityToken.sol";
 
-contract TokenFactory is Ownable {
-  StandardToken[] public customStandardTokens;
-  uint256 public customStandardTokensMade = 0;
+// 0x5666FBE3924A058192032E62Eff355b1e46fE9D9 Factory deployment - 97
 
+contract LiquidityFactory is Ownable {
   LiquidityGeneratorToken[] public customLiquidityTokens;
   uint256 public customLiquidityTokensMade = 0;
 
+  address public serviceFeeReceiver;
   uint256 public balance;
 
-  constructor() Ownable() {
+  constructor(address _serviceFeeReceiver) Ownable() {
+    serviceFeeReceiver = _serviceFeeReceiver;
     transferOwnership(msg.sender);
-  }
-
-  function createStandardToken(
-    string memory _tokenName,
-    string memory _tokenSym,
-    uint8 _decimals,
-    uint256 _total_supply,
-    address _serviceFeeReceiver
-  ) public payable {
-    require(msg.value >= 1 * 10**16, "Not enough eth");
-    StandardToken newToken = new StandardToken(_tokenName, _tokenSym, _decimals, _total_supply, msg.sender);
-    if (_serviceFeeReceiver == address(this)) {
-      balance += msg.value;
-    } else {
-      payable(_serviceFeeReceiver).transfer(msg.value);
-    }
-    customStandardTokens.push(newToken);
-    customStandardTokensMade += 1;
   }
 
   function createLiquidityToken(
@@ -44,8 +26,7 @@ contract TokenFactory is Ownable {
     address _charityAddress,
     uint16 _taxFeeBps,
     uint16 _liquidityFeeBps,
-    uint16 _charityFeeBps,
-    address _serviceFeeReceiver
+    uint16 _charityFeeBps
   ) public payable {
     require(msg.value >= 1 * 10**16, "Not enough eth");
     LiquidityGeneratorToken newToken = new LiquidityGeneratorToken(
@@ -59,10 +40,10 @@ contract TokenFactory is Ownable {
       _charityFeeBps,
       msg.sender
     );
-    if (_serviceFeeReceiver == address(this)) {
+    if (serviceFeeReceiver == address(this)) {
       balance += msg.value;
     } else {
-      payable(_serviceFeeReceiver).transfer(msg.value);
+      payable(serviceFeeReceiver).transfer(msg.value);
     }
     customLiquidityTokens.push(newToken);
     customLiquidityTokensMade += 1;
@@ -79,5 +60,9 @@ contract TokenFactory is Ownable {
   function withdraw() public onlyOwner {
     address payable to = payable(msg.sender);
     to.transfer(getBalance());
+  }
+
+  function changeFeeReceiver(address _serviceFeeReceiver) public onlyOwner {
+    serviceFeeReceiver = _serviceFeeReceiver;
   }
 }

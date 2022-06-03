@@ -1,30 +1,16 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.1;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/ISummitstudiosUniswapV2Router02.sol";
 import "../interfaces/ISummitstudiosUniswapV2Factory.sol";
+import "./BaseToken.sol";
 
 // 0x10ed43c718714eb63d5aa57b78b54704e256024e PancakeSwap router address
 // 0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B Summitswap router address
-
-enum TokenType {
-  standard,
-  antiBotStandard,
-  liquidityGenerator,
-  antiBotLiquidityGenerator,
-  baby,
-  antiBotBaby,
-  buybackBaby,
-  antiBotBuybackBaby
-}
-
-abstract contract BaseToken {
-  event TokenCreated(address indexed owner, address indexed token, TokenType tokenType, uint256 version);
-}
 
 contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
   using SafeMath for uint256;

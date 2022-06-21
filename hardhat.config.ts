@@ -68,6 +68,15 @@ export default {
         },
       },
       {
+        version: "0.8.1",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
         version: "0.8.2",
         settings: {
           optimizer: {
@@ -94,6 +103,6 @@ export default {
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.BSCSCAN_API_KEY,
+    apiKey: "",
   },
 } as HardhatUserConfig;

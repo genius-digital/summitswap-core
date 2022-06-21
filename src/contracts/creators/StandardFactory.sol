@@ -1,10 +1,9 @@
 //SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.1;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../tokens/SummitstudiosStandardToken.sol";
-
-// 0xBb40eACCecDc0838f70588E87485EC1587116904 Factory deployment - 97
+import "../tokens/SummitswapStandardToken.sol";
 
 contract StandardFactory is Ownable {
   StandardToken[] public customStandardTokens;

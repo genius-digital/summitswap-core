@@ -9,9 +9,6 @@ import "../interfaces/ISummitstudiosUniswapV2Router02.sol";
 import "../interfaces/ISummitstudiosUniswapV2Factory.sol";
 import "./BaseToken.sol";
 
-// 0x10ed43c718714eb63d5aa57b78b54704e256024e PancakeSwap router address
-// 0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B Summitswap router address
-
 contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
   using SafeMath for uint256;
   using Address for address;
@@ -103,7 +100,8 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
 
     swapAndLiquifyEnabled = true;
 
-    _rOwned[owner()] = _rTotal;
+    // _rOwned[owner()] = _rTotal;
+    _rOwned[_owner] = _rTotal;
 
     IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(router_);
     // Create a uniswap pair for this new token
@@ -113,12 +111,15 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
     uniswapV2Router = _uniswapV2Router;
 
     // exclude owner and this contract from fee
-    _isExcludedFromFee[owner()] = true;
+    _isExcludedFromFee[_owner] = true;
+    // _isExcludedFromFee[owner()] = true;
     _isExcludedFromFee[address(this)] = true;
 
-    emit Transfer(address(0), owner(), _tTotal);
+    emit Transfer(address(0), _owner, _tTotal);
+    // emit Transfer(address(0), owner(), _tTotal);
 
-    emit TokenCreated(owner(), address(this), TokenType.liquidityGenerator, VERSION);
+    emit TokenCreated(_owner, address(this), TokenType.liquidityGenerator, VERSION);
+    // emit TokenCreated(owner(), address(this), TokenType.liquidityGenerator, VERSION);
 
     transferOwnership(_owner);
   }

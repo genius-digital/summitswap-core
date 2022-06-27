@@ -1,12 +1,41 @@
+// SPDX-License-Identifier: UNLICENSED
+// Developed by: dxsoftware.net
+
 pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
-
-import "./shared/Ownable.sol";
 
 pragma experimental ABIEncoderV2;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+interface IERC20 {
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+
+  function name() external view returns (string memory);
+
+  function symbol() external view returns (string memory);
+
+  function decimals() external view returns (uint8);
+
+  function totalSupply() external view returns (uint256);
+
+  function balanceOf(address owner) external view returns (uint256);
+
+  function allowance(address owner, address spender) external view returns (uint256);
+
+  function approve(address spender, uint256 value) external returns (bool);
+
+  function transfer(address to, uint256 value) external returns (bool);
+
+  function transferFrom(
+    address from,
+    address to,
+    uint256 value
+  ) external returns (bool);
+}
 
 contract SummitCustomPresale is Ownable {
-  address private burnAddress = 0x000000000000000000000000000000000000dEaD;
+  address private constant burnAddress = 0x000000000000000000000000000000000000dEaD;
 
   address public serviceFeeReciever;
   address[] public contributors;
@@ -49,7 +78,7 @@ contract SummitCustomPresale is Ownable {
   constructor(
     address[4] memory _addresses, // owner, token, router, serviceFeeReciever
     uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
-    uint256[4] memory _bnbAmounts, // minBuyBnb, maxBuyBnb, softcap, hardcap, _liquidityPercent
+    uint256[4] memory _bnbAmounts, // minBuyBnb, maxBuyBnb, softcap, hardcap
     uint256 _liquidityLockTime,
     uint256 _startPresaleTime,
     uint256 _endPresaleTime,
@@ -74,19 +103,15 @@ contract SummitCustomPresale is Ownable {
     presale.feeType = _feeType;
     presale.refundType = _refundType;
     presale.isWhiteListPhase = _isWhiteListPhase;
-    presale.totalBought = 0;
-    presale.isClaimPhase = false;
-    presale.isPresaleCancelled = false;
-    presale.isWithdrawCancelledTokens = false;
   }
 
   // getters
 
-  function getInfo() public view returns (PresaleInfo memory) {
+  function getInfo() external view returns (PresaleInfo memory) {
     return presale;
   }
 
-  function showContributors() external view returns (address[] memory) {
+  function getContributors() external view returns (address[] memory) {
     return contributors;
   }
 
@@ -113,7 +138,6 @@ contract SummitCustomPresale is Ownable {
     require(bought[msg.sender] + msg.value <= presale.hardCap, "Cannot buy more than HardCap amount");
     require(msg.value >= presale.minBuyBnb, "msg.value is less than minBuyBnb");
     require(msg.value + bought[msg.sender] <= presale.maxBuyBnb, "msg.value is great than maxBuyBnb");
-    isTokenClaimed[msg.sender] = false;
     presale.totalBought += msg.value;
     bought[msg.sender] += msg.value;
 
@@ -123,7 +147,7 @@ contract SummitCustomPresale is Ownable {
     }
   }
 
-  function claim() external payable {
+  function claim() external {
     require(!presale.isPresaleCancelled, "Presale Cancelled");
     require(
       block.timestamp > presale.endPresaleTime || presale.hardCap == presale.totalBought,
@@ -135,13 +159,12 @@ contract SummitCustomPresale is Ownable {
     require(presale.totalBought >= presale.softCap, "Total Bought less than softcap");
 
     uint256 userTokens = calculateBnbToPresaleToken(bought[msg.sender], presale.presalePrice);
-    isTokenClaimed[msg.sender] = true;
-
     require(
       IERC20(presale.presaleToken).balanceOf(address(this)) >= userTokens,
       "Contract doesn't have enough presale tokens. Please contact owner to add more supply"
     );
     IERC20(presale.presaleToken).transfer(msg.sender, userTokens);
+    isTokenClaimed[msg.sender] = true;
   }
 
   function removeContributor(address _address) internal {
@@ -175,27 +198,27 @@ contract SummitCustomPresale is Ownable {
     }
   }
 
-  function widhrawBnb() external payable {
+  function widhrawBNB() external {
     require(presale.isPresaleCancelled, "Presale Not Cancelled");
-    require(bought[msg.sender] > 0, "You Dont have any contributions");
+    require(bought[msg.sender] > 0, "You do not have any contributions");
     address payable msgSender = payable(msg.sender);
+    msgSender.transfer(bought[msg.sender]);
     presale.totalBought = presale.totalBought - bought[msg.sender];
     bought[msg.sender] = 0;
-    msgSender.transfer(bought[msg.sender]);
     removeContributor(msg.sender);
   }
 
-  function emergencyWithdraw() external payable {
+  function emergencyWithdrawBNB() external {
     require(block.timestamp >= presale.startPresaleTime, "Presale Not started Yet");
     require(block.timestamp < presale.endPresaleTime, "Presale Ended");
-    require(bought[msg.sender] > 0, "You Dont have any contributions");
+    require(bought[msg.sender] > 0, "You do not have any contributions");
     address payable msgSender = payable(msg.sender);
     uint256 bnbFeeAmount = (bought[msg.sender] * emergencyWithdrawFee) / FEE_DENOMINATOR;
+    msgSender.transfer(bought[msg.sender] - bnbFeeAmount);
+    payable(serviceFeeReciever).transfer(bnbFeeAmount);
 
     presale.totalBought = presale.totalBought - bought[msg.sender];
     bought[msg.sender] = 0;
-    msgSender.transfer(bought[msg.sender] - bnbFeeAmount);
-    payable(serviceFeeReciever).transfer(bnbFeeAmount);
     removeContributor(msg.sender);
   }
 
@@ -204,14 +227,13 @@ contract SummitCustomPresale is Ownable {
 
   function finalize() external payable onlyOwner {
     require(block.timestamp > presale.endPresaleTime || presale.hardCap == presale.totalBought, "Presale Not Ended");
-    require(presale.totalBought >= presale.softCap, "Total bought is less than softCap Presale failed");
+    require(presale.totalBought >= presale.softCap, "Total bought is less than softCap. Presale failed");
 
     uint256 feeBnb = presale.feeType == 0
       ? ((presale.totalBought * bnbFeeType0) / FEE_DENOMINATOR)
       : ((presale.totalBought * bnbFeeType1) / FEE_DENOMINATOR);
     uint256 feeToken = presale.feeType == 0 ? 0 : calculateBnbToPresaleToken(feeBnb, presale.presalePrice);
     uint256 raisedTokenAmount = calculateBnbToPresaleToken(presale.totalBought, presale.presalePrice);
-    // if in future also subtract the tokens for liquidity
     uint256 contractBal = IERC20(presale.presaleToken).balanceOf(address(this));
     require(contractBal > (raisedTokenAmount + feeToken), "Contract does not have enough Tokens");
     uint256 remainingTokenAmount = contractBal - raisedTokenAmount - feeToken;
@@ -234,14 +256,14 @@ contract SummitCustomPresale is Ownable {
   function withdrawCancelledTokens() external onlyOwner {
     require(!presale.isWithdrawCancelledTokens, "Cancelled Tokens Already Withdrawn");
     require(presale.isPresaleCancelled, "Presale Not Cancelled");
-    require(IERC20(presale.presaleToken).balanceOf(address(this)) > 0, "You Dont have Any Tokens to Withdraw");
-    presale.isWithdrawCancelledTokens = true;
+    require(IERC20(presale.presaleToken).balanceOf(address(this)) > 0, "You do not have Any Tokens to Withdraw");
     uint256 tokenAmount = IERC20(presale.presaleToken).balanceOf(address(this));
+    presale.isWithdrawCancelledTokens = true;
     IERC20(presale.presaleToken).transfer(msg.sender, tokenAmount);
   }
 
-  function enablewhitelist(bool value) external onlyOwner {
-    presale.isWhiteListPhase = value;
+  function enablewhitelist() external onlyOwner {
+    presale.isWhiteListPhase = !presale.isWhiteListPhase;
   }
 
   function cancelPresale() external onlyOwner {
@@ -253,11 +275,7 @@ contract SummitCustomPresale is Ownable {
     serviceFeeReciever = _feeReciever;
   }
 
-  function withdrawBnb(uint256 _amount, address _receiver) external payable onlyOwner {
+  function withdrawBNBOwner(uint256 _amount, address _receiver) external onlyOwner {
     payable(_receiver).transfer(_amount);
-  }
-
-  function setOwner(address _owner) external onlyOwner {
-    transferOwnership(_owner);
   }
 }

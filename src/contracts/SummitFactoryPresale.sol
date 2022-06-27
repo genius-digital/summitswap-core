@@ -1,25 +1,28 @@
+// SPDX-License-Identifier: UNLICENSED
+// Developed by: dxsoftware.net
+
 pragma solidity 0.7.6;
 
 import "./SummitCustomPresale.sol";
-import "./shared/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SummitFactoryPresale is Ownable {
   mapping(address => address[]) public accountPresales;
   mapping(address => address) public tokenPresales; // token => presale
 
+  address[] public presaleAddresses;
   address public serviceFeeReciever;
   uint256 public preSaleFee = 0.001 ether;
 
   constructor(uint256 _preSaleFee, address _feeReciever) Ownable() {
     preSaleFee = _preSaleFee;
     serviceFeeReciever = _feeReciever;
-    transferOwnership(msg.sender);
   }
 
   function createPresale(
     address[2] memory _addresses, // tokenAdress, routerAddress
     uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
-    uint256[4] memory _bnbAmounts, // minBuyBnb, maxBuyBnb, softcap, hardcap, liquidityPercent
+    uint256[4] memory _bnbAmounts, // minBuyBnb, maxBuyBnb, softcap, hardcap
     uint256 _liquidityLockTime,
     uint256 _startPresaleTime,
     uint256 _endPresaleTime,
@@ -35,7 +38,7 @@ contract SummitFactoryPresale is Ownable {
     require(_bnbAmounts[2] >= (_bnbAmounts[3] * 5) / 100, "Softcap should be greater than or equal to 50% of hardcap");
     require(_tokenDetails[3] >= 51, "Liquidity Percentage should be Greater than or equal to 51%");
 
-    Presale presale = new Presale(
+    SummitCustomPresale presale = new SummitCustomPresale(
       [msg.sender, _addresses[0], _addresses[1], serviceFeeReciever],
       _tokenDetails,
       _bnbAmounts,
@@ -48,10 +51,15 @@ contract SummitFactoryPresale is Ownable {
     );
     tokenPresales[_addresses[0]] = address(presale);
     accountPresales[msg.sender].push(address(presale));
+    presaleAddresses.push(address(presale));
     address payable feeReciever = payable(serviceFeeReciever);
     feeReciever.transfer(preSaleFee);
 
     IERC20(_addresses[0]).transferFrom(msg.sender, address(presale), _tokenDetails[0]);
+  }
+
+  function getPresaleAddresses() external view returns (address[] memory) {
+    return presaleAddresses;
   }
 
   function getAccountPresales(address _address) external view returns (address[] memory) {
@@ -62,8 +70,8 @@ contract SummitFactoryPresale is Ownable {
     serviceFeeReciever = _feeReciever;
   }
 
-  function withdraw() public onlyOwner {
-    address payable to = payable(msg.sender);
+  function withdraw(address _feeReciever) public onlyOwner {
+    address payable to = payable(_feeReciever);
     to.transfer(address(this).balance);
   }
 

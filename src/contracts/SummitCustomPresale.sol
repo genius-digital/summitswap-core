@@ -6,36 +6,11 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./interfaces/IERC20v2.sol";
 
-interface IERC20 {
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-
-  function name() external view returns (string memory);
-
-  function symbol() external view returns (string memory);
-
-  function decimals() external view returns (uint8);
-
-  function totalSupply() external view returns (uint256);
-
-  function balanceOf(address owner) external view returns (uint256);
-
-  function allowance(address owner, address spender) external view returns (uint256);
-
-  function approve(address spender, uint256 value) external returns (bool);
-
-  function transfer(address to, uint256 value) external returns (bool);
-
-  function transferFrom(
-    address from,
-    address to,
-    uint256 value
-  ) external returns (bool);
-}
-
-contract SummitCustomPresale is Ownable {
-  address private constant burnAddress = 0x000000000000000000000000000000000000dEaD;
+contract SummitCustomPresale is Ownable, ReentrancyGuard {
+  address private constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
   address public serviceFeeReciever;
   address[] public contributors;
@@ -125,13 +100,13 @@ contract SummitCustomPresale is Ownable {
     return tokens;
   }
 
-  function buy() external payable {
+  function buy() external payable nonReentrant {
     require(block.timestamp >= presale.startPresaleTime, "Presale Not started Yet");
     require(block.timestamp < presale.endPresaleTime, "Presale Ended");
 
     require(!presale.isClaimPhase, "Claim Phase has started");
     require(
-      !presale.isWhiteListPhase || (whitelist[whitelistIndex[msg.sender]] == msg.sender),
+      !presale.isWhiteListPhase || (whitelist.length > 0 && whitelist[whitelistIndex[msg.sender]] == msg.sender),
       "Address not Whitelisted"
     );
 
@@ -147,16 +122,14 @@ contract SummitCustomPresale is Ownable {
     }
   }
 
-  function claim() external {
+  function claim() external nonReentrant {
     require(!presale.isPresaleCancelled, "Presale Cancelled");
     require(
       block.timestamp > presale.endPresaleTime || presale.hardCap == presale.totalBought,
       "Claim hasn't started yet"
     );
     require(presale.isClaimPhase, "Not Claim Phase");
-    require(presale.presaleToken != address(0), "Presale token not set");
     require(!isTokenClaimed[msg.sender], "Tokens already Claimed");
-    require(presale.totalBought >= presale.softCap, "Total Bought less than softcap");
 
     uint256 userTokens = calculateBnbToPresaleToken(bought[msg.sender], presale.presalePrice);
     require(
@@ -177,28 +150,7 @@ contract SummitCustomPresale is Ownable {
     }
   }
 
-  function addWhiteList(address[] memory addresses) external {
-    for (uint256 index = 0; index < addresses.length; index++) {
-      if (whitelist.length == 0 || whitelistIndex[addresses[index]] == 0) {
-        whitelistIndex[addresses[index]] = whitelist.length;
-        whitelist.push(addresses[index]);
-      }
-    }
-  }
-
-  function removeWhiteList(address[] memory addresses) external {
-    for (uint256 index = 0; index < addresses.length; index++) {
-      uint256 _whitelistIndex = whitelistIndex[addresses[index]];
-      if (whitelist[_whitelistIndex] == addresses[index]) {
-        whitelistIndex[whitelist[_whitelistIndex]] = 0;
-        whitelist[_whitelistIndex] = whitelist[whitelist.length - 1];
-        whitelistIndex[whitelist[_whitelistIndex]] = _whitelistIndex == (whitelist.length - 1) ? 0 : _whitelistIndex;
-        whitelist.pop();
-      }
-    }
-  }
-
-  function widhrawBNB() external {
+  function withdrawBNB() external nonReentrant {
     require(presale.isPresaleCancelled, "Presale Not Cancelled");
     require(bought[msg.sender] > 0, "You do not have any contributions");
     address payable msgSender = payable(msg.sender);
@@ -208,10 +160,12 @@ contract SummitCustomPresale is Ownable {
     removeContributor(msg.sender);
   }
 
-  function emergencyWithdrawBNB() external {
+  function emergencyWithdrawBNB() external nonReentrant {
     require(block.timestamp >= presale.startPresaleTime, "Presale Not started Yet");
     require(block.timestamp < presale.endPresaleTime, "Presale Ended");
     require(bought[msg.sender] > 0, "You do not have any contributions");
+    require(!presale.isPresaleCancelled, "Presale has been cancelled");
+    require(!presale.isClaimPhase, "Presale claim phase");
     address payable msgSender = payable(msg.sender);
     uint256 bnbFeeAmount = (bought[msg.sender] * emergencyWithdrawFee) / FEE_DENOMINATOR;
     msgSender.transfer(bought[msg.sender] - bnbFeeAmount);
@@ -225,7 +179,28 @@ contract SummitCustomPresale is Ownable {
   //////////////////
   // Owner functions
 
-  function finalize() external payable onlyOwner {
+  function addWhiteList(address[] memory addresses) external onlyOwner {
+    for (uint256 index = 0; index < addresses.length; index++) {
+      if (whitelist.length == 0 || (whitelistIndex[addresses[index]] == 0 && addresses[index] != whitelist[0])) {
+        whitelistIndex[addresses[index]] = whitelist.length;
+        whitelist.push(addresses[index]);
+      }
+    }
+  }
+
+  function removeWhiteList(address[] memory addresses) external onlyOwner {
+    for (uint256 index = 0; index < addresses.length; index++) {
+      uint256 _whitelistIndex = whitelistIndex[addresses[index]];
+      if (whitelist.length > 0 && whitelist[_whitelistIndex] == addresses[index]) {
+        whitelistIndex[whitelist[_whitelistIndex]] = 0;
+        whitelist[_whitelistIndex] = whitelist[whitelist.length - 1];
+        whitelistIndex[whitelist[_whitelistIndex]] = _whitelistIndex == (whitelist.length - 1) ? 0 : _whitelistIndex;
+        whitelist.pop();
+      }
+    }
+  }
+
+  function finalize() external payable onlyOwner nonReentrant {
     require(block.timestamp > presale.endPresaleTime || presale.hardCap == presale.totalBought, "Presale Not Ended");
     require(presale.totalBought >= presale.softCap, "Total bought is less than softCap. Presale failed");
 
@@ -248,7 +223,7 @@ contract SummitCustomPresale is Ownable {
       if (presale.refundType == 0) {
         IERC20(presale.presaleToken).transfer(msg.sender, remainingTokenAmount);
       } else {
-        IERC20(presale.presaleToken).transfer(burnAddress, remainingTokenAmount);
+        IERC20(presale.presaleToken).transfer(BURN_ADDRESS, remainingTokenAmount);
       }
     }
   }
@@ -262,7 +237,7 @@ contract SummitCustomPresale is Ownable {
     IERC20(presale.presaleToken).transfer(msg.sender, tokenAmount);
   }
 
-  function enablewhitelist() external onlyOwner {
+  function toggleWhitelistPhase() external onlyOwner {
     presale.isWhiteListPhase = !presale.isWhiteListPhase;
   }
 

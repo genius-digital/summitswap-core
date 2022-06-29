@@ -14,7 +14,7 @@ contract SummitFactoryPresale is Ownable {
   address public serviceFeeReciever;
   uint256 public preSaleFee = 0.001 ether;
 
-  constructor(uint256 _preSaleFee, address _feeReciever) Ownable() {
+  constructor(uint256 _preSaleFee, address _feeReciever) {
     preSaleFee = _preSaleFee;
     serviceFeeReciever = _feeReciever;
   }
@@ -35,7 +35,7 @@ contract SummitFactoryPresale is Ownable {
     require(_startPresaleTime > block.timestamp, "Presale start time should be greater than block.timestamp");
     require(_endPresaleTime > _startPresaleTime, "Presale End time should be greater than presale start time");
     require(_bnbAmounts[0] <= _bnbAmounts[1], "MinBuybnb should be less than maxBuybnb");
-    require(_bnbAmounts[2] >= (_bnbAmounts[3] * 5) / 100, "Softcap should be greater than or equal to 50% of hardcap");
+    require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
     require(_tokenDetails[3] >= 51, "Liquidity Percentage should be Greater than or equal to 51%");
 
     SummitCustomPresale presale = new SummitCustomPresale(

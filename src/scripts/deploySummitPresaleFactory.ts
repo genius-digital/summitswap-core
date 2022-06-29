@@ -1,10 +1,10 @@
 import { ethers } from "hardhat";
 
-export async function deploySummitPresaleFactory(feeToSetter: number, serviceFeeAddress: string) {
+export async function deploySummitPresaleFactory(feeToSetter: string, serviceFeeAddress: string) {
   console.log("Starting to deploy SummitPresaleFactory");
 
   const SummitFactoryPresale = await ethers.getContractFactory("SummitFactoryPresale");
-  const summitFactoryPresale = await SummitFactoryPresale.deploy(100000000000000, serviceFeeAddress);
+  const summitFactoryPresale = await SummitFactoryPresale.deploy(feeToSetter, serviceFeeAddress);
   await summitFactoryPresale.deployed();
 
   console.log("summitFactoryPresale deployed to:", summitFactoryPresale.address);
@@ -13,7 +13,10 @@ export async function deploySummitPresaleFactory(feeToSetter: number, serviceFee
 }
 
 async function main() {
-  await deploySummitPresaleFactory(100000000000000, "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F");
+  const createPresaleFee = "100000000000000"; // 0.0001 ether
+  const serviceFeeReciever = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
+
+  await deploySummitPresaleFactory(createPresaleFee, serviceFeeReciever);
 }
 
 if (require.main === module) {

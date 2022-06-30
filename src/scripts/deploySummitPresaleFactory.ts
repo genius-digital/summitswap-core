@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+import { tryVerify } from "./utils/verify";
 
 export async function deploySummitPresaleFactory(feeToSetter: string, serviceFeeAddress: string) {
   console.log("Starting to deploy SummitPresaleFactory");
@@ -8,6 +9,8 @@ export async function deploySummitPresaleFactory(feeToSetter: string, serviceFee
   await summitFactoryPresale.deployed();
 
   console.log("summitFactoryPresale deployed to:", summitFactoryPresale.address);
+
+  await tryVerify(summitFactoryPresale.address, [feeToSetter, serviceFeeAddress]);
 
   return summitFactoryPresale;
 }

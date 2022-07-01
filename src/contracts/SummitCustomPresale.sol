@@ -7,7 +7,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./interfaces/IERC20v2.sol";
+import "./interfaces/IERC20.sol";
 
 contract SummitCustomPresale is Ownable, ReentrancyGuard {
   address private constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;

@@ -1,6 +1,5 @@
 import { waffle } from "hardhat";
 import { expect, assert } from "chai";
-// import { BigNumber, utils } from "ethers";
 import dayjs from "dayjs";
 import { ethers, BigNumber } from "ethers";
 import CustomPresaleArtifact from "@built-contracts/SummitCustomPresale.sol/SummitCustomPresale.json";
@@ -50,12 +49,7 @@ describe("SummitFactoryPresale", () => {
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
     customPresale = (await deployContract(owner, CustomPresaleArtifact, [
       [owner.address, presaleToken.address, router, otherOwner.address],
-      [
-        ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        ethers.utils.parseUnits(presalePrice, 18),
-        ethers.utils.parseUnits(listingPrice, 18),
-        liquidityPrecentage,
-      ],
+      [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
       [
         ethers.utils.parseUnits(minBuyBnb, 18),
         ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -190,12 +184,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -231,12 +220,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -314,12 +298,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -534,12 +513,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -572,12 +546,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -759,12 +728,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -813,12 +777,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -860,12 +819,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -946,12 +900,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -1011,12 +960,7 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [
-          ethers.utils.parseUnits("0", await presaleToken.decimals()),
-          ethers.utils.parseUnits(presalePrice, 18),
-          ethers.utils.parseUnits(listingPrice, 18),
-          liquidityPrecentage,
-        ],
+        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
         [
           ethers.utils.parseUnits(minBuyBnb, 18),
           ethers.utils.parseUnits(maxBuyBnb, 18),

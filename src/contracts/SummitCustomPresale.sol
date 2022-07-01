@@ -52,7 +52,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
   constructor(
     address[4] memory _addresses, // owner, token, router, serviceFeeReceiver
-    uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
+    uint256[3] memory _tokenDetails, // _presalePrice, _listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuyBnb, maxBuyBnb, softcap, hardcap
     uint256 _liquidityLockTime,
     uint256 _startPresaleTime,
@@ -65,14 +65,14 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     serviceFeeReceiver = _addresses[3];
     presale.presaleToken = _addresses[1];
     presale.router = _addresses[2];
-    presale.presalePrice = _tokenDetails[1];
-    presale.listingPrice = _tokenDetails[2];
+    presale.presalePrice = _tokenDetails[0];
+    presale.listingPrice = _tokenDetails[1];
+    presale.liquidityPercentage = (_tokenDetails[2] * FEE_DENOMINATOR) / 100;
     presale.liquidityLockTime = _liquidityLockTime;
     presale.minBuyBnb = _bnbAmounts[0];
     presale.maxBuyBnb = _bnbAmounts[1];
     presale.softCap = _bnbAmounts[2];
     presale.hardCap = _bnbAmounts[3];
-    presale.liquidityPercentage = (_tokenDetails[3] * FEE_DENOMINATOR) / 100;
     presale.startPresaleTime = _startPresaleTime;
     presale.endPresaleTime = _endPresaleTime;
     presale.feeType = _feeType;

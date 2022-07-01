@@ -40,7 +40,7 @@ contract SummitFactoryPresale is Ownable {
 
     SummitCustomPresale presale = new SummitCustomPresale(
       [msg.sender, _addresses[0], _addresses[1], serviceFeeReceiver],
-      _tokenDetails,
+      [_tokenDetails[1], _tokenDetails[2], _tokenDetails[3]],
       _bnbAmounts,
       _liquidityLockTime,
       _startPresaleTime,

@@ -362,38 +362,48 @@ describe("SummitFactoryPresale", () => {
   });
 
   describe("claim()", () => {
-    it("should be reverted, if presale cancelled", async () => {
+    beforeEach(async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
       });
+    });
+    it("should be reverted, if presale cancelled", async () => {
       await customPresale.connect(owner).cancelPresale();
       await expect(customPresale.connect(otherWallet1).claim()).to.be.revertedWith("Presale Cancelled");
     });
 
     it("should be reverted, if not claim phase", async () => {
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [otherWallet1.address, presaleToken.address, router, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther("0.4")],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        feeType,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       await expect(customPresale.connect(otherWallet1).claim()).to.be.revertedWith("Claim hasn't started yet");
     });
 
     it("should be reverted, if tokens already claimed", async () => {
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
-      });
+      await customPresale.connect(owner).finalize();
+      await expect(customPresale.connect(otherWallet2).claim()).to.be.revertedWith(
+        "You do not have any tokens to claim"
+      );
+    });
+
+    it("should be reverted, if tokens already claimed", async () => {
       await customPresale.connect(owner).finalize();
       await customPresale.connect(otherWallet1).claim();
       await expect(customPresale.connect(otherWallet1).claim()).to.be.revertedWith("Tokens already Claimed");
     });
 
-    it("should be equal buyAmount and boughtAmount", async () => {
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
-      });
+    it("should be equal boughtAmount and transferred Amount", async () => {
       await customPresale.connect(owner).finalize();
       await customPresale.connect(otherWallet1).claim();
 
@@ -403,10 +413,6 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be true isTokenClaimed", async () => {
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
-      });
       await customPresale.connect(owner).finalize();
       await customPresale.connect(otherWallet1).claim();
       const isAccountClaimed = await customPresale.isTokenClaimed(otherWallet1.address);

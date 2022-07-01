@@ -129,6 +129,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       "Claim hasn't started yet"
     );
     require(presale.isClaimPhase, "Not Claim Phase");
+    require(bought[msg.sender] > 0, "You do not have any tokens to claim");
     require(!isTokenClaimed[msg.sender], "Tokens already Claimed");
 
     uint256 userTokens = calculateBnbToPresaleToken(bought[msg.sender], presale.presalePrice);

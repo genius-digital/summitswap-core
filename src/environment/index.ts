@@ -17,7 +17,7 @@ const KODAs = {
 
 const SummitswapFactories = {
   "56": "0x7067079bc460d2c5984cC89008786fE46839FCF0",
-  "97": "0x765317D857df6BceA1B3489b8B66422B9967eF8B",
+  "97": "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B",
 } as Record<string, string>;
 
 const SummitswapRouters = {

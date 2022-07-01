@@ -1,5 +1,9 @@
-import { ethers } from "hardhat";
 import dayjs from "dayjs";
+import { BigNumber } from "ethers";
+import { parseEther, parseUnits } from "ethers/lib/utils";
+import { environment } from "src/environment";
+import { deployDummyToken } from "./deployDummyToken";
+import { deploySummitPresaleFactory } from "./deploySummitPresaleFactory";
 
 interface TokenDetails {
   presalePrice: string;
@@ -15,7 +19,7 @@ interface BnbAmounts {
 }
 
 export async function deployCustomPresale(
-  createPresaleFee: string,
+  createPresaleFee: BigNumber,
   serviceFeeReciever: string,
   router: string,
   tokenDetails: TokenDetails,
@@ -31,22 +35,10 @@ export async function deployCustomPresale(
   const FEE_DENOMINATOR = 10 ** 9;
   const BNB_FEE_TYPE_1 = 20000000;
 
-  console.log("Starting to deploy SummitPresaleFactory");
+  const summitFactoryPresale = await deploySummitPresaleFactory(createPresaleFee, serviceFeeReciever);
+  const dummyToken = await deployDummyToken();
 
-  const SummitFactoryPresale = await ethers.getContractFactory("SummitFactoryPresale");
-  const summitFactoryPresale = await SummitFactoryPresale.deploy(createPresaleFee, serviceFeeReciever);
-  await summitFactoryPresale.deployed();
-
-  console.log("summitFactoryPresale deployed to:", summitFactoryPresale.address);
-  console.log("Starting to deploy DummyToken");
-
-  const DummyToken = await ethers.getContractFactory("DummyToken");
-  const dummyToken = await DummyToken.deploy();
-  await dummyToken.deployed();
-
-  console.log("DummyToken deployed to:", dummyToken.address);
   console.log("Approving Factory");
-
   await dummyToken.approve(summitFactoryPresale.address, MAX_APPROVE_AMOUNT);
 
   console.log("Factory Approved");
@@ -55,22 +47,24 @@ export async function deployCustomPresale(
   const presaleTokenAmount = Number(tokenDetails.presalePrice) * Number(bnbAmounts.hardCap);
   const tokensForLiquidity =
     Number(tokenDetails.liquidityPrecentage / 100) * Number(bnbAmounts.hardCap) * Number(tokenDetails.listingPrice);
-  const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
+  const feeTokens = feeType === 0 ? 0 : (presaleTokenAmount * BNB_FEE_TYPE_1) / FEE_DENOMINATOR;
   const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
 
-  const createPresaleTransaction = await summitFactoryPresale.createPresale(
+  const tokenDecimals = await dummyToken.decimals();
+
+  const presale = await summitFactoryPresale.createPresale(
     [dummyToken.address, router],
     [
-      ethers.utils.parseUnits(tokenAmount.toString(), await dummyToken.decimals()),
-      ethers.utils.parseEther(tokenDetails.presalePrice),
-      ethers.utils.parseEther(tokenDetails.listingPrice),
+      parseUnits(tokenAmount.toString(), tokenDecimals),
+      parseEther(tokenDetails.presalePrice),
+      parseEther(tokenDetails.listingPrice),
       tokenDetails.liquidityPrecentage,
     ],
     [
-      ethers.utils.parseEther(bnbAmounts.minBuyBnb),
-      ethers.utils.parseEther(bnbAmounts.maxBuyBnb),
-      ethers.utils.parseEther(bnbAmounts.softCap),
-      ethers.utils.parseEther(bnbAmounts.hardCap),
+      parseEther(bnbAmounts.minBuyBnb),
+      parseEther(bnbAmounts.maxBuyBnb),
+      parseEther(bnbAmounts.softCap),
+      parseEther(bnbAmounts.hardCap),
     ],
     liquidityLockTime,
     startPresaleTime,
@@ -83,20 +77,19 @@ export async function deployCustomPresale(
     }
   );
 
-  await createPresaleTransaction.wait();
+  await presale.wait();
 
   const presaleAddress = await summitFactoryPresale.tokenPresales(dummyToken.address);
 
   console.log("CustomPresale deployed to:", presaleAddress);
 
-  return summitFactoryPresale;
+  return presale;
 }
 
 async function main() {
-  const createPresaleFee = "100000000000000"; // 0.0001 ether
+  const createPresaleFee = parseEther("0.0001");
   const serviceFeeReciever = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
 
-  const router = "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
@@ -114,7 +107,7 @@ async function main() {
   await deployCustomPresale(
     createPresaleFee,
     serviceFeeReciever,
-    router,
+    environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B",
     { presalePrice, listingPrice, liquidityPrecentage },
     { minBuyBnb, maxBuyBnb, softCap, hardCap },
     liquidityLockTime,

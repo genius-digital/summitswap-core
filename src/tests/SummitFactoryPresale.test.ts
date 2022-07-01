@@ -2,9 +2,11 @@ import { waffle } from "hardhat";
 import { expect, assert } from "chai";
 import dayjs from "dayjs";
 import { ethers, BigNumber } from "ethers";
+import { parseEther } from "ethers/lib/utils";
 import PresaleFactoryArtifact from "@built-contracts/SummitFactoryPresale.sol/SummitFactoryPresale.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import { DummyToken, SummitFactoryPresale } from "build/typechain";
+import { environment, MAX_APPROVE_AMOUNT } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
@@ -14,15 +16,13 @@ describe("SummitFactoryPresale", () => {
   let presaleFactory: SummitFactoryPresale;
   let presaleToken: DummyToken;
 
-  const createPresaleFee = "100000000000000"; // 0.0001 ether
-  const updatedPresaleFee = "1200000000000000";
-
-  const MAX_APPROVE_AMOUNT = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+  const serviceFee = parseEther("0.00010");
+  const updatedServiceFee = parseEther("0.00012");
 
   const FEE_DENOMINATOR = 10 ** 9;
   const BNB_FEE_TYPE_1 = 20000000; // 2 %
 
-  const router = "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
+  const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
@@ -39,7 +39,7 @@ describe("SummitFactoryPresale", () => {
 
   beforeEach(async () => {
     presaleFactory = (await deployContract(owner, PresaleFactoryArtifact, [
-      createPresaleFee,
+      serviceFee,
       otherOwner.address,
     ])) as SummitFactoryPresale;
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -52,46 +52,46 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
-  describe("serviceFeeReciever", () => {
+  describe("serviceFeeReceiver", () => {
     it("should be otherOwner", async () => {
-      const feeRecieverAddress = await presaleFactory.serviceFeeReciever();
-      assert.equal(feeRecieverAddress, otherOwner.address);
+      const feeReceiverAddress = await presaleFactory.serviceFeeReceiver();
+      assert.equal(feeReceiverAddress, otherOwner.address);
     });
   });
 
-  describe("setServiceFeeReciver()", () => {
+  describe("setServiceFeeReceiver()", () => {
     it("should be reverted, if set with other than owner", async () => {
-      await expect(presaleFactory.connect(otherWallet1).setServiceFeeReciver(otherWallet1.address)).to.be.revertedWith(
+      await expect(presaleFactory.connect(otherWallet1).setServiceFeeReceiver(otherWallet1.address)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
     });
 
     it("should be set to otherWallet1", async () => {
-      await presaleFactory.connect(owner).setServiceFeeReciver(otherWallet1.address);
+      await presaleFactory.connect(owner).setServiceFeeReceiver(otherWallet1.address);
 
-      const feeRecieverAddress = await presaleFactory.serviceFeeReciever();
-      assert.equal(feeRecieverAddress, otherWallet1.address);
+      const feeReceiverAddress = await presaleFactory.serviceFeeReceiver();
+      assert.equal(feeReceiverAddress, otherWallet1.address);
     });
   });
 
   describe("preSaleFee", () => {
-    it("should be createPresaleFee", async () => {
+    it("should be serviceFee", async () => {
       const presaleFee = await presaleFactory.preSaleFee();
-      assert.equal(presaleFee.toString(), createPresaleFee);
+      assert.equal(presaleFee.toString(), serviceFee.toString());
     });
   });
 
   describe("setFee()", () => {
     it("should be reverted, if set with other than owner", async () => {
-      await expect(presaleFactory.connect(otherWallet1).setFee(updatedPresaleFee)).to.be.revertedWith(
+      await expect(presaleFactory.connect(otherWallet1).setFee(updatedServiceFee)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
     });
 
-    it("should be set to updatedPresaleFee", async () => {
-      await presaleFactory.connect(owner).setFee(updatedPresaleFee);
+    it("should be set to updatedServiceFee", async () => {
+      await presaleFactory.connect(owner).setFee(updatedServiceFee);
       const presaleFee = await presaleFactory.preSaleFee();
-      assert.equal(presaleFee.toString(), updatedPresaleFee);
+      assert.equal(presaleFee.toString(), updatedServiceFee.toString());
     });
   });
 
@@ -138,7 +138,7 @@ describe("SummitFactoryPresale", () => {
           refundType,
           isWhiteListPhase,
           {
-            value: createPresaleFee,
+            value: serviceFee,
             gasLimit: 3000000,
           }
         );
@@ -182,7 +182,7 @@ describe("SummitFactoryPresale", () => {
             refundType,
             isWhiteListPhase,
             {
-              value: BigNumber.from(createPresaleFee).sub("1"),
+              value: BigNumber.from(serviceFee).sub("1"),
               gasLimit: 3000000,
             }
           )
@@ -213,7 +213,7 @@ describe("SummitFactoryPresale", () => {
           refundType,
           isWhiteListPhase,
           {
-            value: createPresaleFee,
+            value: serviceFee,
             gasLimit: 3000000,
           }
         );
@@ -241,7 +241,7 @@ describe("SummitFactoryPresale", () => {
             refundType,
             isWhiteListPhase,
             {
-              value: createPresaleFee,
+              value: serviceFee,
               gasLimit: 3000000,
             }
           )
@@ -273,7 +273,7 @@ describe("SummitFactoryPresale", () => {
             refundType,
             isWhiteListPhase,
             {
-              value: createPresaleFee,
+              value: serviceFee,
               gasLimit: 3000000,
             }
           )
@@ -305,7 +305,7 @@ describe("SummitFactoryPresale", () => {
             refundType,
             isWhiteListPhase,
             {
-              value: createPresaleFee,
+              value: serviceFee,
               gasLimit: 3000000,
             }
           )
@@ -337,7 +337,7 @@ describe("SummitFactoryPresale", () => {
             refundType,
             isWhiteListPhase,
             {
-              value: createPresaleFee,
+              value: serviceFee,
               gasLimit: 3000000,
             }
           )
@@ -369,7 +369,7 @@ describe("SummitFactoryPresale", () => {
             refundType,
             isWhiteListPhase,
             {
-              value: createPresaleFee,
+              value: serviceFee,
               gasLimit: 3000000,
             }
           )
@@ -401,7 +401,7 @@ describe("SummitFactoryPresale", () => {
             refundType,
             isWhiteListPhase,
             {
-              value: createPresaleFee,
+              value: serviceFee,
               gasLimit: 3000000,
             }
           )
@@ -432,7 +432,7 @@ describe("SummitFactoryPresale", () => {
           refundType,
           isWhiteListPhase,
           {
-            value: createPresaleFee,
+            value: serviceFee,
             gasLimit: 3000000,
           }
         );
@@ -466,13 +466,13 @@ describe("SummitFactoryPresale", () => {
           refundType,
           isWhiteListPhase,
           {
-            value: createPresaleFee,
+            value: serviceFee,
             gasLimit: 3000000,
           }
         );
       const finalBalance = await provider.getBalance(otherOwner.address);
       const feeToServiceFeeAddress = finalBalance.sub(initialBalance).toString();
-      assert.equal(feeToServiceFeeAddress, createPresaleFee);
+      assert.equal(feeToServiceFeeAddress, serviceFee.toString());
     });
 
     it("should be equal presale token amount and change owner token amount", async () => {
@@ -500,7 +500,7 @@ describe("SummitFactoryPresale", () => {
           refundType,
           isWhiteListPhase,
           {
-            value: createPresaleFee,
+            value: serviceFee,
             gasLimit: 3000000,
           }
         );

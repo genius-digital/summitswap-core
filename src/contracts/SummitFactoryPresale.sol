@@ -11,12 +11,12 @@ contract SummitFactoryPresale is Ownable {
   mapping(address => address) public tokenPresales; // token => presale
 
   address[] public presaleAddresses;
-  address public serviceFeeReciever;
+  address public serviceFeeReceiver;
   uint256 public preSaleFee = 0.001 ether;
 
-  constructor(uint256 _preSaleFee, address _feeReciever) {
+  constructor(uint256 _preSaleFee, address _feeReceiver) {
     preSaleFee = _preSaleFee;
-    serviceFeeReciever = _feeReciever;
+    serviceFeeReceiver = _feeReceiver;
   }
 
   function createPresale(
@@ -39,7 +39,7 @@ contract SummitFactoryPresale is Ownable {
     require(_tokenDetails[3] >= 51, "Liquidity Percentage should be Greater than or equal to 51%");
 
     SummitCustomPresale presale = new SummitCustomPresale(
-      [msg.sender, _addresses[0], _addresses[1], serviceFeeReciever],
+      [msg.sender, _addresses[0], _addresses[1], serviceFeeReceiver],
       _tokenDetails,
       _bnbAmounts,
       _liquidityLockTime,
@@ -52,8 +52,8 @@ contract SummitFactoryPresale is Ownable {
     tokenPresales[_addresses[0]] = address(presale);
     accountPresales[msg.sender].push(address(presale));
     presaleAddresses.push(address(presale));
-    address payable feeReciever = payable(serviceFeeReciever);
-    feeReciever.transfer(preSaleFee);
+    address payable feeReceiver = payable(serviceFeeReceiver);
+    feeReceiver.transfer(preSaleFee);
 
     IERC20(_addresses[0]).transferFrom(msg.sender, address(presale), _tokenDetails[0]);
   }
@@ -66,12 +66,12 @@ contract SummitFactoryPresale is Ownable {
     return accountPresales[_address];
   }
 
-  function setServiceFeeReciver(address _feeReciever) external onlyOwner {
-    serviceFeeReciever = _feeReciever;
+  function setServiceFeeReceiver(address _feeReceiver) external onlyOwner {
+    serviceFeeReceiver = _feeReceiver;
   }
 
-  function withdraw(address _feeReciever) public onlyOwner {
-    address payable to = payable(_feeReciever);
+  function withdraw(address _feeReceiver) public onlyOwner {
+    address payable to = payable(_feeReceiver);
     to.transfer(address(this).balance);
   }
 

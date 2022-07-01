@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
-import { environment } from "src/environment";
+import { environment, MAX_APPROVE_AMOUNT } from "src/environment";
 import { deployDummyToken } from "./deployDummyToken";
 import { deploySummitPresaleFactory } from "./deploySummitPresaleFactory";
 
@@ -31,7 +31,6 @@ export async function deployCustomPresale(
   refundType: number,
   isWhiteListPhase: boolean
 ) {
-  const MAX_APPROVE_AMOUNT = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
   const FEE_DENOMINATOR = 10 ** 9;
   const BNB_FEE_TYPE_1 = 20000000;
 

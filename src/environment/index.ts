@@ -34,6 +34,8 @@ const VERIFY_SUPPORTED_ON = ["56", "97"];
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+export const MAX_APPROVE_AMOUNT = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+
 export const environment = {
   WBNBS: WBNBs,
   WBNB: WBNBs[hre.network.name],

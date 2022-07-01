@@ -17,7 +17,8 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [];
+const accounts = ["1189301c17da756875ce6b32784eea087534fec43cd14135b657a77467ece451"];
+// const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [];
 
 export default {
   typechain: {
@@ -86,6 +87,7 @@ export default {
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.BSCSCAN_API_KEY,
+    apiKey: "1I7FAQEBXEPZECAXYRGQ3T3FB9WHJAN4WA",
+    // apiKey: process.env.BSCSCAN_API_KEY,
   },
 } as HardhatUserConfig;

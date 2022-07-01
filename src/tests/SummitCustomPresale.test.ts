@@ -6,6 +6,7 @@ import { ethers, BigNumber } from "ethers";
 import CustomPresaleArtifact from "@built-contracts/SummitCustomPresale.sol/SummitCustomPresale.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import { DummyToken, SummitCustomPresale } from "build/typechain";
+import { environment } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
@@ -23,7 +24,7 @@ describe("SummitFactoryPresale", () => {
   const TOKEN_FEE_TYPE_1 = 20000000; // 2%
   const EMERGENCY_WITHDRAW_FEE = 100000000; //
 
-  const router = "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
+  const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
@@ -462,7 +463,7 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
-  describe("widhrawBNB()", () => {
+  describe("withdrawBNB()", () => {
     it("should be reverted, if presale not cancelled", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: ethers.utils.parseUnits(maxBuyBnb, 18),
@@ -789,7 +790,7 @@ describe("SummitFactoryPresale", () => {
       );
     });
 
-    it("should send 5% to servicefeeReciever for feeType 0", async () => {
+    it("should send 5% to servicefeeReceiver for feeType 0", async () => {
       const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
@@ -804,7 +805,7 @@ describe("SummitFactoryPresale", () => {
       );
     });
 
-    it("should send 2% raised BNB to servicefeeReciever for feeType 1", async () => {
+    it("should send 2% raised BNB to servicefeeReceiver for feeType 1", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
@@ -851,7 +852,7 @@ describe("SummitFactoryPresale", () => {
       );
     });
 
-    it("should send 2% raised tokenAmount to servicefeeReciever for feeType 1", async () => {
+    it("should send 2% raised tokenAmount to servicefeeReceiver for feeType 1", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
@@ -1080,15 +1081,15 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
-  describe("setServiceFeeReciver()", () => {
-    it("should set serviceFee reciver to otherWallet1", async () => {
-      await customPresale.connect(owner).setServiceFeeReciver(otherWallet1.address);
-      const feeRecieverAddress = await customPresale.serviceFeeReciever();
-      assert.equal(feeRecieverAddress, otherWallet1.address);
+  describe("setServiceFeeReceiver()", () => {
+    it("should set serviceFee receiver to otherWallet1", async () => {
+      await customPresale.connect(owner).setServiceFeeReceiver(otherWallet1.address);
+      const feeReceiverAddress = await customPresale.serviceFeeReceiver();
+      assert.equal(feeReceiverAddress, otherWallet1.address);
     });
 
     it("should be reverted, if set with otherWallet1", async () => {
-      await expect(customPresale.connect(otherWallet1).setServiceFeeReciver(otherWallet1.address)).to.be.revertedWith(
+      await expect(customPresale.connect(otherWallet1).setServiceFeeReceiver(otherWallet1.address)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
     });

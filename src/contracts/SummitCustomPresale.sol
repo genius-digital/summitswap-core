@@ -12,7 +12,7 @@ import "./interfaces/IERC20.sol";
 contract SummitCustomPresale is Ownable, ReentrancyGuard {
   address private constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
-  address public serviceFeeReciever;
+  address public serviceFeeReceiver;
   address[] public contributors;
   address[] public whitelist;
   mapping(address => uint256) private contributorIndex;
@@ -51,7 +51,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   PresaleInfo presale;
 
   constructor(
-    address[4] memory _addresses, // owner, token, router, serviceFeeReciever
+    address[4] memory _addresses, // owner, token, router, serviceFeeReceiver
     uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuyBnb, maxBuyBnb, softcap, hardcap
     uint256 _liquidityLockTime,
@@ -62,7 +62,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     bool _isWhiteListPhase
   ) {
     transferOwnership(_addresses[0]);
-    serviceFeeReciever = _addresses[3];
+    serviceFeeReceiver = _addresses[3];
     presale.presaleToken = _addresses[1];
     presale.router = _addresses[2];
     presale.presalePrice = _tokenDetails[1];
@@ -169,7 +169,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     address payable msgSender = payable(msg.sender);
     uint256 bnbFeeAmount = (bought[msg.sender] * emergencyWithdrawFee) / FEE_DENOMINATOR;
     msgSender.transfer(bought[msg.sender] - bnbFeeAmount);
-    payable(serviceFeeReciever).transfer(bnbFeeAmount);
+    payable(serviceFeeReceiver).transfer(bnbFeeAmount);
 
     presale.totalBought = presale.totalBought - bought[msg.sender];
     bought[msg.sender] = 0;
@@ -215,9 +215,9 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
     presale.isClaimPhase = true;
 
-    payable(serviceFeeReciever).transfer(feeBnb);
+    payable(serviceFeeReceiver).transfer(feeBnb);
     if (feeToken > 0) {
-      IERC20(presale.presaleToken).transfer(serviceFeeReciever, feeToken);
+      IERC20(presale.presaleToken).transfer(serviceFeeReceiver, feeToken);
     }
     if (remainingTokenAmount > 0) {
       if (presale.refundType == 0) {
@@ -246,8 +246,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     presale.isPresaleCancelled = true;
   }
 
-  function setServiceFeeReciver(address _feeReciever) external onlyOwner {
-    serviceFeeReciever = _feeReciever;
+  function setServiceFeeReceiver(address _feeReceiver) external onlyOwner {
+    serviceFeeReceiver = _feeReceiver;
   }
 
   function withdrawBNBOwner(uint256 _amount, address _receiver) external onlyOwner {

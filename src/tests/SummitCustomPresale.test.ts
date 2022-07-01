@@ -195,7 +195,6 @@ describe("SummitFactoryPresale", () => {
       await expect(
         customPresale.connect(otherWallet2).buy({
           value: parseEther(maxBuyBnb),
-          gasLimit: 3000000,
         })
       ).to.be.revertedWith("Presale Not started Yet");
     });
@@ -223,7 +222,6 @@ describe("SummitFactoryPresale", () => {
       await expect(
         customPresale.connect(otherWallet2).buy({
           value: parseEther(maxBuyBnb),
-          gasLimit: 3000000,
         })
       ).to.be.revertedWith("Presale Ended");
     });
@@ -231,13 +229,11 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if claim phase", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
       await expect(
         customPresale.connect(otherWallet2).buy({
           value: parseEther(maxBuyBnb),
-          gasLimit: 3000000,
         })
       ).to.be.revertedWith("Claim Phase has started");
     });
@@ -247,7 +243,6 @@ describe("SummitFactoryPresale", () => {
       await expect(
         customPresale.connect(otherWallet2).buy({
           value: parseEther(minBuyBnb),
-          gasLimit: 3000000,
         })
       ).to.be.revertedWith("Address not Whitelisted");
     });
@@ -256,7 +251,6 @@ describe("SummitFactoryPresale", () => {
       await expect(
         customPresale.connect(otherWallet2).buy({
           value: parseEther(maxBuyBnb).add("1"),
-          gasLimit: 3000000,
         })
       ).to.be.revertedWith("Cannot buy more than HardCap amount");
     });
@@ -265,7 +259,6 @@ describe("SummitFactoryPresale", () => {
       await expect(
         customPresale.connect(otherWallet2).buy({
           value: parseEther(minBuyBnb).sub("1"),
-          gasLimit: 3000000,
         })
       ).to.be.revertedWith("msg.value is less than minBuyBnb");
     });
@@ -293,7 +286,6 @@ describe("SummitFactoryPresale", () => {
       await expect(
         customPresale.connect(otherWallet2).buy({
           value: parseEther(maxBuyBnb).add("1"),
-          gasLimit: 3000000,
         })
       ).to.be.revertedWith("msg.value is great than maxBuyBnb");
     });
@@ -302,7 +294,6 @@ describe("SummitFactoryPresale", () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
-        gasLimit: 3000000,
       });
       const otherWallet1BoughtAmount = (await customPresale.bought(otherWallet1.address)).toString();
       assert.equal(bigMaxBuyBnb.toString(), otherWallet1BoughtAmount);
@@ -312,11 +303,9 @@ describe("SummitFactoryPresale", () => {
       const bigMinBuyBnb = parseEther(minBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
-        gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet2).buy({
         value: bigMinBuyBnb,
-        gasLimit: 3000000,
       });
       const otherWallet1BoughtAmount = (await customPresale.getInfo()).totalBought.toString();
       assert.equal(otherWallet1BoughtAmount, bigMinBuyBnb.add(bigMinBuyBnb).toString());
@@ -326,7 +315,6 @@ describe("SummitFactoryPresale", () => {
       const bigMinBuyBnb = parseEther(minBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
-        gasLimit: 3000000,
       });
       const contributors = await customPresale.getContributors();
       assert.equal(contributors[0], otherWallet1.address);
@@ -336,11 +324,9 @@ describe("SummitFactoryPresale", () => {
       const bigMinBuyBnb = parseEther(minBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
-        gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet2).buy({
         value: bigMinBuyBnb,
-        gasLimit: 3000000,
       });
       const contributors = await customPresale.getContributors();
       assert.equal(contributors.length, 2);
@@ -350,11 +336,9 @@ describe("SummitFactoryPresale", () => {
       const bigMinBuyBnb = parseEther(minBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
-        gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
-        gasLimit: 3000000,
       });
       const contributors = await customPresale.getContributors();
       assert.equal(contributors.length, 1);
@@ -424,7 +408,6 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if presale not cancelled", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
       });
       await expect(customPresale.connect(otherWallet1).withdrawBNB()).to.be.revertedWith("Presale Not Cancelled");
     });
@@ -439,7 +422,6 @@ describe("SummitFactoryPresale", () => {
     it("should be equal withdrawalBNB amount and BuyBNB amount ", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       const initialBoughtAmount = await customPresale.bought(otherWallet1.address);
       await customPresale.connect(owner).cancelPresale();
@@ -451,7 +433,6 @@ describe("SummitFactoryPresale", () => {
     it("should be 0 bought amount after withdrawalBNB", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       await customPresale.connect(owner).cancelPresale();
       await customPresale.connect(otherWallet1).withdrawBNB();
@@ -462,11 +443,9 @@ describe("SummitFactoryPresale", () => {
     it("should be equal change in total bought and withdrawal amount", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet2).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       const initialTotalBought = (await customPresale.getInfo()).totalBought;
       await customPresale.connect(owner).cancelPresale();
@@ -534,7 +513,6 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if presale is cancelled", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       await customPresale.connect(owner).cancelPresale();
       await expect(customPresale.connect(otherWallet1).emergencyWithdrawBNB()).to.be.revertedWith(
@@ -545,7 +523,6 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if is claim phase", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
       await expect(customPresale.connect(otherWallet1).emergencyWithdrawBNB()).to.be.revertedWith(
@@ -556,7 +533,6 @@ describe("SummitFactoryPresale", () => {
     it("should send 10% to service fee address", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       const initialBalance = await provider.getBalance(otherOwner.address);
       await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
@@ -570,7 +546,6 @@ describe("SummitFactoryPresale", () => {
     it("should be equal withdrawalBNB amount and BuyBNB amount ", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       const initialBoughtAmount = await customPresale.bought(otherWallet1.address);
       await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
@@ -581,7 +556,6 @@ describe("SummitFactoryPresale", () => {
     it("should be 0 bought amount after emergencyWithdrawBNB", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
       const boughtAmount = await customPresale.bought(otherWallet1.address);
@@ -591,11 +565,9 @@ describe("SummitFactoryPresale", () => {
     it("should be equal change in total bought and withdrawal amount", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet2).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       const initialTotalBought = (await customPresale.getInfo()).totalBought;
       await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
@@ -655,7 +627,6 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if set with otherWallet1", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
       });
       await expect(customPresale.connect(otherWallet1).finalize()).to.be.revertedWith(
         "Ownable: caller is not the owner"
@@ -665,7 +636,6 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if is not end presale time && hardcap !== totalBought", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuyBnb),
-        gasLimit: 3000000,
       });
       await expect(customPresale.connect(owner).finalize()).to.be.revertedWith("Presale Not Ended");
     });
@@ -700,7 +670,6 @@ describe("SummitFactoryPresale", () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
-        gasLimit: 3000000,
       });
       const initialBalance = await provider.getBalance(otherOwner.address);
       await customPresale.connect(owner).finalize();
@@ -734,7 +703,6 @@ describe("SummitFactoryPresale", () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
-        gasLimit: 3000000,
       });
       const initialBalance = await provider.getBalance(otherOwner.address);
       await customPresale.connect(owner).finalize();
@@ -768,7 +736,6 @@ describe("SummitFactoryPresale", () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
-        gasLimit: 3000000,
       });
       const initialBalance = await presaleToken.balanceOf(otherOwner.address);
       await customPresale.connect(owner).finalize();
@@ -783,7 +750,6 @@ describe("SummitFactoryPresale", () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
-        gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
       const presaleInfo = await customPresale.getInfo();
@@ -794,7 +760,6 @@ describe("SummitFactoryPresale", () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
-        gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
       const presaleInfo = await customPresale.getInfo();
@@ -805,7 +770,6 @@ describe("SummitFactoryPresale", () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
-        gasLimit: 3000000,
       });
       const initialBalance = await presaleToken.balanceOf(owner.address);
       const initialPresaleBalance = await presaleToken.balanceOf(customPresale.address);
@@ -841,7 +805,6 @@ describe("SummitFactoryPresale", () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
-        gasLimit: 3000000,
       });
       const initialBalance = await presaleToken.balanceOf(BURN_ADDRESS);
       const initialPresaleBalance = await presaleToken.balanceOf(customPresale.address);
@@ -956,7 +919,6 @@ describe("SummitFactoryPresale", () => {
     it("should send BNB to otherWallet2", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
       });
       const initialBalance = await provider.getBalance(otherWallet2.address);
       await customPresale.connect(owner).withdrawBNBOwner(parseEther(maxBuyBnb), otherWallet2.address);
@@ -967,7 +929,6 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if set with otherWallet", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuyBnb),
-        gasLimit: 3000000,
       });
       await expect(
         customPresale.connect(otherOwner).withdrawBNBOwner(parseEther(maxBuyBnb), otherWallet2.address)

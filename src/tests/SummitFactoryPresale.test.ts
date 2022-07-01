@@ -134,7 +134,6 @@ describe("SummitFactoryPresale", () => {
           isWhiteListPhase,
           {
             value: serviceFee,
-            gasLimit: 3000000,
           }
         );
     });
@@ -173,7 +172,6 @@ describe("SummitFactoryPresale", () => {
             isWhiteListPhase,
             {
               value: BigNumber.from(serviceFee).sub("1"),
-              gasLimit: 3000000,
             }
           )
       ).to.be.revertedWith("Not Enough Fee");
@@ -199,7 +197,6 @@ describe("SummitFactoryPresale", () => {
           isWhiteListPhase,
           {
             value: serviceFee,
-            gasLimit: 3000000,
           }
         );
       await expect(
@@ -222,7 +219,6 @@ describe("SummitFactoryPresale", () => {
             isWhiteListPhase,
             {
               value: serviceFee,
-              gasLimit: 3000000,
             }
           )
       ).to.be.revertedWith("Presale Already Exists");
@@ -249,7 +245,6 @@ describe("SummitFactoryPresale", () => {
             isWhiteListPhase,
             {
               value: serviceFee,
-              gasLimit: 3000000,
             }
           )
       ).to.be.revertedWith("Presale start time should be greater than block.timestamp");
@@ -276,7 +271,6 @@ describe("SummitFactoryPresale", () => {
             isWhiteListPhase,
             {
               value: serviceFee,
-              gasLimit: 3000000,
             }
           )
       ).to.be.revertedWith("Presale End time should be greater than presale start time");
@@ -308,7 +302,6 @@ describe("SummitFactoryPresale", () => {
             isWhiteListPhase,
             {
               value: serviceFee,
-              gasLimit: 3000000,
             }
           )
       ).to.be.revertedWith("MinBuybnb should be less than maxBuybnb");
@@ -340,7 +333,6 @@ describe("SummitFactoryPresale", () => {
             isWhiteListPhase,
             {
               value: serviceFee,
-              gasLimit: 3000000,
             }
           )
       ).to.be.revertedWith("Softcap should be greater than or equal to 50% of hardcap");
@@ -367,7 +359,6 @@ describe("SummitFactoryPresale", () => {
             isWhiteListPhase,
             {
               value: serviceFee,
-              gasLimit: 3000000,
             }
           )
       ).to.be.revertedWith("Liquidity Percentage should be Greater than or equal to 51%");
@@ -393,7 +384,6 @@ describe("SummitFactoryPresale", () => {
           isWhiteListPhase,
           {
             value: serviceFee,
-            gasLimit: 3000000,
           }
         );
       const presaleAddress = await presaleFactory.presaleAddresses(0);
@@ -422,7 +412,6 @@ describe("SummitFactoryPresale", () => {
           isWhiteListPhase,
           {
             value: serviceFee,
-            gasLimit: 3000000,
           }
         );
       const finalBalance = await provider.getBalance(otherOwner.address);
@@ -451,7 +440,6 @@ describe("SummitFactoryPresale", () => {
           isWhiteListPhase,
           {
             value: serviceFee,
-            gasLimit: 3000000,
           }
         );
       const finalTokenAmount = await presaleToken.balanceOf(owner.address);

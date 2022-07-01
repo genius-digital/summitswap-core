@@ -143,6 +143,49 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
+  describe("withdraw()", () => {
+    it("should be reverted, if withdrawn with otherWallet", async () => {
+      await expect(presaleFactory.connect(otherWallet1).withdraw(otherOwner.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+
+    it("should be equal increase in serviceFeeReceiverAddress and serviceFee", async () => {
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
+      await presaleFactory.connect(owner).setServiceFeeReceiver(presaleFactory.address);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, router],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          liquidityLockTime,
+          startPresaleTime,
+          endPresaleTime,
+          feeType,
+          refundType,
+          isWhiteListPhase,
+          {
+            value: serviceFee,
+          }
+        );
+
+      const initialBalance = await provider.getBalance(otherOwner.address);
+      await presaleFactory.connect(owner).withdraw(otherOwner.address);
+      const finalBalance = await provider.getBalance(otherOwner.address);
+      assert.equal(finalBalance.sub(initialBalance).toString(), serviceFee.toString());
+    });
+  });
+
   describe("createPresale()", () => {
     const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
     const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);

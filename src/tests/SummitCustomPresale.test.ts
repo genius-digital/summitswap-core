@@ -22,7 +22,7 @@ describe("SummitFactoryPresale", () => {
   const BNB_FEE_TYPE_0 = 50000000; // 5%
   const BNB_FEE_TYPE_1 = 20000000; // 2 %
   const TOKEN_FEE_TYPE_1 = 20000000; // 2%
-  const EMERGENCY_WITHDRAW_FEE = 100000000; //
+  const EMERGENCY_WITHDRAW_FEE = 100000000; // 10%
 
   const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
   const presalePrice = "100";
@@ -453,6 +453,17 @@ describe("SummitFactoryPresale", () => {
       const finalTotalBought = (await customPresale.getInfo()).totalBought;
       assert.equal(initialTotalBought.sub(finalTotalBought).toString(), parseEther(minBuyBnb).toString());
     });
+
+    it("should be greater balance after withdrawBNB", async () => {
+      await customPresale.connect(otherWallet1).buy({
+        value: parseEther(maxBuyBnb),
+      });
+      const initialBalance = await provider.getBalance(otherWallet1.address);
+      await customPresale.connect(owner).cancelPresale();
+      await customPresale.connect(otherWallet1).withdrawBNB();
+      const finalBalance = await provider.getBalance(otherWallet1.address);
+      assert.equal(finalBalance.gt(initialBalance), true);
+    });
   });
 
   describe("emergencyWithdrawBNB()", () => {
@@ -573,6 +584,16 @@ describe("SummitFactoryPresale", () => {
       await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
       const finalTotalBought = (await customPresale.getInfo()).totalBought;
       assert.equal(initialTotalBought.sub(finalTotalBought).toString(), parseEther(minBuyBnb).toString());
+    });
+
+    it("should be greater balance after emergencyWithdrawBNB", async () => {
+      await customPresale.connect(otherWallet1).buy({
+        value: parseEther(maxBuyBnb),
+      });
+      const initialBalance = await provider.getBalance(otherWallet1.address);
+      await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
+      const finalBalance = await provider.getBalance(otherWallet1.address);
+      assert.equal(finalBalance.gt(initialBalance), true);
     });
   });
 
@@ -766,7 +787,7 @@ describe("SummitFactoryPresale", () => {
       assert.equal(presaleInfo.isClaimPhase, true);
     });
 
-    it("should refund remaing tokens for refundType 0", async () => {
+    it("should refund remaining tokens for refundType 0", async () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
@@ -782,7 +803,7 @@ describe("SummitFactoryPresale", () => {
       );
     });
 
-    it("should burn remaing tokens for refundType 1", async () => {
+    it("should burn remaining tokens for refundType 1", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);

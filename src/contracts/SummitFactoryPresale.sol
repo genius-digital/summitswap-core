@@ -52,8 +52,10 @@ contract SummitFactoryPresale is Ownable {
     tokenPresales[_addresses[0]] = address(presale);
     accountPresales[msg.sender].push(address(presale));
     presaleAddresses.push(address(presale));
-    address payable feeReceiver = payable(serviceFeeReceiver);
-    feeReceiver.transfer(preSaleFee);
+    if (serviceFeeReceiver != address(this)) {
+      address payable feeReceiver = payable(serviceFeeReceiver);
+      feeReceiver.transfer(preSaleFee);
+    }
 
     IERC20(_addresses[0]).transferFrom(msg.sender, address(presale), _tokenDetails[0]);
   }

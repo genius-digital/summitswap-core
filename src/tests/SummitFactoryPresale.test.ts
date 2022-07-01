@@ -1,8 +1,8 @@
 import { waffle } from "hardhat";
 import { expect, assert } from "chai";
 import dayjs from "dayjs";
-import { ethers, BigNumber } from "ethers";
-import { parseEther } from "ethers/lib/utils";
+import { BigNumber } from "ethers";
+import { parseEther, parseUnits } from "ethers/lib/utils";
 import PresaleFactoryArtifact from "@built-contracts/SummitFactoryPresale.sol/SummitFactoryPresale.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import { DummyToken, SummitFactoryPresale } from "build/typechain";
@@ -120,17 +120,12 @@ describe("SummitFactoryPresale", () => {
         .createPresale(
           [presaleToken.address, router],
           [
-            ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            ethers.utils.parseUnits(presalePrice, 18),
-            ethers.utils.parseUnits(listingPrice, 18),
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [
-            ethers.utils.parseUnits(minBuyBnb, 18),
-            ethers.utils.parseUnits(maxBuyBnb, 18),
-            ethers.utils.parseUnits(softCap, 18),
-            ethers.utils.parseUnits(hardCap, 18),
-          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -164,17 +159,12 @@ describe("SummitFactoryPresale", () => {
           .createPresale(
             [presaleToken.address, router],
             [
-              ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-              ethers.utils.parseUnits(presalePrice, 18),
-              ethers.utils.parseUnits(listingPrice, 18),
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
               liquidityPrecentage,
             ],
-            [
-              ethers.utils.parseUnits(minBuyBnb, 18),
-              ethers.utils.parseUnits(maxBuyBnb, 18),
-              ethers.utils.parseUnits(softCap, 18),
-              ethers.utils.parseUnits(hardCap, 18),
-            ],
+            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
@@ -195,17 +185,12 @@ describe("SummitFactoryPresale", () => {
         .createPresale(
           [presaleToken.address, router],
           [
-            ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            ethers.utils.parseUnits(presalePrice, 18),
-            ethers.utils.parseUnits(listingPrice, 18),
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [
-            ethers.utils.parseUnits(minBuyBnb, 18),
-            ethers.utils.parseUnits(maxBuyBnb, 18),
-            ethers.utils.parseUnits(softCap, 18),
-            ethers.utils.parseUnits(hardCap, 18),
-          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -223,17 +208,12 @@ describe("SummitFactoryPresale", () => {
           .createPresale(
             [presaleToken.address, router],
             [
-              ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-              ethers.utils.parseUnits(presalePrice, 18),
-              ethers.utils.parseUnits(listingPrice, 18),
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
               liquidityPrecentage,
             ],
-            [
-              ethers.utils.parseUnits(minBuyBnb, 18),
-              ethers.utils.parseUnits(maxBuyBnb, 18),
-              ethers.utils.parseUnits(softCap, 18),
-              ethers.utils.parseUnits(hardCap, 18),
-            ],
+            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
@@ -255,17 +235,12 @@ describe("SummitFactoryPresale", () => {
           .createPresale(
             [presaleToken.address, router],
             [
-              ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-              ethers.utils.parseUnits(presalePrice, 18),
-              ethers.utils.parseUnits(listingPrice, 18),
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
               liquidityPrecentage,
             ],
-            [
-              ethers.utils.parseUnits(minBuyBnb, 18),
-              ethers.utils.parseUnits(maxBuyBnb, 18),
-              ethers.utils.parseUnits(softCap, 18),
-              ethers.utils.parseUnits(hardCap, 18),
-            ],
+            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             dayjs(startPresaleTime).subtract(2, "day").unix(),
             endPresaleTime,
@@ -287,17 +262,12 @@ describe("SummitFactoryPresale", () => {
           .createPresale(
             [presaleToken.address, router],
             [
-              ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-              ethers.utils.parseUnits(presalePrice, 18),
-              ethers.utils.parseUnits(listingPrice, 18),
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
               liquidityPrecentage,
             ],
-            [
-              ethers.utils.parseUnits(minBuyBnb, 18),
-              ethers.utils.parseUnits(maxBuyBnb, 18),
-              ethers.utils.parseUnits(softCap, 18),
-              ethers.utils.parseUnits(hardCap, 18),
-            ],
+            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             startPresaleTime,
             dayjs(endPresaleTime).subtract(2, "day").unix(),
@@ -319,16 +289,16 @@ describe("SummitFactoryPresale", () => {
           .createPresale(
             [presaleToken.address, router],
             [
-              ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-              ethers.utils.parseUnits(presalePrice, 18),
-              ethers.utils.parseUnits(listingPrice, 18),
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
               liquidityPrecentage,
             ],
             [
-              ethers.utils.parseUnits((Number(minBuyBnb) + Number(maxBuyBnb)).toString(), 18),
-              ethers.utils.parseUnits(maxBuyBnb, 18),
-              ethers.utils.parseUnits(softCap, 18),
-              ethers.utils.parseUnits(hardCap, 18),
+              parseEther((Number(minBuyBnb) + Number(maxBuyBnb)).toString()),
+              parseEther(maxBuyBnb),
+              parseEther(softCap),
+              parseEther(hardCap),
             ],
             liquidityLockTime,
             startPresaleTime,
@@ -351,16 +321,16 @@ describe("SummitFactoryPresale", () => {
           .createPresale(
             [presaleToken.address, router],
             [
-              ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-              ethers.utils.parseUnits(presalePrice, 18),
-              ethers.utils.parseUnits(listingPrice, 18),
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
               liquidityPrecentage,
             ],
             [
-              ethers.utils.parseUnits(minBuyBnb, 18),
-              ethers.utils.parseUnits(maxBuyBnb, 18),
-              ethers.utils.parseUnits((Number(hardCap) * 0.4).toString(), 18),
-              ethers.utils.parseUnits(hardCap, 18),
+              parseEther(minBuyBnb),
+              parseEther(maxBuyBnb),
+              parseEther((Number(hardCap) * 0.4).toString()),
+              parseEther(hardCap),
             ],
             liquidityLockTime,
             startPresaleTime,
@@ -383,17 +353,12 @@ describe("SummitFactoryPresale", () => {
           .createPresale(
             [presaleToken.address, router],
             [
-              ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-              ethers.utils.parseUnits(presalePrice, 18),
-              ethers.utils.parseUnits(listingPrice, 18),
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
               liquidityPrecentage - 30,
             ],
-            [
-              ethers.utils.parseUnits(minBuyBnb, 18),
-              ethers.utils.parseUnits(maxBuyBnb, 18),
-              ethers.utils.parseUnits(softCap, 18),
-              ethers.utils.parseUnits(hardCap, 18),
-            ],
+            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
@@ -414,17 +379,12 @@ describe("SummitFactoryPresale", () => {
         .createPresale(
           [presaleToken.address, router],
           [
-            ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            ethers.utils.parseUnits(presalePrice, 18),
-            ethers.utils.parseUnits(listingPrice, 18),
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [
-            ethers.utils.parseUnits(minBuyBnb, 18),
-            ethers.utils.parseUnits(maxBuyBnb, 18),
-            ethers.utils.parseUnits(softCap, 18),
-            ethers.utils.parseUnits(hardCap, 18),
-          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -448,17 +408,12 @@ describe("SummitFactoryPresale", () => {
         .createPresale(
           [presaleToken.address, router],
           [
-            ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            ethers.utils.parseUnits(presalePrice, 18),
-            ethers.utils.parseUnits(listingPrice, 18),
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [
-            ethers.utils.parseUnits(minBuyBnb, 18),
-            ethers.utils.parseUnits(maxBuyBnb, 18),
-            ethers.utils.parseUnits(softCap, 18),
-            ethers.utils.parseUnits(hardCap, 18),
-          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -482,17 +437,12 @@ describe("SummitFactoryPresale", () => {
         .createPresale(
           [presaleToken.address, router],
           [
-            ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            ethers.utils.parseUnits(presalePrice, 18),
-            ethers.utils.parseUnits(listingPrice, 18),
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [
-            ethers.utils.parseUnits(minBuyBnb, 18),
-            ethers.utils.parseUnits(maxBuyBnb, 18),
-            ethers.utils.parseUnits(softCap, 18),
-            ethers.utils.parseUnits(hardCap, 18),
-          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,

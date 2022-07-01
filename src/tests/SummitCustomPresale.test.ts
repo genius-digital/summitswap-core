@@ -1,7 +1,8 @@
 import { waffle } from "hardhat";
 import { expect, assert } from "chai";
 import dayjs from "dayjs";
-import { ethers, BigNumber } from "ethers";
+import { BigNumber } from "ethers";
+import { parseEther, parseUnits, formatUnits } from "ethers/lib/utils";
 import CustomPresaleArtifact from "@built-contracts/SummitCustomPresale.sol/SummitCustomPresale.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import { DummyToken, SummitCustomPresale } from "build/typechain";
@@ -49,13 +50,8 @@ describe("SummitFactoryPresale", () => {
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
     customPresale = (await deployContract(owner, CustomPresaleArtifact, [
       [owner.address, presaleToken.address, router, otherOwner.address],
-      [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-      [
-        ethers.utils.parseUnits(minBuyBnb, 18),
-        ethers.utils.parseUnits(maxBuyBnb, 18),
-        ethers.utils.parseUnits(softCap, 18),
-        ethers.utils.parseUnits(hardCap, 18),
-      ],
+      [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+      [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
       liquidityLockTime,
       startPresaleTime,
       endPresaleTime,
@@ -65,7 +61,7 @@ describe("SummitFactoryPresale", () => {
     ])) as SummitCustomPresale;
     await presaleToken
       .connect(owner)
-      .transfer(customPresale.address, ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+      .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
   });
 
   describe("owner", () => {
@@ -102,27 +98,27 @@ describe("SummitFactoryPresale", () => {
       assert.equal(routerAddresss, router);
     });
     it("should be presalePrice", () => {
-      const bigPresalePrice = ethers.utils.parseUnits(presalePrice, 18);
+      const bigPresalePrice = parseEther(presalePrice);
       assert.equal(bigPresalePrice.toString(), presaleInfo.presalePrice.toString());
     });
     it("should be listingPrice", () => {
-      const bigListingPrice = ethers.utils.parseUnits(listingPrice, 18);
+      const bigListingPrice = parseEther(listingPrice);
       assert.equal(bigListingPrice.toString(), presaleInfo.listingPrice.toString());
     });
     it("should be minBuyBnb", () => {
-      const bigMinBuyBnb = ethers.utils.parseUnits(minBuyBnb, 18);
+      const bigMinBuyBnb = parseEther(minBuyBnb);
       assert.equal(bigMinBuyBnb.toString(), presaleInfo.minBuyBnb.toString());
     });
     it("should be maxBuyBnb", () => {
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       assert.equal(bigMaxBuyBnb.toString(), presaleInfo.maxBuyBnb.toString());
     });
     it("should be softCap", () => {
-      const bigSoftCap = ethers.utils.parseUnits(softCap, 18);
+      const bigSoftCap = parseEther(softCap);
       assert.equal(bigSoftCap.toString(), presaleInfo.softCap.toString());
     });
     it("should be hardCap", () => {
-      const bigHardCap = ethers.utils.parseUnits(hardCap, 18);
+      const bigHardCap = parseEther(hardCap);
       assert.equal(bigHardCap.toString(), presaleInfo.hardCap.toString());
     });
     it("should be liquidityPercentage", () => {
@@ -160,18 +156,18 @@ describe("SummitFactoryPresale", () => {
 
   describe("calculateBnbToPresaleToken()", () => {
     it("should return Tokens for presale", async () => {
-      const bigHardCap = ethers.utils.parseUnits(hardCap, 18);
-      const bigPresalePrice = ethers.utils.parseUnits(presalePrice, 18);
+      const bigHardCap = parseEther(hardCap);
+      const bigPresalePrice = parseEther(presalePrice);
 
       const tokenAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigPresalePrice);
-      assert.equal(tokenAmount.toString(), ethers.utils.formatUnits(bigHardCap.mul(bigPresalePrice), 18).split(".")[0]);
+      assert.equal(tokenAmount.toString(), formatUnits(bigHardCap.mul(bigPresalePrice), 18).split(".")[0]);
     });
     it("should return Tokens with listing price", async () => {
-      const bigHardCap = ethers.utils.parseUnits(hardCap, 18);
-      const bigListingPrice = ethers.utils.parseUnits(listingPrice, 18);
+      const bigHardCap = parseEther(hardCap);
+      const bigListingPrice = parseEther(listingPrice);
 
       const tokenAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigListingPrice);
-      assert.equal(tokenAmount.toString(), ethers.utils.formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
+      assert.equal(tokenAmount.toString(), formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
     });
   });
 
@@ -184,13 +180,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         dayjs().add(1, "day").unix(),
         endPresaleTime,
@@ -200,13 +191,10 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
       await expect(
         customPresale.connect(otherWallet2).buy({
-          value: ethers.utils.parseUnits(maxBuyBnb, 18),
+          value: parseEther(maxBuyBnb),
           gasLimit: 3000000,
         })
       ).to.be.revertedWith("Presale Not started Yet");
@@ -220,13 +208,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         dayjs().unix(),
@@ -236,13 +219,10 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
       await expect(
         customPresale.connect(otherWallet2).buy({
-          value: ethers.utils.parseUnits(maxBuyBnb, 18),
+          value: parseEther(maxBuyBnb),
           gasLimit: 3000000,
         })
       ).to.be.revertedWith("Presale Ended");
@@ -250,13 +230,13 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if claim phase", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb, 18),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
       await expect(
         customPresale.connect(otherWallet2).buy({
-          value: ethers.utils.parseUnits(maxBuyBnb, 18),
+          value: parseEther(maxBuyBnb),
           gasLimit: 3000000,
         })
       ).to.be.revertedWith("Claim Phase has started");
@@ -266,7 +246,7 @@ describe("SummitFactoryPresale", () => {
       await customPresale.connect(owner).toggleWhitelistPhase();
       await expect(
         customPresale.connect(otherWallet2).buy({
-          value: ethers.utils.parseUnits(minBuyBnb, 18),
+          value: parseEther(minBuyBnb),
           gasLimit: 3000000,
         })
       ).to.be.revertedWith("Address not Whitelisted");
@@ -275,7 +255,7 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if buyBnbAmount greater than maxBuybnb", async () => {
       await expect(
         customPresale.connect(otherWallet2).buy({
-          value: ethers.utils.parseUnits(maxBuyBnb, 18).add("1"),
+          value: parseEther(maxBuyBnb).add("1"),
           gasLimit: 3000000,
         })
       ).to.be.revertedWith("Cannot buy more than HardCap amount");
@@ -284,7 +264,7 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if buyBnbAmount less than minBuyBnb", async () => {
       await expect(
         customPresale.connect(otherWallet2).buy({
-          value: ethers.utils.parseUnits(minBuyBnb, 18).sub("1"),
+          value: parseEther(minBuyBnb).sub("1"),
           gasLimit: 3000000,
         })
       ).to.be.revertedWith("msg.value is less than minBuyBnb");
@@ -298,13 +278,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits("0.4", 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther("0.4")],
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
@@ -314,20 +289,17 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
       await expect(
         customPresale.connect(otherWallet2).buy({
-          value: ethers.utils.parseUnits(maxBuyBnb, 18).add("1"),
+          value: parseEther(maxBuyBnb).add("1"),
           gasLimit: 3000000,
         })
       ).to.be.revertedWith("msg.value is great than maxBuyBnb");
     });
 
     it("should be equal buyAmount and boughtAmount", async () => {
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
         gasLimit: 3000000,
@@ -337,7 +309,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be equal totalBoughtAmount and accounts bought amount", async () => {
-      const bigMinBuyBnb = ethers.utils.parseUnits(minBuyBnb, 18);
+      const bigMinBuyBnb = parseEther(minBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
         gasLimit: 3000000,
@@ -351,7 +323,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be same, the contributor and otherWallet1", async () => {
-      const bigMinBuyBnb = ethers.utils.parseUnits(minBuyBnb, 18);
+      const bigMinBuyBnb = parseEther(minBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
         gasLimit: 3000000,
@@ -361,7 +333,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be same, the contributors length and buyers", async () => {
-      const bigMinBuyBnb = ethers.utils.parseUnits(minBuyBnb, 18);
+      const bigMinBuyBnb = parseEther(minBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
         gasLimit: 3000000,
@@ -375,7 +347,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be same, the contributors length and otherWallet1 buying multiple times", async () => {
-      const bigMinBuyBnb = ethers.utils.parseUnits(minBuyBnb, 18);
+      const bigMinBuyBnb = parseEther(minBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuyBnb,
         gasLimit: 3000000,
@@ -392,7 +364,7 @@ describe("SummitFactoryPresale", () => {
   describe("claim()", () => {
     it("should be reverted, if presale cancelled", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb, 18),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(owner).cancelPresale();
@@ -401,7 +373,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if not claim phase", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       await expect(customPresale.connect(otherWallet1).claim()).to.be.revertedWith("Claim hasn't started yet");
@@ -409,7 +381,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if tokens already claimed", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb, 18),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
@@ -419,20 +391,20 @@ describe("SummitFactoryPresale", () => {
 
     it("should be equal buyAmount and boughtAmount", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb, 18),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
       await customPresale.connect(otherWallet1).claim();
 
-      const tokenAmountTransfer = ethers.utils.parseUnits(maxBuyBnb, 18).mul(presalePrice).toString();
+      const tokenAmountTransfer = parseEther(maxBuyBnb).mul(presalePrice).toString();
       const tokenBalance = (await presaleToken.balanceOf(otherWallet1.address)).toString();
       assert.equal(tokenAmountTransfer, tokenBalance);
     });
 
     it("should be true isTokenClaimed", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb, 18),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
@@ -445,7 +417,7 @@ describe("SummitFactoryPresale", () => {
   describe("withdrawBNB()", () => {
     it("should be reverted, if presale not cancelled", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb, 18),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await expect(customPresale.connect(otherWallet1).withdrawBNB()).to.be.revertedWith("Presale Not Cancelled");
@@ -460,22 +432,19 @@ describe("SummitFactoryPresale", () => {
 
     it("should be equal withdrawalBNB amount and BuyBNB amount ", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       const initialBoughtAmount = await customPresale.bought(otherWallet1.address);
       await customPresale.connect(owner).cancelPresale();
       await customPresale.connect(otherWallet1).withdrawBNB();
       const finalBoughtAmount = await customPresale.bought(otherWallet1.address);
-      assert.equal(
-        initialBoughtAmount.sub(finalBoughtAmount).toString(),
-        ethers.utils.parseUnits(minBuyBnb, 18).toString()
-      );
+      assert.equal(initialBoughtAmount.sub(finalBoughtAmount).toString(), parseEther(minBuyBnb).toString());
     });
 
     it("should be 0 bought amount after withdrawalBNB", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(owner).cancelPresale();
@@ -486,21 +455,18 @@ describe("SummitFactoryPresale", () => {
 
     it("should be equal change in total bought and withdrawal amount", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet2).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       const initialTotalBought = (await customPresale.getInfo()).totalBought;
       await customPresale.connect(owner).cancelPresale();
       await customPresale.connect(otherWallet1).withdrawBNB();
       const finalTotalBought = (await customPresale.getInfo()).totalBought;
-      assert.equal(
-        initialTotalBought.sub(finalTotalBought).toString(),
-        ethers.utils.parseUnits(minBuyBnb, 18).toString()
-      );
+      assert.equal(initialTotalBought.sub(finalTotalBought).toString(), parseEther(minBuyBnb).toString());
     });
   });
 
@@ -513,13 +479,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         dayjs().add(1, "day").unix(),
         endPresaleTime,
@@ -529,10 +490,7 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
       await expect(customPresale.connect(otherWallet1).emergencyWithdrawBNB()).to.be.revertedWith(
         "Presale Not started Yet"
       );
@@ -546,13 +504,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [otherWallet1.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         dayjs().unix(),
@@ -562,10 +515,7 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
       await expect(customPresale.connect(otherWallet1).emergencyWithdrawBNB()).to.be.revertedWith("Presale Ended");
     });
 
@@ -577,7 +527,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if presale is cancelled", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(owner).cancelPresale();
@@ -588,7 +538,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if is claim phase", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb, 18),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(owner).finalize();
@@ -599,7 +549,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should send 10% to service fee address", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       const initialBalance = await provider.getBalance(otherOwner.address);
@@ -607,27 +557,24 @@ describe("SummitFactoryPresale", () => {
       const finalBalance = await provider.getBalance(otherOwner.address);
       assert.equal(
         finalBalance.sub(initialBalance).toString(),
-        ethers.utils.parseUnits(minBuyBnb, 18).mul(EMERGENCY_WITHDRAW_FEE).div(FEE_DENOMINATOR).toString()
+        parseUnits(minBuyBnb).mul(EMERGENCY_WITHDRAW_FEE).div(FEE_DENOMINATOR).toString()
       );
     });
 
     it("should be equal withdrawalBNB amount and BuyBNB amount ", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       const initialBoughtAmount = await customPresale.bought(otherWallet1.address);
       await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
       const finalBoughtAmount = await customPresale.bought(otherWallet1.address);
-      assert.equal(
-        initialBoughtAmount.sub(finalBoughtAmount).toString(),
-        ethers.utils.parseUnits(minBuyBnb, 18).toString()
-      );
+      assert.equal(initialBoughtAmount.sub(finalBoughtAmount).toString(), parseEther(minBuyBnb).toString());
     });
 
     it("should be 0 bought amount after emergencyWithdrawBNB", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
@@ -637,20 +584,17 @@ describe("SummitFactoryPresale", () => {
 
     it("should be equal change in total bought and withdrawal amount", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       await customPresale.connect(otherWallet2).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       const initialTotalBought = (await customPresale.getInfo()).totalBought;
       await customPresale.connect(otherWallet1).emergencyWithdrawBNB();
       const finalTotalBought = (await customPresale.getInfo()).totalBought;
-      assert.equal(
-        initialTotalBought.sub(finalTotalBought).toString(),
-        ethers.utils.parseUnits(minBuyBnb, 18).toString()
-      );
+      assert.equal(initialTotalBought.sub(finalTotalBought).toString(), parseEther(minBuyBnb).toString());
     });
   });
 
@@ -704,7 +648,7 @@ describe("SummitFactoryPresale", () => {
   describe("finalize()", () => {
     it("should be reverted, if set with otherWallet1", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb, 18),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await expect(customPresale.connect(otherWallet1).finalize()).to.be.revertedWith(
@@ -714,7 +658,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if is not end presale time && hardcap !== totalBought", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(minBuyBnb, 18),
+        value: parseEther(minBuyBnb),
         gasLimit: 3000000,
       });
       await expect(customPresale.connect(owner).finalize()).to.be.revertedWith("Presale Not Ended");
@@ -728,13 +672,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         dayjs().unix(),
@@ -744,10 +683,7 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
 
       await expect(customPresale.connect(owner).finalize()).to.be.revertedWith(
         "Total bought is less than softCap. Presale failed"
@@ -755,7 +691,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should send 5% to servicefeeReceiver for feeType 0", async () => {
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
         gasLimit: 3000000,
@@ -777,13 +713,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
@@ -793,11 +724,8 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
         gasLimit: 3000000,
@@ -819,13 +747,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
@@ -835,11 +758,8 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
         gasLimit: 3000000,
@@ -854,7 +774,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should start claim phase", async () => {
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
         gasLimit: 3000000,
@@ -865,7 +785,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should start claim phase", async () => {
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
         gasLimit: 3000000,
@@ -876,7 +796,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should refund remaing tokens for refundType 0", async () => {
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
         gasLimit: 3000000,
@@ -900,13 +820,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
@@ -916,11 +831,8 @@ describe("SummitFactoryPresale", () => {
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
-        .transfer(
-          customPresale.address,
-          ethers.utils.parseUnits(tokenAmount.toString(), await presaleToken.decimals())
-        );
-      const bigMaxBuyBnb = ethers.utils.parseUnits(maxBuyBnb, 18);
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
         gasLimit: 3000000,
@@ -960,13 +872,8 @@ describe("SummitFactoryPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, router, otherOwner.address],
-        [ethers.utils.parseUnits(presalePrice, 18), ethers.utils.parseUnits(listingPrice, 18), liquidityPrecentage],
-        [
-          ethers.utils.parseUnits(minBuyBnb, 18),
-          ethers.utils.parseUnits(maxBuyBnb, 18),
-          ethers.utils.parseUnits(softCap, 18),
-          ethers.utils.parseUnits(hardCap, 18),
-        ],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
@@ -1042,22 +949,22 @@ describe("SummitFactoryPresale", () => {
   describe("withdrawBNBOwner()", () => {
     it("should send BNB to otherWallet2", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       const initialBalance = await provider.getBalance(otherWallet2.address);
-      await customPresale.connect(owner).withdrawBNBOwner(ethers.utils.parseUnits(maxBuyBnb), otherWallet2.address);
+      await customPresale.connect(owner).withdrawBNBOwner(parseEther(maxBuyBnb), otherWallet2.address);
       const finalBalance = await provider.getBalance(otherWallet2.address);
-      assert.equal(finalBalance.sub(initialBalance).toString(), ethers.utils.parseUnits(maxBuyBnb).toString());
+      assert.equal(finalBalance.sub(initialBalance).toString(), parseEther(maxBuyBnb).toString());
     });
 
     it("should be reverted, if set with otherWallet", async () => {
       await customPresale.connect(otherWallet1).buy({
-        value: ethers.utils.parseUnits(maxBuyBnb),
+        value: parseEther(maxBuyBnb),
         gasLimit: 3000000,
       });
       await expect(
-        customPresale.connect(otherOwner).withdrawBNBOwner(ethers.utils.parseUnits(maxBuyBnb), otherWallet2.address)
+        customPresale.connect(otherOwner).withdrawBNBOwner(parseEther(maxBuyBnb), otherWallet2.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });

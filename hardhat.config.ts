@@ -76,7 +76,7 @@ export default {
       accounts,
     },
     97: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      url: "https://speedy-nodes-nyc.moralis.io/7e0d9ce2026980e8ef628e97/bsc/testnet",
       accounts,
       timeout: 200000,
       gas: 4000000,

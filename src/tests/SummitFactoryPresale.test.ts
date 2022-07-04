@@ -5,16 +5,22 @@ import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
 import PresaleFactoryArtifact from "@built-contracts/SummitFactoryPresale.sol/SummitFactoryPresale.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
-import { DummyToken, SummitFactoryPresale } from "build/typechain";
-import { environment, MAX_APPROVE_AMOUNT } from "src/environment";
+import SummitFactoryArtifact from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
+import SummitRouterArtifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
+import WbnbArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
+import { DummyToken, SummitFactoryPresale, SummitswapFactory, SummitswapRouter02, WBNB } from "build/typechain";
+import { MAX_APPROVE_AMOUNT } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
 describe("SummitFactoryPresale", () => {
-  const [owner, otherOwner, otherWallet1] = provider.getWallets();
+  const [owner, otherOwner, otherWallet1, summitFactoryFeeToSetter] = provider.getWallets();
 
   let presaleFactory: SummitFactoryPresale;
   let presaleToken: DummyToken;
+  let wbnb: WBNB;
+  let summitFactory: SummitswapFactory;
+  let summitRouter: SummitswapRouter02;
 
   const serviceFee = parseEther("0.00010");
   const updatedServiceFee = parseEther("0.00012");
@@ -22,7 +28,6 @@ describe("SummitFactoryPresale", () => {
   const FEE_DENOMINATOR = 10 ** 9;
   const BNB_FEE_TYPE_1 = 20000000; // 2 %
 
-  const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
@@ -43,6 +48,14 @@ describe("SummitFactoryPresale", () => {
       otherOwner.address,
     ])) as SummitFactoryPresale;
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+    wbnb = (await deployContract(owner, WbnbArtifact, [])) as WBNB;
+    summitFactory = (await deployContract(owner, SummitFactoryArtifact, [
+      summitFactoryFeeToSetter.address,
+    ])) as SummitswapFactory;
+    summitRouter = (await deployContract(owner, SummitRouterArtifact, [
+      summitFactory.address,
+      wbnb.address,
+    ])) as SummitswapRouter02;
   });
 
   describe("owner", () => {
@@ -118,7 +131,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, router],
+          [presaleToken.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -160,7 +173,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, router],
+          [presaleToken.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -199,7 +212,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, router],
+            [presaleToken.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -224,7 +237,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, router],
+          [presaleToken.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -246,7 +259,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, router],
+            [presaleToken.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -272,7 +285,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, router],
+            [presaleToken.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -298,7 +311,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, router],
+            [presaleToken.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -324,7 +337,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, router],
+            [presaleToken.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -355,7 +368,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, router],
+            [presaleToken.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -386,7 +399,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, router],
+            [presaleToken.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -411,7 +424,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, router],
+          [presaleToken.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -439,7 +452,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, router],
+          [presaleToken.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -467,7 +480,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, router],
+          [presaleToken.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),

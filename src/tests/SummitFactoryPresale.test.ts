@@ -101,7 +101,7 @@ describe("SummitFactoryPresale", () => {
       );
     });
 
-    it("should be set to updatedServiceFee", async () => {
+    it("should be able to set new service fee", async () => {
       await presaleFactory.connect(owner).setFee(updatedServiceFee);
       const presaleFee = await presaleFactory.preSaleFee();
       assert.equal(presaleFee.toString(), updatedServiceFee.toString());
@@ -157,13 +157,13 @@ describe("SummitFactoryPresale", () => {
   });
 
   describe("withdraw()", () => {
-    it("should be reverted, if withdrawn with otherWallet", async () => {
+    it("should be reverted if non-owner try to withdraw", async () => {
       await expect(presaleFactory.connect(otherWallet1).withdraw(serviceFeeReceiver.address)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
     });
 
-    it("should be equal increase in serviceFeeReceiverAddress and serviceFee", async () => {
+    it("should be able to withdraw fee by owner", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);

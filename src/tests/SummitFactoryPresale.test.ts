@@ -233,6 +233,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("Not Enough Fee");
     });
 
+    // TODO: ability to create presale with the same token address
     it("should be reverted, if presale already exists", async () => {
       await presaleFactory
         .connect(owner)
@@ -332,7 +333,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("Presale End time should be greater than presale start time");
     });
 
-    it("should be reverted, if minbuybnb greater than maxBuybnb", async () => {
+    it("should be reverted, if minBuyBnb greater than maxBuyBnb", async () => {
       await expect(
         presaleFactory
           .connect(owner)
@@ -363,7 +364,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("MinBuybnb should be less than maxBuybnb");
     });
 
-    it("should be reverted, if soft less than 50% of hardcap", async () => {
+    it("should be reverted, if softCap less than 50% of hardCap", async () => {
       await expect(
         presaleFactory
           .connect(owner)

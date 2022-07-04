@@ -374,7 +374,7 @@ describe("SummitFactoryPresale", () => {
       await expect(customPresale.connect(otherWallet1).claim()).to.be.revertedWith("Claim hasn't started yet");
     });
 
-    it("should be reverted, if tokens already claimed", async () => {
+    it("should be reverted, if user don't have any token to claim", async () => {
       await customPresale.connect(owner).finalize();
       await expect(customPresale.connect(otherWallet2).claim()).to.be.revertedWith(
         "You do not have any tokens to claim"

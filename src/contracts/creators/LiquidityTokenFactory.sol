@@ -3,11 +3,11 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../tokens/SummitswapStandardToken.sol";
+import "../tokens/SummitswapLiquidityToken.sol";
 
-contract StandardFactory is Ownable {
-  StandardToken[] public customStandardTokens;
-  uint256 public customStandardTokensMade = 0;
+contract LiquidityTokenFactory is Ownable {
+  LiquidityGeneratorToken[] public customLiquidityTokens;
+  uint256 public customLiquidityTokensMade = 0;
   uint256 public createTokenFee = 0.001 ether;
 
   address public serviceFeeReceiver;
@@ -17,19 +17,33 @@ contract StandardFactory is Ownable {
     serviceFeeReceiver = _serviceFeeReceiver;
   }
 
-  function createStandardToken(
-    string memory _tokenName,
-    string memory _tokenSym,
-    uint8 _decimals,
-    uint256 _totalSupply
+  function createLiquidityToken(
+    string memory _name,
+    string memory _symbol,
+    uint256 _totalSupply,
+    address _router,
+    address _charityAddress,
+    uint16 _taxFeeBps,
+    uint16 _liquidityFeeBps,
+    uint16 _charityFeeBps
   ) public payable {
     require(msg.value >= createTokenFee, "Not enough Fee");
-    StandardToken newToken = new StandardToken(_tokenName, _tokenSym, _decimals, _totalSupply, msg.sender);
+    LiquidityGeneratorToken newToken = new LiquidityGeneratorToken(
+      _name,
+      _symbol,
+      _totalSupply,
+      _router,
+      _charityAddress,
+      _taxFeeBps,
+      _liquidityFeeBps,
+      _charityFeeBps,
+      msg.sender
+    );
     if (serviceFeeReceiver != address(this) && serviceFeeReceiver != address(0)) {
       payable(serviceFeeReceiver).transfer(msg.value);
     }
-    customStandardTokens.push(newToken);
-    customStandardTokensMade += 1;
+    customLiquidityTokens.push(newToken);
+    customLiquidityTokensMade += 1;
   }
 
   function withdraw(address _feeReceiver) public onlyOwner {

@@ -1,14 +1,14 @@
-import { waffle } from "hardhat";
-import { expect, assert } from "chai";
+import PresaleFactoryArtifact from "@built-contracts/SummitFactoryPresale.sol/SummitFactoryPresale.json";
+import SummitFactoryArtifact from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
+import SummitRouterArtifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
+import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
+import WbnbArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
+import { DummyToken, SummitFactoryPresale, SummitswapFactory, SummitswapRouter02, WBNB } from "build/typechain";
+import { assert, expect } from "chai";
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
-import PresaleFactoryArtifact from "@built-contracts/SummitFactoryPresale.sol/SummitFactoryPresale.json";
-import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
-import SummitFactoryArtifact from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
-import SummitRouterArtifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
-import WbnbArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
-import { DummyToken, SummitFactoryPresale, SummitswapFactory, SummitswapRouter02, WBNB } from "build/typechain";
+import { waffle } from "hardhat";
 import { MAX_APPROVE_AMOUNT } from "src/environment";
 
 const { deployContract, provider } = waffle;

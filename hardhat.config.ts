@@ -103,6 +103,6 @@ export default {
     currency: "USD",
   },
   etherscan: {
-    apiKey: "",
+    apiKey: process.env.BSCSCAN_API_KEY,
   },
 } as HardhatUserConfig;

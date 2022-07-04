@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.1;
+pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "../interfaces/ISummitstudiosUniswapV2Router02.sol";
-import "../interfaces/ISummitstudiosUniswapV2Factory.sol";
+import "../interfaces/ISummitswapRouter02.sol";
+import "../interfaces/ISummitswapFactory.sol";
 import "./BaseToken.sol";
 
 contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
@@ -41,8 +41,8 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
   uint256 public _charityFee;
   uint256 private _previousCharityFee = _charityFee;
 
-  IUniswapV2Router02 public uniswapV2Router;
-  address public uniswapV2Pair;
+  ISummitswapRouter02 public summitswapV2Router;
+  address public summitswapV2Pair;
   address public _charityAddress;
 
   bool inSwapAndLiquify;
@@ -103,12 +103,15 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
     // _rOwned[owner()] = _rTotal;
     _rOwned[_owner] = _rTotal;
 
-    IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(router_);
+    ISummitswapRouter02 _summitswapV2Router = ISummitswapRouter02(router_);
     // Create a uniswap pair for this new token
-    uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(address(this), _uniswapV2Router.WETH());
+    summitswapV2Pair = ISummitswapFactory(_summitswapV2Router.factory()).createPair(
+      address(this),
+      _summitswapV2Router.WETH()
+    );
 
     // set the rest of the contract variables
-    uniswapV2Router = _uniswapV2Router;
+    summitswapV2Router = _summitswapV2Router;
 
     // exclude owner and this contract from fee
     _isExcludedFromFee[_owner] = true;
@@ -291,7 +294,7 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
     emit SwapAndLiquifyEnabledUpdated(_enabled);
   }
 
-  //to recieve ETH from uniswapV2Router when swaping
+  //to recieve ETH from summitswapV2Router when swaping
   receive() external payable {}
 
   function _reflectFee(uint256 rFee, uint256 tFee) private {
@@ -460,7 +463,7 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
     uint256 contractTokenBalance = balanceOf(address(this));
 
     bool overMinTokenBalance = contractTokenBalance >= numTokensSellToAddToLiquidity;
-    if (overMinTokenBalance && !inSwapAndLiquify && from != uniswapV2Pair && swapAndLiquifyEnabled) {
+    if (overMinTokenBalance && !inSwapAndLiquify && from != summitswapV2Pair && swapAndLiquifyEnabled) {
       contractTokenBalance = numTokensSellToAddToLiquidity;
       //add liquidity
       swapAndLiquify(contractTokenBalance);
@@ -505,12 +508,12 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
     // generate the uniswap pair path of token -> weth
     address[] memory path = new address[](2);
     path[0] = address(this);
-    path[1] = uniswapV2Router.WETH();
+    path[1] = summitswapV2Router.WETH();
 
-    _approve(address(this), address(uniswapV2Router), tokenAmount);
+    _approve(address(this), address(summitswapV2Router), tokenAmount);
 
     // make the swap
-    uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+    summitswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
       tokenAmount,
       0, // accept any amount of ETH
       path,
@@ -521,10 +524,10 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
 
   function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
     // approve token transfer to cover all possible scenarios
-    _approve(address(this), address(uniswapV2Router), tokenAmount);
+    _approve(address(this), address(summitswapV2Router), tokenAmount);
 
     // add the liquidity
-    uniswapV2Router.addLiquidityETH{value: ethAmount}(
+    summitswapV2Router.addLiquidityETH{value: ethAmount}(
       address(this),
       tokenAmount,
       0, // slippage is unavoidable

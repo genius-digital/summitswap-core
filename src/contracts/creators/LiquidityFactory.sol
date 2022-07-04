@@ -1,11 +1,9 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.1;
+pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../tokens/SummitswapLiquidityToken.sol";
-
-// 0x5666FBE3924A058192032E62Eff355b1e46fE9D9 Factory deployment - 97
 
 contract LiquidityFactory is Ownable {
   LiquidityGeneratorToken[] public customLiquidityTokens;

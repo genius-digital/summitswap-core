@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Developed by: dxsoftware.net
 
-pragma solidity 0.8.1;
+pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";

@@ -421,7 +421,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("Liquidity Percentage should be Greater than or equal to 51%");
     });
 
-    it("should be equal to tokenPresale address", async () => {
+    it("should be able to set insert newly created presale address into presaleAddresses and tokenPresales", async () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
@@ -448,7 +448,7 @@ describe("SummitFactoryPresale", () => {
       assert.equal(presaleAddress, presaleAddressFromTokenPresales);
     });
 
-    it("should be equal create presalefee and balance of service fee add", async () => {
+    it("should be ablt to send service fee to serviceFeeReceiver address", async () => {
       const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
       await presaleFactory
         .connect(owner)
@@ -476,7 +476,7 @@ describe("SummitFactoryPresale", () => {
       assert.equal(feeToServiceFeeAddress, serviceFee.toString());
     });
 
-    it("should be equal presale token amount and change owner token amount", async () => {
+    it("should be able to send token amount to presale contract from factory", async () => {
       const initialTokenAmount = await presaleToken.balanceOf(owner.address);
       await presaleFactory
         .connect(owner)

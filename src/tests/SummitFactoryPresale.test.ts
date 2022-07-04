@@ -150,7 +150,7 @@ describe("SummitFactoryPresale", () => {
           }
         );
     });
-    it("should be accountPresales.lenght == 1", async () => {
+    it("should be accountPresales.length == 1", async () => {
       const accountPresales = await presaleFactory.getAccountPresales(owner.address);
       assert.equal(accountPresales.length, 1);
     });

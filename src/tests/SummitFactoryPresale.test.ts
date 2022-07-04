@@ -14,7 +14,7 @@ import { MAX_APPROVE_AMOUNT } from "src/environment";
 const { deployContract, provider } = waffle;
 
 describe("SummitFactoryPresale", () => {
-  const [owner, otherOwner, otherWallet1, summitFactoryFeeToSetter] = provider.getWallets();
+  const [owner, serviceFeeReceiver, otherWallet1, summitFactoryFeeToSetter] = provider.getWallets();
 
   let presaleFactory: SummitFactoryPresale;
   let presaleToken: DummyToken;
@@ -45,7 +45,7 @@ describe("SummitFactoryPresale", () => {
   beforeEach(async () => {
     presaleFactory = (await deployContract(owner, PresaleFactoryArtifact, [
       serviceFee,
-      otherOwner.address,
+      serviceFeeReceiver.address,
     ])) as SummitFactoryPresale;
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
     wbnb = (await deployContract(owner, WbnbArtifact, [])) as WBNB;
@@ -68,7 +68,7 @@ describe("SummitFactoryPresale", () => {
   describe("serviceFeeReceiver", () => {
     it("should be otherOwner", async () => {
       const feeReceiverAddress = await presaleFactory.serviceFeeReceiver();
-      assert.equal(feeReceiverAddress, otherOwner.address);
+      assert.equal(feeReceiverAddress, serviceFeeReceiver.address);
     });
   });
 
@@ -158,7 +158,7 @@ describe("SummitFactoryPresale", () => {
 
   describe("withdraw()", () => {
     it("should be reverted, if withdrawn with otherWallet", async () => {
-      await expect(presaleFactory.connect(otherWallet1).withdraw(otherOwner.address)).to.be.revertedWith(
+      await expect(presaleFactory.connect(otherWallet1).withdraw(serviceFeeReceiver.address)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
     });
@@ -192,9 +192,9 @@ describe("SummitFactoryPresale", () => {
           }
         );
 
-      const initialBalance = await provider.getBalance(otherOwner.address);
-      await presaleFactory.connect(owner).withdraw(otherOwner.address);
-      const finalBalance = await provider.getBalance(otherOwner.address);
+      const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
+      await presaleFactory.connect(owner).withdraw(serviceFeeReceiver.address);
+      const finalBalance = await provider.getBalance(serviceFeeReceiver.address);
       assert.equal(finalBalance.sub(initialBalance).toString(), serviceFee.toString());
     });
   });
@@ -448,7 +448,7 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be equal create presalefee and balance of service fee add", async () => {
-      const initialBalance = await provider.getBalance(otherOwner.address);
+      const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
       await presaleFactory
         .connect(owner)
         .createPresale(
@@ -470,7 +470,7 @@ describe("SummitFactoryPresale", () => {
             value: serviceFee,
           }
         );
-      const finalBalance = await provider.getBalance(otherOwner.address);
+      const finalBalance = await provider.getBalance(serviceFeeReceiver.address);
       const feeToServiceFeeAddress = finalBalance.sub(initialBalance).toString();
       assert.equal(feeToServiceFeeAddress, serviceFee.toString());
     });

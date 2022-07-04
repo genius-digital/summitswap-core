@@ -17,7 +17,7 @@ export async function deployStandardToken(
   const tokenFactoryDeploy = await TokenFactoryContract.deploy(serviceFee, serviceFeeAddress);
   await tokenFactoryDeploy.deployed();
 
-  console.log("StandardFactory deployed to:", tokenFactoryDeploy.address);
+  console.log("StandardTokenFactory deployed to:", tokenFactoryDeploy.address);
   console.log("Starting to deploy StandardToken");
 
   const tx = await tokenFactoryDeploy.createStandardToken(tokenName, tokenSymbol, tokenDecimals, tokenSupply, {

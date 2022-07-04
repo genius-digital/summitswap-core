@@ -8,13 +8,13 @@ import "../tokens/SummitswapLiquidityToken.sol";
 contract LiquidityFactory is Ownable {
   LiquidityGeneratorToken[] public customLiquidityTokens;
   uint256 public customLiquidityTokensMade = 0;
+  uint256 public createTokenFee = 0.001 ether;
 
   address public serviceFeeReceiver;
-  uint256 public balance;
 
-  constructor(address _serviceFeeReceiver) Ownable() {
+  constructor(uint256 _createTokenFee, address _serviceFeeReceiver) {
+    createTokenFee = _createTokenFee;
     serviceFeeReceiver = _serviceFeeReceiver;
-    transferOwnership(msg.sender);
   }
 
   function createLiquidityToken(
@@ -27,7 +27,7 @@ contract LiquidityFactory is Ownable {
     uint16 _liquidityFeeBps,
     uint16 _charityFeeBps
   ) public payable {
-    require(msg.value >= 1 * 10**16, "Not enough eth");
+    require(msg.value >= createTokenFee, "Not enough Fee");
     LiquidityGeneratorToken newToken = new LiquidityGeneratorToken(
       _name,
       _symbol,
@@ -39,29 +39,23 @@ contract LiquidityFactory is Ownable {
       _charityFeeBps,
       msg.sender
     );
-    if (serviceFeeReceiver == address(this)) {
-      balance += msg.value;
-    } else {
+    if (serviceFeeReceiver != address(this) && serviceFeeReceiver != address(0)) {
       payable(serviceFeeReceiver).transfer(msg.value);
     }
     customLiquidityTokens.push(newToken);
     customLiquidityTokensMade += 1;
   }
 
-  function receiveMoney() external payable {
-    balance += msg.value;
+  function withdraw(address _feeReceiver) public onlyOwner {
+    address payable to = payable(_feeReceiver);
+    to.transfer(address(this).balance);
   }
 
-  function getBalance() public view returns (uint256) {
-    return address(this).balance;
-  }
-
-  function withdraw() public onlyOwner {
-    address payable to = payable(msg.sender);
-    to.transfer(getBalance());
-  }
-
-  function changeFeeReceiver(address _serviceFeeReceiver) public onlyOwner {
+  function setServiceFeeReceiver(address _serviceFeeReceiver) public onlyOwner {
     serviceFeeReceiver = _serviceFeeReceiver;
+  }
+
+  function setFee(uint256 _fee) external onlyOwner {
+    createTokenFee = _fee;
   }
 }

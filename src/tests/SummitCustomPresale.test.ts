@@ -428,16 +428,7 @@ describe("SummitFactoryPresale", () => {
       await customPresale.connect(otherWallet1).withdrawBNB();
       const finalBoughtAmount = await customPresale.bought(otherWallet1.address);
       assert.equal(initialBoughtAmount.sub(finalBoughtAmount).toString(), parseEther(minBuyBnb).toString());
-    });
-
-    it("should be 0 bought amount after withdrawalBNB", async () => {
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(minBuyBnb),
-      });
-      await customPresale.connect(owner).cancelPresale();
-      await customPresale.connect(otherWallet1).withdrawBNB();
-      const boughtAmount = await customPresale.bought(otherWallet1.address);
-      assert.equal(boughtAmount.toString(), "0");
+      assert.equal(finalBoughtAmount.toString(), "0");
     });
 
     it("should be equal change in total bought and withdrawal amount", async () => {

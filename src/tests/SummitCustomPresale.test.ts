@@ -768,16 +768,6 @@ describe("SummitFactoryPresale", () => {
       assert.equal(presaleInfo.isClaimPhase, true);
     });
 
-    it("should start claim phase", async () => {
-      const bigMaxBuyBnb = parseEther(maxBuyBnb);
-      await customPresale.connect(otherWallet1).buy({
-        value: bigMaxBuyBnb,
-      });
-      await customPresale.connect(owner).finalize();
-      const presaleInfo = await customPresale.getInfo();
-      assert.equal(presaleInfo.isClaimPhase, true);
-    });
-
     it("should refund remaining tokens for refundType 0", async () => {
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({

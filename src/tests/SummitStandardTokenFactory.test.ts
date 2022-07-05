@@ -89,6 +89,14 @@ describe("SummitStandardTokenFactory", () => {
   });
 
   describe("createStandardToken()", () => {
+    beforeEach(async () => {
+      await standardTokenFactory
+        .connect(otherWallet1)
+        .createStandardToken(tokenName, tokenSymbol, tokenDecimals, totalSupply, {
+          value: serviceFee,
+        });
+    });
+
     it("should be able to create standard token", async () => {
       const initialCount = await standardTokenFactory.customStandardTokensMade();
       await standardTokenFactory
@@ -101,23 +109,13 @@ describe("SummitStandardTokenFactory", () => {
     });
 
     it("should otherWallet1 be the owner of created token", async () => {
-      await standardTokenFactory
-        .connect(otherWallet1)
-        .createStandardToken(tokenName, tokenSymbol, tokenDecimals, totalSupply, {
-          value: serviceFee,
-        });
       const tokenAddress = await standardTokenFactory.customStandardTokens(0);
       const StandardToken = await ethers.getContractFactory("StandardToken");
       const standardToken = StandardToken.attach(tokenAddress);
       assert.equal(await standardToken.owner(), otherWallet1.address);
     });
 
-    it("should created token arguments be equal", async () => {
-      await standardTokenFactory
-        .connect(otherWallet1)
-        .createStandardToken(tokenName, tokenSymbol, tokenDecimals, totalSupply, {
-          value: serviceFee,
-        });
+    it("should created token arguments be equal to arguments provided", async () => {
       const tokenAddress = await standardTokenFactory.customStandardTokens(0);
       const StandardToken = await ethers.getContractFactory("StandardToken");
       const standardToken = StandardToken.attach(tokenAddress);
@@ -136,6 +134,16 @@ describe("SummitStandardTokenFactory", () => {
         });
       const finalBalance = await provider.getBalance(serviceFeeReceiver.address);
       assert.equal(finalBalance.sub(initialBalance).toString(), serviceFee.toString());
+    });
+
+    it("should revert, if not enough fee", async () => {
+      await expect(
+        standardTokenFactory
+          .connect(otherWallet1)
+          .createStandardToken(tokenName, tokenSymbol, tokenDecimals, totalSupply, {
+            value: serviceFee.sub(1),
+          })
+      ).to.be.revertedWith("Not enough Fee");
     });
   });
 

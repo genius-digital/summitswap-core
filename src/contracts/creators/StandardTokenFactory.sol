@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../tokens/SummitswapStandardToken.sol";
+import "../tokens/SummitStandardToken.sol";
 
 contract StandardTokenFactory is Ownable {
   StandardToken[] public customStandardTokens;

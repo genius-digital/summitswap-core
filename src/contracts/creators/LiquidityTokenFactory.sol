@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../tokens/SummitswapLiquidityToken.sol";
+import "../tokens/SummitLiquidityToken.sol";
 
 contract LiquidityTokenFactory is Ownable {
   LiquidityGeneratorToken[] public customLiquidityTokens;

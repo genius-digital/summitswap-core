@@ -693,9 +693,10 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should send 2% raised BNB to servicefeeReceiver for feeType 1", async () => {
+      const feeType = 1;
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
-      const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
+      const feeTokens = feeType === 1 ? presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR) : 0;
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
@@ -705,7 +706,7 @@ describe("SummitFactoryPresale", () => {
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
-        1,
+        feeType,
         refundType,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
@@ -726,9 +727,10 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should send 2% raised tokenAmount to servicefeeReceiver for feeType 1", async () => {
+      const feeType = 1;
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
-      const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
+      const feeTokens = feeType === 1 ? presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR) : 0;
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
@@ -738,7 +740,7 @@ describe("SummitFactoryPresale", () => {
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
-        1,
+        feeType,
         refundType,
         isWhiteListPhase,
       ])) as SummitCustomPresale;

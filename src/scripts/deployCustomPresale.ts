@@ -88,6 +88,7 @@ export async function deployCustomPresale(
 async function main() {
   const createPresaleFee = parseEther("0.0001");
   const serviceFeeReciever = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
+  const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
 
   const presalePrice = "100";
   const listingPrice = "100";
@@ -106,7 +107,7 @@ async function main() {
   await deployCustomPresale(
     createPresaleFee,
     serviceFeeReciever,
-    environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B",
+    router,
     { presalePrice, listingPrice, liquidityPrecentage },
     { minBuyBnb, maxBuyBnb, softCap, hardCap },
     liquidityLockTime,

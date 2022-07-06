@@ -100,7 +100,6 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
 
     swapAndLiquifyEnabled = true;
 
-    // _rOwned[owner()] = _rTotal;
     _rOwned[_owner] = _rTotal;
 
     ISummitswapRouter02 _summitswapV2Router = ISummitswapRouter02(router_);
@@ -115,14 +114,12 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
 
     // exclude owner and this contract from fee
     _isExcludedFromFee[_owner] = true;
-    // _isExcludedFromFee[owner()] = true;
+
     _isExcludedFromFee[address(this)] = true;
 
     emit Transfer(address(0), _owner, _tTotal);
-    // emit Transfer(address(0), owner(), _tTotal);
 
     emit TokenCreated(_owner, address(this), TokenType.liquidityGenerator, VERSION);
-    // emit TokenCreated(owner(), address(this), TokenType.liquidityGenerator, VERSION);
 
     transferOwnership(_owner);
   }
@@ -235,7 +232,7 @@ contract LiquidityGeneratorToken is IERC20, Ownable, BaseToken {
   }
 
   function includeInReward(address account) external onlyOwner {
-    require(_isExcluded[account], "Account is already excluded");
+    require(_isExcluded[account], "Account is already included");
     for (uint256 i = 0; i < _excluded.length; i++) {
       if (_excluded[i] == account) {
         _excluded[i] = _excluded[_excluded.length - 1];

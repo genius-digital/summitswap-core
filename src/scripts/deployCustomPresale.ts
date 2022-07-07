@@ -87,7 +87,7 @@ export async function deployCustomPresale(
 
 async function main() {
   const createPresaleFee = parseEther("0.0001");
-  const serviceFeeReciever = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
+  const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
   const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
 
   const presalePrice = "100";

@@ -19,7 +19,7 @@ export async function deploySummitPresaleFactory(serviceFee: BigNumber, serviceF
 
 async function main() {
   const serviceFee = parseEther("0.0001");
-  const serviceFeeReciever = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
+  const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
 
   await deploySummitPresaleFactory(serviceFee, serviceFeeReciever);
 }

@@ -7,6 +7,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
 
 contract SummitCustomPresale is Ownable, ReentrancyGuard {
@@ -151,6 +152,20 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     }
   }
 
+  function addLiquidity(uint256 amountToken, uint256 amountBNB) internal {
+    IERC20(presale.presaleToken).approve(presale.router, amountToken);
+    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
+
+    summitswapV2Router.addLiquidityETH{value: amountBNB}(
+      presale.presaleToken,
+      amountToken,
+      0,
+      0,
+      owner(),
+      block.timestamp
+    );
+  }
+
   function withdrawBNB() external nonReentrant {
     require(presale.isPresaleCancelled, "Presale Not Cancelled");
     require(bought[msg.sender] > 0, "You do not have any contributions");
@@ -210,11 +225,14 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       : ((presale.totalBought * bnbFeeType1) / FEE_DENOMINATOR);
     uint256 feeToken = presale.feeType == 0 ? 0 : calculateBnbToPresaleToken(feeBnb, presale.presalePrice);
     uint256 raisedTokenAmount = calculateBnbToPresaleToken(presale.totalBought, presale.presalePrice);
+    uint256 liquidityTokens = (calculateBnbToPresaleToken(presale.totalBought, presale.listingPrice) *
+      presale.liquidityPercentage) / FEE_DENOMINATOR;
     uint256 contractBal = IERC20(presale.presaleToken).balanceOf(address(this));
-    require(contractBal > (raisedTokenAmount + feeToken), "Contract does not have enough Tokens");
-    uint256 remainingTokenAmount = contractBal - raisedTokenAmount - feeToken;
-
+    require(contractBal >= (raisedTokenAmount + feeToken + liquidityTokens), "Contract does not have enough Tokens");
+    uint256 remainingTokenAmount = contractBal - liquidityTokens - raisedTokenAmount - feeToken;
     presale.isClaimPhase = true;
+
+    addLiquidity(liquidityTokens, (presale.totalBought * presale.liquidityPercentage) / FEE_DENOMINATOR);
 
     payable(serviceFeeReceiver).transfer(feeBnb);
     if (feeToken > 0) {

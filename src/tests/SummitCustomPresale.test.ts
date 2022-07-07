@@ -8,8 +8,7 @@ import { assert, expect } from "chai";
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, formatUnits, parseUnits } from "ethers/lib/utils";
-import { waffle } from "hardhat";
-import { environment } from "src/environment";
+import { ethers, waffle } from "hardhat";
 
 const { deployContract, provider } = waffle;
 
@@ -57,7 +56,7 @@ describe("SummitFactoryPresale", () => {
       wbnb.address,
     ])) as SummitswapRouter02;
     const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-    const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+    const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
     const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
     const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -187,7 +186,7 @@ describe("SummitFactoryPresale", () => {
   describe("buy()", () => {
     it("should be reverted, if presale not started", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -214,7 +213,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if presale ended", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -278,7 +277,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if buyBnbAmount greater than maxBuybnb", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -473,7 +472,7 @@ describe("SummitFactoryPresale", () => {
   describe("emergencyWithdrawBNB()", () => {
     it("should be reverted, if presale not started", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -498,7 +497,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if presale has ended", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -667,7 +666,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if is not end presale time && hardcap !== totalBought", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -708,7 +707,7 @@ describe("SummitFactoryPresale", () => {
     it("should send 2% raised BNB to servicefeeReceiver for feeType 1", async () => {
       const feeType = 1;
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 1 ? presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR) : 0;
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -742,7 +741,7 @@ describe("SummitFactoryPresale", () => {
     it("should send 2% raised tokenAmount to servicefeeReceiver for feeType 1", async () => {
       const feeType = 1;
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 1 ? presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR) : 0;
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -799,7 +798,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should burn remaining tokens for refundType 1", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens + 1;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
@@ -828,6 +827,28 @@ describe("SummitFactoryPresale", () => {
         finalBalance.sub(initialBalance).toString(),
         parseUnits("1", await presaleToken.decimals()).toString()
       );
+    });
+
+    it("should reserves be equal to amount of liquidity added", async () => {
+      const bigMaxBuyBnb = parseEther(maxBuyBnb);
+      await customPresale.connect(otherWallet1).buy({
+        value: bigMaxBuyBnb,
+      });
+      const tokensForLiquidity = parseEther(
+        ((Number(liquidityPrecentage) * Number(maxBuyBnb) * Number(listingPrice)) / 100).toString()
+      );
+
+      const amountBNBAdded = bigMaxBuyBnb.mul(liquidityPrecentage).div(100);
+      await customPresale.connect(owner).finalize();
+
+      const pairAddress = await summitFactory.getPair(presaleToken.address, await summitRouter.WETH());
+      const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
+      const summitswapPair = SummitswapPair.attach(pairAddress);
+
+      const reserves = await summitswapPair.getReserves();
+
+      assert.equal(reserves[0].toString(), amountBNBAdded.toString());
+      assert.equal(reserves[1].toString(), tokensForLiquidity.toString());
     });
   });
 

@@ -1,19 +1,25 @@
-import { waffle } from "hardhat";
-import { expect, assert } from "chai";
+import CustomPresaleArtifact from "@built-contracts/SummitCustomPresale.sol/SummitCustomPresale.json";
+import SummitFactoryArtifact from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
+import SummitRouterArtifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
+import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
+import WbnbArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
+import { DummyToken, SummitCustomPresale, SummitswapFactory, SummitswapRouter02, WBNB } from "build/typechain";
+import { assert, expect } from "chai";
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
-import { parseEther, parseUnits, formatUnits } from "ethers/lib/utils";
-import CustomPresaleArtifact from "@built-contracts/SummitCustomPresale.sol/SummitCustomPresale.json";
-import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
-import { DummyToken, SummitCustomPresale } from "build/typechain";
+import { parseEther, formatUnits, parseUnits } from "ethers/lib/utils";
+import { waffle } from "hardhat";
 import { environment } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
 describe("SummitFactoryPresale", () => {
-  const [owner, otherOwner, otherWallet1, otherWallet2] = provider.getWallets();
+  const [owner, otherOwner, otherWallet1, otherWallet2, summitFactoryFeeToSetter] = provider.getWallets();
 
   let presaleToken: DummyToken;
+  let wbnb: WBNB;
+  let summitFactory: SummitswapFactory;
+  let summitRouter: SummitswapRouter02;
   let customPresale: SummitCustomPresale;
 
   const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
@@ -24,7 +30,6 @@ describe("SummitFactoryPresale", () => {
   const TOKEN_FEE_TYPE_1 = 20000000; // 2%
   const EMERGENCY_WITHDRAW_FEE = 100000000; // 10%
 
-  const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
@@ -43,13 +48,21 @@ describe("SummitFactoryPresale", () => {
   const isWithdrawCancelledTokens = false;
 
   beforeEach(async () => {
+    wbnb = (await deployContract(owner, WbnbArtifact, [])) as WBNB;
+    summitFactory = (await deployContract(owner, SummitFactoryArtifact, [
+      summitFactoryFeeToSetter.address,
+    ])) as SummitswapFactory;
+    summitRouter = (await deployContract(owner, SummitRouterArtifact, [
+      summitFactory.address,
+      wbnb.address,
+    ])) as SummitswapRouter02;
     const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
     const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
     const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
     const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
     customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-      [owner.address, presaleToken.address, router, otherOwner.address],
+      [owner.address, presaleToken.address, summitRouter.address, otherOwner.address],
       [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
       [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
       liquidityLockTime,
@@ -95,7 +108,7 @@ describe("SummitFactoryPresale", () => {
     });
     it("should be router", () => {
       const routerAddresss = presaleInfo.router;
-      assert.equal(routerAddresss, router);
+      assert.equal(routerAddresss, summitRouter.address);
     });
     it("should be presalePrice", () => {
       const bigPresalePrice = parseEther(presalePrice);
@@ -179,7 +192,7 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [otherWallet1.address, presaleToken.address, router, otherOwner.address],
+        [otherWallet1.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
@@ -206,7 +219,7 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [otherWallet1.address, presaleToken.address, router, otherOwner.address],
+        [otherWallet1.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
@@ -270,7 +283,7 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [otherWallet1.address, presaleToken.address, router, otherOwner.address],
+        [otherWallet1.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther("0.4")],
         liquidityLockTime,
@@ -358,7 +371,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be reverted, if not claim phase", async () => {
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [otherWallet1.address, presaleToken.address, router, otherOwner.address],
+        [otherWallet1.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther("0.4")],
         liquidityLockTime,
@@ -465,7 +478,7 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [otherWallet1.address, presaleToken.address, router, otherOwner.address],
+        [otherWallet1.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
@@ -490,7 +503,7 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [otherWallet1.address, presaleToken.address, router, otherOwner.address],
+        [otherWallet1.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
@@ -659,7 +672,7 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [owner.address, presaleToken.address, router, otherOwner.address],
+        [owner.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
@@ -700,7 +713,7 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [owner.address, presaleToken.address, router, otherOwner.address],
+        [owner.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
@@ -734,7 +747,7 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [owner.address, presaleToken.address, router, otherOwner.address],
+        [owner.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
@@ -771,29 +784,27 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should refund remaining tokens for refundType 0", async () => {
+      const transferAmount = parseUnits("1", await presaleToken.decimals());
       const bigMaxBuyBnb = parseEther(maxBuyBnb);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuyBnb,
       });
+      await presaleToken.connect(owner).transfer(customPresale.address, transferAmount);
       const initialBalance = await presaleToken.balanceOf(owner.address);
-      const initialPresaleBalance = await presaleToken.balanceOf(customPresale.address);
       await customPresale.connect(owner).finalize();
       const finalBalance = await presaleToken.balanceOf(owner.address);
 
-      assert.equal(
-        finalBalance.sub(initialBalance).toString(),
-        initialPresaleBalance.sub(bigMaxBuyBnb.mul(presalePrice)).toString()
-      );
+      assert.equal(finalBalance.sub(initialBalance).toString(), transferAmount.toString());
     });
 
     it("should burn remaining tokens for refundType 1", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
-      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens + 1;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [owner.address, presaleToken.address, router, otherOwner.address],
+        [owner.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
@@ -811,12 +822,11 @@ describe("SummitFactoryPresale", () => {
         value: bigMaxBuyBnb,
       });
       const initialBalance = await presaleToken.balanceOf(BURN_ADDRESS);
-      const initialPresaleBalance = await presaleToken.balanceOf(customPresale.address);
       await customPresale.connect(owner).finalize();
       const finalBalance = await presaleToken.balanceOf(BURN_ADDRESS);
       assert.equal(
         finalBalance.sub(initialBalance).toString(),
-        initialPresaleBalance.sub(bigMaxBuyBnb.mul(presalePrice)).toString()
+        parseUnits("1", await presaleToken.decimals()).toString()
       );
     });
   });
@@ -844,7 +854,7 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if contract does not have tokens", async () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [owner.address, presaleToken.address, router, otherOwner.address],
+        [owner.address, presaleToken.address, summitRouter.address, otherOwner.address],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,

@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, formatUnits, parseUnits } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
+import { BURN_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
@@ -20,8 +21,6 @@ describe("SummitFactoryPresale", () => {
   let summitFactory: SummitswapFactory;
   let summitRouter: SummitswapRouter02;
   let customPresale: SummitCustomPresale;
-
-  const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 
   const FEE_DENOMINATOR = 10 ** 9;
   const BNB_FEE_TYPE_0 = 50000000; // 5%

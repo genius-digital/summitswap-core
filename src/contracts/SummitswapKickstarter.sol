@@ -40,10 +40,12 @@ contract SummitswapKickstarter is Ownable {
   }
 
   function setStartTimestamp(uint256 _startTimestamp) external onlyOwner {
+    require(_startTimestamp < endTimestamp, "Start timestamp must be before end timestamp");
     startTimestamp = _startTimestamp;
   }
 
   function setEndTimestamp(uint256 _endTimestamp) external onlyOwner {
+    require(_endTimestamp > startTimestamp, "End timestamp must be after start timestamp");
     endTimestamp = _endTimestamp;
   }
 

@@ -78,7 +78,7 @@ export async function deployCustomPresale(
 
   await presale.wait();
 
-  const presaleAddress = await summitFactoryPresale.tokenPresales(dummyToken.address);
+  const presaleAddress = (await summitFactoryPresale.getTokenPresales(dummyToken.address))[0];
 
   console.log("CustomPresale deployed to:", presaleAddress);
 

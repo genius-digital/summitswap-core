@@ -444,7 +444,7 @@ describe("SummitFactoryPresale", () => {
           }
         );
       const presaleAddress = await presaleFactory.presaleAddresses(0);
-      const presaleAddressFromTokenPresales = await presaleFactory.tokenPresales(presaleToken.address);
+      const presaleAddressFromTokenPresales = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
       assert.equal(presaleAddress, presaleAddressFromTokenPresales);
     });
 
@@ -501,7 +501,7 @@ describe("SummitFactoryPresale", () => {
         );
       const finalTokenAmount = await presaleToken.balanceOf(owner.address);
       const changeTokenAmountOwner = initialTokenAmount.sub(finalTokenAmount).toString();
-      const presaleAddress = await presaleFactory.tokenPresales(presaleToken.address);
+      const presaleAddress = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
       const presaleTokenAmount = (await presaleToken.balanceOf(presaleAddress)).toString();
 
       assert.equal(changeTokenAmountOwner, presaleTokenAmount);

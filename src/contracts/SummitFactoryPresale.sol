@@ -71,7 +71,7 @@ contract SummitFactoryPresale is Ownable {
     return presaleAddresses;
   }
 
-  function getTokenPresale(address _address) external view returns (address[] memory) {
+  function getTokenPresales(address _address) external view returns (address[] memory) {
     return tokenPresales[_address];
   }
 

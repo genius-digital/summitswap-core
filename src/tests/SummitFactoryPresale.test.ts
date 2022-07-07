@@ -8,7 +8,7 @@ import { assert, expect } from "chai";
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
-import { waffle } from "hardhat";
+import { ethers, waffle } from "hardhat";
 import { MAX_APPROVE_AMOUNT } from "src/environment";
 
 const { deployContract, provider } = waffle;
@@ -122,7 +122,7 @@ describe("SummitFactoryPresale", () => {
   });
 
   describe("getAccountPresales()", () => {
-    beforeEach(async () => {
+    it("should be accountPresales.length == 1", async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
@@ -149,8 +149,6 @@ describe("SummitFactoryPresale", () => {
             value: serviceFee,
           }
         );
-    });
-    it("should be accountPresales.length == 1", async () => {
       const accountPresales = await presaleFactory.getAccountPresales(owner.address);
       assert.equal(accountPresales.length, 1);
     });
@@ -233,7 +231,6 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("Not Enough Fee");
     });
 
-    // TODO: ability to create presale with the same token address
     it("should be reverted, if presale already exists", async () => {
       await presaleFactory
         .connect(owner)
@@ -505,6 +502,89 @@ describe("SummitFactoryPresale", () => {
       const presaleTokenAmount = (await presaleToken.balanceOf(presaleAddress)).toString();
 
       assert.equal(changeTokenAmountOwner, presaleTokenAmount);
+    });
+
+    it("should be able to create presale again if last token presale cancelled", async () => {
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, summitRouter.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          liquidityLockTime,
+          startPresaleTime,
+          endPresaleTime,
+          feeType,
+          refundType,
+          isWhiteListPhase,
+          {
+            value: serviceFee,
+          }
+        );
+      const presaleAddress = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
+      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      const summitCustomPresale = SummitCustomPresale.attach(presaleAddress);
+      await summitCustomPresale.connect(owner).cancelPresale();
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, summitRouter.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          liquidityLockTime,
+          startPresaleTime,
+          endPresaleTime,
+          feeType,
+          refundType,
+          isWhiteListPhase,
+          {
+            value: serviceFee,
+          }
+        );
+      assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 2);
+    });
+  });
+
+  describe("getTokenPresales()", () => {
+    it("should be tokenPresales.length == 1", async () => {
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, summitRouter.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          liquidityLockTime,
+          startPresaleTime,
+          endPresaleTime,
+          feeType,
+          refundType,
+          isWhiteListPhase,
+          {
+            value: serviceFee,
+          }
+        );
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      assert.equal(tokenPresales.length, 1);
     });
   });
 });

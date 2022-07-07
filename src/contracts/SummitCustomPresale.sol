@@ -95,6 +95,10 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     return whitelist;
   }
 
+  function isPresaleCancelled() external view returns (bool) {
+    return presale.isPresaleCancelled;
+  }
+
   function calculateBnbToPresaleToken(uint256 _amount, uint256 _price) public view returns (uint256) {
     require(presale.presaleToken != address(0), "Presale token not set");
     uint256 tokens = ((_amount * _price) / 10**18) / (10**(18 - uint256(IERC20(presale.presaleToken).decimals())));

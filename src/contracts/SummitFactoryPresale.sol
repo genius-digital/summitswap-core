@@ -4,11 +4,12 @@
 pragma solidity 0.7.6;
 
 import "./SummitCustomPresale.sol";
+import "./interfaces/ISummitCustomPresale.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SummitFactoryPresale is Ownable {
   mapping(address => address[]) public accountPresales;
-  mapping(address => address) public tokenPresales; // token => presale
+  mapping(address => address[]) public tokenPresales; // token => presale
 
   address[] public presaleAddresses;
   address public serviceFeeReceiver;
@@ -31,12 +32,18 @@ contract SummitFactoryPresale is Ownable {
     bool _isWhiteListPhase
   ) external payable {
     require(msg.value >= preSaleFee, "Not Enough Fee");
-    require(tokenPresales[_addresses[0]] == address(0), "Presale Already Exists");
     require(_startPresaleTime > block.timestamp, "Presale start time should be greater than block.timestamp");
     require(_endPresaleTime > _startPresaleTime, "Presale End time should be greater than presale start time");
     require(_bnbAmounts[0] <= _bnbAmounts[1], "MinBuybnb should be less than maxBuybnb");
     require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
     require(_tokenDetails[3] >= 51, "Liquidity Percentage should be Greater than or equal to 51%");
+
+    if (tokenPresales[_addresses[0]].length > 0) {
+      ISummitCustomPresale _presale = ISummitCustomPresale(
+        tokenPresales[_addresses[0]][tokenPresales[_addresses[0]].length - 1]
+      );
+      require(_presale.isPresaleCancelled(), "Presale Already Exists");
+    }
 
     SummitCustomPresale presale = new SummitCustomPresale(
       [msg.sender, _addresses[0], _addresses[1], serviceFeeReceiver],
@@ -49,7 +56,7 @@ contract SummitFactoryPresale is Ownable {
       _refundType,
       _isWhiteListPhase
     );
-    tokenPresales[_addresses[0]] = address(presale);
+    tokenPresales[_addresses[0]].push(address(presale));
     accountPresales[msg.sender].push(address(presale));
     presaleAddresses.push(address(presale));
     if (serviceFeeReceiver != address(this)) {
@@ -62,6 +69,10 @@ contract SummitFactoryPresale is Ownable {
 
   function getPresaleAddresses() external view returns (address[] memory) {
     return presaleAddresses;
+  }
+
+  function getTokenPresale(address _address) external view returns (address[] memory) {
+    return tokenPresales[_address];
   }
 
   function getAccountPresales(address _address) external view returns (address[] memory) {

@@ -26,7 +26,7 @@ contract LiquidityTokenFactory is Ownable {
     uint16 _taxFeeBps,
     uint16 _liquidityFeeBps,
     uint16 _charityFeeBps
-  ) public payable {
+  ) external payable {
     require(msg.value >= createTokenFee, "Not enough Fee");
     LiquidityGeneratorToken newToken = new LiquidityGeneratorToken(
       _name,
@@ -46,12 +46,12 @@ contract LiquidityTokenFactory is Ownable {
     customLiquidityTokensMade += 1;
   }
 
-  function withdraw(address _feeReceiver) public onlyOwner {
+  function withdraw(address _feeReceiver) external onlyOwner {
     address payable to = payable(_feeReceiver);
     to.transfer(address(this).balance);
   }
 
-  function setServiceFeeReceiver(address _serviceFeeReceiver) public onlyOwner {
+  function setServiceFeeReceiver(address _serviceFeeReceiver) external onlyOwner {
     serviceFeeReceiver = _serviceFeeReceiver;
   }
 

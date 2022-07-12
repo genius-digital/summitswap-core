@@ -22,7 +22,7 @@ contract StandardTokenFactory is Ownable {
     string memory _tokenSym,
     uint8 _decimals,
     uint256 _totalSupply
-  ) public payable {
+  ) external payable {
     require(msg.value >= createTokenFee, "Not enough Fee");
     StandardToken newToken = new StandardToken(_tokenName, _tokenSym, _decimals, _totalSupply, msg.sender);
     if (serviceFeeReceiver != address(this) && serviceFeeReceiver != address(0)) {
@@ -32,12 +32,12 @@ contract StandardTokenFactory is Ownable {
     customStandardTokensMade += 1;
   }
 
-  function withdraw(address _feeReceiver) public onlyOwner {
+  function withdraw(address _feeReceiver) external onlyOwner {
     address payable to = payable(_feeReceiver);
     to.transfer(address(this).balance);
   }
 
-  function setServiceFeeReceiver(address _serviceFeeReceiver) public onlyOwner {
+  function setServiceFeeReceiver(address _serviceFeeReceiver) external onlyOwner {
     serviceFeeReceiver = _serviceFeeReceiver;
   }
 

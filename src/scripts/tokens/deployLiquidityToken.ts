@@ -1,8 +1,8 @@
 import { BigNumber } from "ethers";
-import { ethers } from "hardhat";
 import { parseEther, parseUnits } from "ethers/lib/utils";
-import { tryVerify } from "../utils/verify";
 import { environment, ZERO_ADDRESS } from "src/environment";
+import { deployLiquidityTokenFactory } from "../tokenCreators/deployLiquidityTokenFactory";
+import { tryVerify } from "../utils/verify";
 
 export async function deployStandardToken(
   serviceFee: BigNumber,
@@ -16,16 +16,10 @@ export async function deployStandardToken(
   charityAddress: string,
   charityFeeBps: string
 ) {
-  console.log("Starting to deploy LiquidityTokenFactory");
-
-  const TokenFactoryContract = await ethers.getContractFactory("LiquidityTokenFactory");
-  const tokenFactoryDeploy = await TokenFactoryContract.deploy(serviceFee, serviceFeeAddress);
-  await tokenFactoryDeploy.deployed();
-
-  console.log("LiquidityTokenFactory deployed to:", tokenFactoryDeploy.address);
+  const deployedLiquidityTokenFactory = await deployLiquidityTokenFactory(serviceFee, serviceFeeAddress);
   console.log("Starting to deploy LiquidityToken");
 
-  const tx = await tokenFactoryDeploy.createLiquidityToken(
+  const tx = await deployedLiquidityTokenFactory.createLiquidityToken(
     tokenName,
     tokenSymbol,
     tokenSupply,
@@ -40,7 +34,7 @@ export async function deployStandardToken(
   );
 
   await tx.wait();
-  const tokenAddress = await tokenFactoryDeploy.customLiquidityTokens(0);
+  const tokenAddress = await deployedLiquidityTokenFactory.customLiquidityTokens(0);
   console.log("LiquidityToken deployed to:", tokenAddress);
 
   const owner = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
@@ -56,12 +50,12 @@ export async function deployStandardToken(
     owner,
   ]);
 
-  return tokenFactoryDeploy;
+  return deployedLiquidityTokenFactory;
 }
 
 async function main() {
   const serviceFee = parseEther("0.0001");
-  const serviceFeeReciever = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
+  const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
   const tokenName = "Sample1";
   const tokenSymbol = "SAM1";
   const tokenSupply = parseUnits("100000", 9);

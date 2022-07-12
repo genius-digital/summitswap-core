@@ -1,6 +1,6 @@
 import { BigNumber } from "ethers";
-import { ethers } from "hardhat";
 import { parseEther, parseUnits } from "ethers/lib/utils";
+import { deployStandardTokenFactory } from "../tokenCreators/deployStandardTokenFactory";
 import { tryVerify } from "../utils/verify";
 
 export async function deployStandardToken(
@@ -11,27 +11,27 @@ export async function deployStandardToken(
   tokenDecimals: number,
   tokenSupply: BigNumber
 ) {
-  console.log("Starting to deploy StandardTokenFactory");
-
-  const TokenFactoryContract = await ethers.getContractFactory("StandardTokenFactory");
-  const tokenFactoryDeploy = await TokenFactoryContract.deploy(serviceFee, serviceFeeAddress);
-  await tokenFactoryDeploy.deployed();
-
-  console.log("StandardTokenFactory deployed to:", tokenFactoryDeploy.address);
+  const deployedStandardTokenFactory = await deployStandardTokenFactory(serviceFee, serviceFeeAddress);
   console.log("Starting to deploy StandardToken");
 
-  const tx = await tokenFactoryDeploy.createStandardToken(tokenName, tokenSymbol, tokenDecimals, tokenSupply, {
-    value: serviceFee,
-  });
+  const tx = await deployedStandardTokenFactory.createStandardToken(
+    tokenName,
+    tokenSymbol,
+    tokenDecimals,
+    tokenSupply,
+    {
+      value: serviceFee,
+    }
+  );
 
   await tx.wait();
-  const tokenAddress = await tokenFactoryDeploy.customStandardTokens(0);
+  const tokenAddress = await deployedStandardTokenFactory.customStandardTokens(0);
   console.log("StandardToken deployed to:", tokenAddress);
 
   const owner = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
   await tryVerify(tokenAddress, [tokenName, tokenSymbol, tokenDecimals, tokenSupply, owner]);
 
-  return tokenFactoryDeploy;
+  return deployedStandardTokenFactory;
 }
 
 async function main() {
@@ -40,7 +40,7 @@ async function main() {
   const tokenDecimals = 18;
   const tokenSupply = parseUnits("100000", tokenDecimals);
   const serviceFee = parseEther("0.0001");
-  const serviceFeeReciever = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
+  const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
   await deployStandardToken(serviceFee, serviceFeeReciever, tokenName, tokenSymbol, tokenDecimals, tokenSupply);
 }
 

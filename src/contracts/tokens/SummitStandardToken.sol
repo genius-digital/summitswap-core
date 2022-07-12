@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract StandardToken is ERC20, Ownable {
   uint8 internal tokenDecimals = 18;
-  uint256 public VERSION = 1;
 
   constructor(
     string memory _tokenName,
@@ -14,7 +13,7 @@ contract StandardToken is ERC20, Ownable {
     uint8 _decimals,
     uint256 _total_supply,
     address _owner
-  ) ERC20(_tokenName, _tokenSym) Ownable() {
+  ) ERC20(_tokenName, _tokenSym) {
     _mint(_owner, _total_supply);
     tokenDecimals = _decimals;
     transferOwnership(_owner);

@@ -13,7 +13,7 @@ import { BURN_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
-describe("SummitFactoryPresale", () => {
+describe("SummitCustomPresale", () => {
   const [owner, otherOwner, otherWallet1, otherWallet2, summitFactoryFeeToSetter] = provider.getWallets();
 
   let presaleToken: DummyToken;

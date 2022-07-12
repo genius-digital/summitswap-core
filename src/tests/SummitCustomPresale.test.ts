@@ -796,10 +796,11 @@ describe("SummitCustomPresale", () => {
     });
 
     it("should burn remaining tokens for refundType 1", async () => {
+      const excessTokens = 1;
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
-      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens + 1;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens + excessTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
         [owner.address, presaleToken.address, summitRouter.address, otherOwner.address],
@@ -824,7 +825,7 @@ describe("SummitCustomPresale", () => {
       const finalBalance = await presaleToken.balanceOf(BURN_ADDRESS);
       assert.equal(
         finalBalance.sub(initialBalance).toString(),
-        parseUnits("1", await presaleToken.decimals()).toString()
+        parseUnits(excessTokens.toString(), await presaleToken.decimals()).toString()
       );
     });
 

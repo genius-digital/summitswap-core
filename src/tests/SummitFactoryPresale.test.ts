@@ -25,9 +25,6 @@ describe("SummitFactoryPresale", () => {
   const serviceFee = parseEther("0.00010");
   const updatedServiceFee = parseEther("0.00012");
 
-  const FEE_DENOMINATOR = 10 ** 9;
-  const BNB_FEE_TYPE_1 = 20000000; // 2 %
-
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
@@ -430,7 +427,7 @@ describe("SummitFactoryPresale", () => {
       assert.equal(presaleAddress, presaleAddressFromTokenPresales);
     });
 
-    it("should be ablt to send service fee to serviceFeeReceiver address", async () => {
+    it("should be able to send service fee to serviceFeeReceiver address", async () => {
       const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
       await presaleFactory
         .connect(owner)
@@ -533,6 +530,31 @@ describe("SummitFactoryPresale", () => {
           }
         );
       assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 2);
+    });
+
+    it("should be able to create presale with feeToken", async () => {
+      const feeToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, summitRouter.address, feeToken.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          liquidityLockTime,
+          startPresaleTime,
+          endPresaleTime,
+          refundType,
+          isWhiteListPhase,
+          {
+            value: serviceFee,
+          }
+        );
+      assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 1);
     });
   });
 

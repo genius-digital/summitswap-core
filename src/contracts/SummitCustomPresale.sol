@@ -37,8 +37,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     uint256 presalePrice; // in wei
     uint256 listingPrice; // in wei
     uint256 liquidityLockTime; // in seconds
-    uint256 minBuyBnb; // in wei
-    uint256 maxBuyBnb; // in wei
+    uint256 minBuy; // in wei
+    uint256 maxBuy; // in wei
     uint256 softCap; // in wei
     uint256 hardCap; // in wei
     uint256 liquidityPercentage;
@@ -60,7 +60,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   constructor(
     address[5] memory _addresses, // owner, token, router, raisedTokenAddress, serviceFeeReceiver
     uint256[3] memory _tokenDetails, // _presalePrice, _listingPrice, liquidityPercent
-    uint256[4] memory _bnbAmounts, // minBuyBnb, maxBuyBnb, softcap, hardcap
+    uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256 _liquidityLockTime,
     uint256 _startPresaleTime,
     uint256 _endPresaleTime,
@@ -75,8 +75,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     presale.listingPrice = _tokenDetails[1];
     presale.liquidityPercentage = (_tokenDetails[2] * FEE_DENOMINATOR) / 100;
     presale.liquidityLockTime = _liquidityLockTime;
-    presale.minBuyBnb = _bnbAmounts[0];
-    presale.maxBuyBnb = _bnbAmounts[1];
+    presale.minBuy = _bnbAmounts[0];
+    presale.maxBuy = _bnbAmounts[1];
     presale.softCap = _bnbAmounts[2];
     presale.hardCap = _bnbAmounts[3];
     presale.startPresaleTime = _startPresaleTime;
@@ -140,8 +140,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   function buy() external payable validContribution nonReentrant {
     require(feeInfo.raisedTokenAddress == address(0), "Raised token is not native coin");
     require(bought[msg.sender] + msg.value <= presale.hardCap, "Cannot buy more than HardCap amount");
-    require(msg.value >= presale.minBuyBnb, "msg.value is less than minBuyBnb");
-    require(msg.value + bought[msg.sender] <= presale.maxBuyBnb, "msg.value is great than maxBuyBnb");
+    require(msg.value >= presale.minBuy, "msg.value is less than minBuy");
+    require(msg.value + bought[msg.sender] <= presale.maxBuy, "msg.value is great than maxBuy");
     presale.totalBought += msg.value;
     bought[msg.sender] += msg.value;
 
@@ -154,8 +154,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   function buyCustomCurrency(uint256 contributionAmount) external validContribution nonReentrant {
     require(feeInfo.raisedTokenAddress != address(0), "Raised token is native coin");
     require(bought[msg.sender] + contributionAmount <= presale.hardCap, "Cannot buy more than HardCap amount");
-    require(contributionAmount >= presale.minBuyBnb, "contributionAmount is less than minBuyBnb");
-    require(contributionAmount + bought[msg.sender] <= presale.maxBuyBnb, "contributionAmount is great than maxBuyBnb");
+    require(contributionAmount >= presale.minBuy, "contributionAmount is less than minBuy");
+    require(contributionAmount + bought[msg.sender] <= presale.maxBuy, "contributionAmount is great than maxBuy");
     require(
       IERC20(feeInfo.raisedTokenAddress).allowance(msg.sender, address(this)) >= contributionAmount,
       "Increase allowance to contribute"

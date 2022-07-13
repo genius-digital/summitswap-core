@@ -23,7 +23,7 @@ contract SummitFactoryPresale is Ownable {
   function createPresale(
     address[3] memory _addresses, // tokenAdress, routerAddress, raisedTokenAddress
     uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
-    uint256[4] memory _bnbAmounts, // minBuyBnb, maxBuyBnb, softcap, hardcap
+    uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256 _liquidityLockTime,
     uint256 _startPresaleTime,
     uint256 _endPresaleTime,

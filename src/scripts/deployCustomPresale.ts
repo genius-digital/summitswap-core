@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
-import { environment, MAX_APPROVE_AMOUNT } from "src/environment";
+import { environment, MAX_VALUE } from "src/environment";
 import { deployDummyToken } from "./deployDummyToken";
 import { deploySummitPresaleFactory } from "./deploySummitPresaleFactory";
 
@@ -38,7 +38,7 @@ export async function deployCustomPresale(
   const dummyToken = await deployDummyToken();
 
   console.log("Approving Factory");
-  await dummyToken.approve(summitFactoryPresale.address, MAX_APPROVE_AMOUNT);
+  await dummyToken.approve(summitFactoryPresale.address, MAX_VALUE);
 
   console.log("Factory Approved");
   console.log("Starting to deploy SummitCustomPresale");

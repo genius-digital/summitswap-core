@@ -28,8 +28,8 @@ describe("SummitFactoryPresale", () => {
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
-  const minBuyBnb = "0.1";
-  const maxBuyBnb = "0.2";
+  const minBuy = "0.1";
+  const maxBuy = "0.2";
   const softCap = "0.1";
   const hardCap = "0.2";
   const liquidityPrecentage = 70;
@@ -133,7 +133,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -171,7 +171,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -208,7 +208,7 @@ describe("SummitFactoryPresale", () => {
               parseEther(listingPrice),
               liquidityPrecentage,
             ],
-            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
@@ -232,7 +232,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -253,7 +253,7 @@ describe("SummitFactoryPresale", () => {
               parseEther(listingPrice),
               liquidityPrecentage,
             ],
-            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
@@ -278,7 +278,7 @@ describe("SummitFactoryPresale", () => {
               parseEther(listingPrice),
               liquidityPrecentage,
             ],
-            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             dayjs(startPresaleTime).subtract(2, "day").unix(),
             endPresaleTime,
@@ -303,7 +303,7 @@ describe("SummitFactoryPresale", () => {
               parseEther(listingPrice),
               liquidityPrecentage,
             ],
-            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             startPresaleTime,
             dayjs(endPresaleTime).subtract(2, "day").unix(),
@@ -316,7 +316,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("Presale End time should be greater than presale start time");
     });
 
-    it("should be reverted, if minBuyBnb greater than maxBuyBnb", async () => {
+    it("should be reverted, if minBuy greater than maxBuy", async () => {
       await expect(
         presaleFactory
           .connect(owner)
@@ -329,8 +329,8 @@ describe("SummitFactoryPresale", () => {
               liquidityPrecentage,
             ],
             [
-              parseEther((Number(minBuyBnb) + Number(maxBuyBnb)).toString()),
-              parseEther(maxBuyBnb),
+              parseEther((Number(minBuy) + Number(maxBuy)).toString()),
+              parseEther(maxBuy),
               parseEther(softCap),
               parseEther(hardCap),
             ],
@@ -343,7 +343,7 @@ describe("SummitFactoryPresale", () => {
               value: serviceFee,
             }
           )
-      ).to.be.revertedWith("MinBuybnb should be less than maxBuybnb");
+      ).to.be.revertedWith("MinBuy should be less than maxBuy");
     });
 
     it("should be reverted, if softCap less than 50% of hardCap", async () => {
@@ -359,8 +359,8 @@ describe("SummitFactoryPresale", () => {
               liquidityPrecentage,
             ],
             [
-              parseEther(minBuyBnb),
-              parseEther(maxBuyBnb),
+              parseEther(minBuy),
+              parseEther(maxBuy),
               parseEther((Number(hardCap) * 0.4).toString()),
               parseEther(hardCap),
             ],
@@ -388,7 +388,7 @@ describe("SummitFactoryPresale", () => {
               parseEther(listingPrice),
               liquidityPrecentage - 30,
             ],
-            [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
@@ -412,7 +412,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -439,7 +439,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -466,7 +466,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -495,7 +495,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -519,7 +519,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -544,7 +544,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
@@ -574,7 +574,7 @@ describe("SummitFactoryPresale", () => {
             parseEther(listingPrice),
             liquidityPrecentage,
           ],
-          [parseEther(minBuyBnb), parseEther(maxBuyBnb), parseEther(softCap), parseEther(hardCap)],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,

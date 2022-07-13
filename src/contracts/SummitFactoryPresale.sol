@@ -33,7 +33,7 @@ contract SummitFactoryPresale is Ownable {
     require(msg.value >= preSaleFee, "Not Enough Fee");
     require(_startPresaleTime > block.timestamp, "Presale start time should be greater than block.timestamp");
     require(_endPresaleTime > _startPresaleTime, "Presale End time should be greater than presale start time");
-    require(_bnbAmounts[0] <= _bnbAmounts[1], "MinBuybnb should be less than maxBuybnb");
+    require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
     require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
     require(_tokenDetails[3] >= 51, "Liquidity Percentage should be Greater than or equal to 51%");
 

@@ -294,8 +294,12 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     );
 
     uint256 raisedTokenAmount = calculateBnbToPresaleToken(presale.totalBought, presale.presalePrice);
-    uint256 liquidityTokens = ((calculateBnbToPresaleToken(presale.totalBought, presale.listingPrice) *
-      presale.liquidityPercentage) / FEE_DENOMINATOR) - feePresaleToken;
+    uint256 liquidityTokens = (
+      calculateBnbToPresaleToken(
+        (presale.totalBought * presale.liquidityPercentage) / FEE_DENOMINATOR,
+        presale.listingPrice
+      )
+    ) - feePresaleToken;
 
     uint256 contractBal = IERC20(presale.presaleToken).balanceOf(address(this));
     require(

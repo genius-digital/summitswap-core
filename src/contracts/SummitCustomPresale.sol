@@ -45,8 +45,6 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     uint256 startPresaleTime;
     uint256 endPresaleTime;
     uint256 totalBought; // in wei
-    // remove feeType no need
-    uint8 feeType; // 0 == 5% raised Bnb || 1 == 2% raised Bnb and 2% raised tokens
     uint8 refundType; // 0 refund, 1 burn
     bool isWhiteListPhase;
     bool isClaimPhase;
@@ -54,8 +52,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     bool isWithdrawCancelledTokens;
   }
 
-  PresaleInfo presale;
-  FeeInfo feeInfo;
+  PresaleInfo private presale;
+  FeeInfo private feeInfo;
 
   constructor(
     address[5] memory _addresses, // owner, token, router, raisedTokenAddress, serviceFeeReceiver
@@ -199,18 +197,30 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     }
   }
 
-  function addLiquidity(uint256 amountToken, uint256 amountBNB) internal {
+  function addLiquidity(uint256 amountToken, uint256 amountRaised) internal {
     IERC20(presale.presaleToken).approve(presale.router, amountToken);
     ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
-
-    summitswapV2Router.addLiquidityETH{value: amountBNB}(
-      presale.presaleToken,
-      amountToken,
-      0,
-      0,
-      owner(),
-      block.timestamp
-    );
+    if (feeInfo.raisedTokenAddress == address(0)) {
+      summitswapV2Router.addLiquidityETH{value: amountRaised}(
+        presale.presaleToken,
+        amountToken,
+        0,
+        0,
+        owner(),
+        block.timestamp
+      );
+    } else {
+      summitswapV2Router.addLiquidity(
+        presale.presaleToken,
+        feeInfo.raisedTokenAddress,
+        amountToken,
+        amountRaised,
+        0,
+        0,
+        owner(),
+        block.timestamp
+      );
+    }
   }
 
   function withdrawRaisedToken() external nonReentrant {
@@ -284,8 +294,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     );
 
     uint256 raisedTokenAmount = calculateBnbToPresaleToken(presale.totalBought, presale.presalePrice);
-    uint256 liquidityTokens = (calculateBnbToPresaleToken(presale.totalBought, presale.listingPrice) *
-      presale.liquidityPercentage) / FEE_DENOMINATOR;
+    uint256 liquidityTokens = ((calculateBnbToPresaleToken(presale.totalBought, presale.listingPrice) *
+      presale.liquidityPercentage) / FEE_DENOMINATOR) - feePresaleToken;
 
     uint256 contractBal = IERC20(presale.presaleToken).balanceOf(address(this));
     require(
@@ -295,7 +305,10 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     uint256 remainingTokenAmount = contractBal - liquidityTokens - raisedTokenAmount - feePresaleToken;
     presale.isClaimPhase = true;
 
-    addLiquidity(liquidityTokens, (presale.totalBought * presale.liquidityPercentage) / FEE_DENOMINATOR);
+    addLiquidity(
+      liquidityTokens,
+      ((presale.totalBought * presale.liquidityPercentage) / FEE_DENOMINATOR) - feeRaisedToken
+    );
 
     if (feeInfo.raisedTokenAddress == address(0)) {
       payable(serviceFeeReceiver).transfer(feeRaisedToken);

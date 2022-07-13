@@ -9,7 +9,7 @@ import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
-import { MAX_APPROVE_AMOUNT } from "src/environment";
+import { MAX_AMOUNT, ZERO_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
@@ -38,7 +38,6 @@ describe("SummitFactoryPresale", () => {
   const liquidityPrecentage = 70;
   const startPresaleTime = dayjs().add(1, "day").unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
-  const feeType = 0;
   const refundType = 0;
   const isWhiteListPhase = false;
 
@@ -123,15 +122,14 @@ describe("SummitFactoryPresale", () => {
 
   describe("getAccountPresales()", () => {
     it("should be accountPresales.length == 1", async () => {
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_AMOUNT);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
-      const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
-      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -142,7 +140,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {
@@ -164,14 +161,13 @@ describe("SummitFactoryPresale", () => {
     it("should be able to withdraw fee by owner", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
-      const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
-      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory.connect(owner).setServiceFeeReceiver(presaleFactory.address);
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_AMOUNT);
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -182,7 +178,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {
@@ -200,17 +195,16 @@ describe("SummitFactoryPresale", () => {
   describe("createPresale()", () => {
     const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
     const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
-    const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
-    const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
+    const tokenAmount = presaleTokenAmount + tokensForLiquidity;
     beforeEach(async () => {
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_AMOUNT);
     });
     it("should be reverted, if not enough fee", async () => {
       await expect(
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address],
+            [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -221,7 +215,6 @@ describe("SummitFactoryPresale", () => {
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
-            feeType,
             refundType,
             isWhiteListPhase,
             {
@@ -235,7 +228,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -246,7 +239,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {
@@ -257,7 +249,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address],
+            [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -268,7 +260,6 @@ describe("SummitFactoryPresale", () => {
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
-            feeType,
             refundType,
             isWhiteListPhase,
             {
@@ -283,7 +274,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address],
+            [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -294,7 +285,6 @@ describe("SummitFactoryPresale", () => {
             liquidityLockTime,
             dayjs(startPresaleTime).subtract(2, "day").unix(),
             endPresaleTime,
-            feeType,
             refundType,
             isWhiteListPhase,
             {
@@ -309,7 +299,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address],
+            [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -320,7 +310,6 @@ describe("SummitFactoryPresale", () => {
             liquidityLockTime,
             startPresaleTime,
             dayjs(endPresaleTime).subtract(2, "day").unix(),
-            feeType,
             refundType,
             isWhiteListPhase,
             {
@@ -335,7 +324,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address],
+            [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -351,7 +340,6 @@ describe("SummitFactoryPresale", () => {
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
-            feeType,
             refundType,
             isWhiteListPhase,
             {
@@ -366,7 +354,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address],
+            [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -382,7 +370,6 @@ describe("SummitFactoryPresale", () => {
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
-            feeType,
             refundType,
             isWhiteListPhase,
             {
@@ -397,7 +384,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address],
+            [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -408,7 +395,6 @@ describe("SummitFactoryPresale", () => {
             liquidityLockTime,
             startPresaleTime,
             endPresaleTime,
-            feeType,
             refundType,
             isWhiteListPhase,
             {
@@ -422,7 +408,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -433,7 +419,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {
@@ -450,7 +435,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -461,7 +446,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {
@@ -478,7 +462,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -489,7 +473,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {
@@ -508,7 +491,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -519,7 +502,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {
@@ -533,7 +515,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -544,7 +526,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {
@@ -557,15 +538,14 @@ describe("SummitFactoryPresale", () => {
 
   describe("getTokenPresales()", () => {
     it("should be tokenPresales.length == 1", async () => {
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_AMOUNT);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
-      const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
-      const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address],
+          [presaleToken.address, summitRouter.address, ZERO_ADDRESS],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -576,7 +556,6 @@ describe("SummitFactoryPresale", () => {
           liquidityLockTime,
           startPresaleTime,
           endPresaleTime,
-          feeType,
           refundType,
           isWhiteListPhase,
           {

@@ -23,6 +23,7 @@ export async function deployCustomPresale(
   serviceFeeReciever: string,
   router: string,
   raisedToken: string,
+  pairToken: string,
   tokenDetails: TokenDetails,
   bnbAmounts: BnbAmounts,
   liquidityLockTime: number,
@@ -48,7 +49,7 @@ export async function deployCustomPresale(
   const tokenDecimals = await dummyToken.decimals();
 
   const presale = await summitFactoryPresale.createPresale(
-    [dummyToken.address, router, raisedToken],
+    [dummyToken.address, router, raisedToken, pairToken],
     [
       parseUnits(tokenAmount.toString(), tokenDecimals),
       parseEther(tokenDetails.presalePrice),
@@ -85,6 +86,7 @@ async function main() {
   const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
   const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
   const raisedToken = ZERO_ADDRESS; // raisedToken == ZERO_ADDRESS ? native coin to be raised: raisedToken
+  const pairToken = ZERO_ADDRESS; // pairToken == ZERO_ADDRESS ? native coin to be paired: pairToken
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
@@ -103,6 +105,7 @@ async function main() {
     serviceFeeReciever,
     router,
     raisedToken,
+    pairToken,
     { presalePrice, listingPrice, liquidityPrecentage },
     { minBuyBnb, maxBuyBnb, softCap, hardCap },
     liquidityLockTime,

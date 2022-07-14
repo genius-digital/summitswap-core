@@ -17,6 +17,7 @@ describe("SummitCustomPresale", () => {
   const [owner, otherOwner, otherWallet1, otherWallet2, summitFactoryFeeToSetter] = provider.getWallets();
 
   let presaleToken: DummyToken;
+  let raisedToken: DummyToken;
   let wbnb: WBNB;
   let summitFactory: SummitswapFactory;
   let summitRouter: SummitswapRouter02;
@@ -91,10 +92,51 @@ describe("SummitCustomPresale", () => {
     });
   });
 
-  describe("getInfo()", () => {
+  describe("getFeeInfo()", () => {
+    let feeInfo: SummitCustomPresale.FeeInfoStruct;
+    beforeEach(async () => {
+      feeInfo = await customPresale.getFeeInfo();
+    });
+    it("should be emergencyWithdrawFee", () => {
+      const emergencyWithdrawFee = feeInfo.emergencyWithdrawFee;
+      assert.equal(EMERGENCY_WITHDRAW_FEE.toString(), emergencyWithdrawFee.toString());
+    });
+    it("should be FEE_RAISED_TOKEN", () => {
+      const feeRaisedToken = feeInfo.feeRaisedToken;
+      assert.equal(feeRaisedToken.toString(), FEE_RAISED_TOKEN.toString());
+    });
+    it("should be FEE_PRESALE_TOKEN", () => {
+      const feePresaleToken = feeInfo.feePresaleToken;
+      assert.equal(feePresaleToken.toString(), FEE_PRESALE_TOKEN.toString());
+    });
+    it("should be ZeroAddress", () => {
+      const tokenAddress = feeInfo.raisedTokenAddress;
+      assert.equal(ZERO_ADDRESS, tokenAddress);
+    });
+    it("should be raisedToken address", async () => {
+      raisedToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [owner.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        liquidityLockTime,
+        startPresaleTime,
+        dayjs().unix(),
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+
+      feeInfo = await customPresale.getFeeInfo();
+      const tokenAddress = feeInfo.raisedTokenAddress;
+
+      assert.equal(raisedToken.address, tokenAddress);
+    });
+  });
+
+  describe("getPresaleInfo()", () => {
     let presaleInfo: SummitCustomPresale.PresaleInfoStructOutput;
     beforeEach(async () => {
-      presaleInfo = await customPresale.getInfo();
+      presaleInfo = await customPresale.getPresaleInfo();
     });
     it("should be presaleToken", () => {
       const tokenAddress = presaleInfo.presaleToken;
@@ -305,7 +347,7 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet2).buy({
         value: bigMinBuy,
       });
-      const otherWallet1BoughtAmount = (await customPresale.getInfo()).totalBought.toString();
+      const otherWallet1BoughtAmount = (await customPresale.getPresaleInfo()).totalBought.toString();
       assert.equal(otherWallet1BoughtAmount, bigMinBuy.add(bigMinBuy).toString());
     });
 
@@ -338,6 +380,197 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet1).buy({
         value: bigMinBuy,
       });
+      const contributors = await customPresale.getContributors();
+      assert.equal(contributors.length, 1);
+    });
+  });
+
+  describe("buyCustomCurrency()", () => {
+    let raisedToken: DummyToken;
+    beforeEach(async () => {
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      raisedToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [owner.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+      await presaleToken
+        .connect(owner)
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+    });
+    it("should be reverted, if presale not started", async () => {
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [otherWallet1.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        liquidityLockTime,
+        dayjs().add(1, "day").unix(),
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+      await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
+        "Presale Not started Yet"
+      );
+    });
+
+    it("should be reverted, if presale ended", async () => {
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [otherWallet1.address, presaleToken.address, summitRouter.address, ZERO_ADDRESS, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        liquidityLockTime,
+        startPresaleTime,
+        dayjs().unix(),
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+      await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
+        "Presale Ended"
+      );
+    });
+
+    it("should be reverted, if claim phase", async () => {
+      await raisedToken.connect(owner).approve(customPresale.address, parseEther(maxBuy));
+      await customPresale.connect(owner).buyCustomCurrency(parseEther(maxBuy));
+      await customPresale.connect(owner).finalize();
+      await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
+        "Claim Phase has started"
+      );
+    });
+
+    it("should be reverted, if whitelistphase and address not whitelisted", async () => {
+      await customPresale.connect(owner).toggleWhitelistPhase();
+      await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(minBuy))).to.be.revertedWith(
+        "Address not Whitelisted"
+      );
+    });
+
+    it("should be reverted, if raised token is native coin", async () => {
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [otherWallet1.address, presaleToken.address, summitRouter.address, ZERO_ADDRESS, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+      await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
+        "Raised token is native coin"
+      );
+    });
+
+    it("should be reverted, if buy bought more than hardcap amount", async () => {
+      await expect(customPresale.connect(owner).buyCustomCurrency(parseEther(maxBuy).add("1"))).to.be.revertedWith(
+        "Cannot buy more than HardCap amount"
+      );
+    });
+
+    it("should be reverted, if contributionAmount less than minBuy", async () => {
+      await expect(
+        customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(minBuy).sub("1"))
+      ).to.be.revertedWith("contributionAmount is less than minBuy");
+    });
+
+    it("should be reverted, if contributionAmount greater than maxBuy", async () => {
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [otherWallet1.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther("0.4")],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+      await expect(
+        customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy).add("1"))
+      ).to.be.revertedWith("contributionAmount is great than maxBuy");
+    });
+
+    it("should be reverted, if allowance less than contributionAmount", async () => {
+      await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(minBuy))).to.be.revertedWith(
+        "Increase allowance to contribute"
+      );
+    });
+
+    it("should be equal contributionAmount and change in account balance", async () => {
+      await raisedToken.connect(owner).approve(customPresale.address, parseEther(maxBuy));
+      const balance0 = await raisedToken.balanceOf(owner.address);
+      await customPresale.connect(owner).buyCustomCurrency(parseEther(maxBuy));
+      const balance1 = await raisedToken.balanceOf(owner.address);
+
+      const ownerBoughtAmount = await customPresale.bought(owner.address);
+      assert.equal(balance0.sub(balance1).toString(), ownerBoughtAmount.toString());
+    });
+
+    it("should be equal contributionAmount and boughtAmount", async () => {
+      await raisedToken.connect(owner).approve(customPresale.address, parseEther(maxBuy));
+      const bigMaxBuy = parseEther(maxBuy);
+      await customPresale.connect(owner).buyCustomCurrency(bigMaxBuy);
+      const ownerBoughtAmount = await customPresale.bought(owner.address);
+      assert.equal(bigMaxBuy.toString(), ownerBoughtAmount.toString());
+    });
+
+    it("should be equal totalBoughtAmount and accounts bought amount", async () => {
+      const bigMinBuy = parseEther(minBuy);
+      await raisedToken.connect(owner).transfer(otherWallet1.address, bigMinBuy);
+      await raisedToken.connect(owner).approve(customPresale.address, bigMinBuy);
+      await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMinBuy);
+
+      await customPresale.connect(owner).buyCustomCurrency(bigMinBuy);
+      await customPresale.connect(otherWallet1).buyCustomCurrency(bigMinBuy);
+
+      const totalBought = (await customPresale.getPresaleInfo()).totalBought.toString();
+      assert.equal(totalBought, bigMinBuy.add(bigMinBuy).toString());
+    });
+
+    it("should be same, the contributor and owner", async () => {
+      const bigMinBuy = parseEther(minBuy);
+      await raisedToken.connect(owner).approve(customPresale.address, bigMinBuy);
+
+      await customPresale.connect(owner).buyCustomCurrency(bigMinBuy);
+
+      const contributors = await customPresale.getContributors();
+      assert.equal(contributors[0], owner.address);
+    });
+
+    it("should be same, the contributors length and buyers", async () => {
+      const bigMinBuy = parseEther(minBuy);
+      await raisedToken.connect(owner).transfer(otherWallet1.address, bigMinBuy);
+      await raisedToken.connect(owner).approve(customPresale.address, bigMinBuy);
+      await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMinBuy);
+
+      await customPresale.connect(owner).buyCustomCurrency(bigMinBuy);
+      await customPresale.connect(otherWallet1).buyCustomCurrency(bigMinBuy);
+
+      const contributors = await customPresale.getContributors();
+      assert.equal(contributors.length, 2);
+    });
+
+    it("should be same, the contributors length and otherWallet1 buying multiple times", async () => {
+      const bigMinBuy = parseEther(minBuy);
+      await raisedToken.connect(owner).transfer(otherWallet1.address, bigMinBuy.add(bigMinBuy));
+      await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMinBuy.add(bigMinBuy));
+
+      await customPresale.connect(otherWallet1).buyCustomCurrency(bigMinBuy);
+      await customPresale.connect(otherWallet1).buyCustomCurrency(bigMinBuy);
+
       const contributors = await customPresale.getContributors();
       assert.equal(contributors.length, 1);
     });
@@ -418,7 +651,7 @@ describe("SummitCustomPresale", () => {
       );
     });
 
-    it("should be equal withdrawalBNB amount and BuyBNB amount ", async () => {
+    it("should be equal withdrawal BNB amount and Buy BNB amount ", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuy),
       });
@@ -430,6 +663,43 @@ describe("SummitCustomPresale", () => {
       assert.equal(finalBoughtAmount.toString(), "0");
     });
 
+    it("should be equal withdrawal token amount and contribution amount if raised token not native coin", async () => {
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      raisedToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [owner.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+      await presaleToken
+        .connect(owner)
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+
+      await raisedToken.connect(owner).approve(customPresale.address, parseEther(minBuy));
+      await customPresale.connect(owner).buyCustomCurrency(parseEther(minBuy));
+
+      const raisedTokenBalance0 = await raisedToken.balanceOf(owner.address);
+      const initialBoughtAmount = await customPresale.bought(owner.address);
+
+      await customPresale.connect(owner).cancelPresale();
+      await customPresale.connect(owner).withdrawRaisedToken();
+
+      const raisedTokenBalance1 = await raisedToken.balanceOf(owner.address);
+      const finalBoughtAmount = await customPresale.bought(owner.address);
+
+      assert.equal(raisedTokenBalance1.sub(raisedTokenBalance0).toString(), parseEther(minBuy).toString());
+      assert.equal(initialBoughtAmount.sub(finalBoughtAmount).toString(), parseEther(minBuy).toString());
+      assert.equal(finalBoughtAmount.toString(), "0");
+    });
+
     it("should be equal change in total bought and withdrawal amount", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuy),
@@ -437,14 +707,14 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet2).buy({
         value: parseEther(minBuy),
       });
-      const initialTotalBought = (await customPresale.getInfo()).totalBought;
+      const initialTotalBought = (await customPresale.getPresaleInfo()).totalBought;
       await customPresale.connect(owner).cancelPresale();
       await customPresale.connect(otherWallet1).withdrawRaisedToken();
-      const finalTotalBought = (await customPresale.getInfo()).totalBought;
+      const finalTotalBought = (await customPresale.getPresaleInfo()).totalBought;
       assert.equal(initialTotalBought.sub(finalTotalBought).toString(), parseEther(minBuy).toString());
     });
 
-    it("should be greater balance after withdrawBNB", async () => {
+    it("should be greater balance after withdrawal of BNB", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuy),
       });
@@ -453,6 +723,20 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet1).withdrawRaisedToken();
       const finalBalance = await provider.getBalance(otherWallet1.address);
       assert.equal(finalBalance.gt(initialBalance), true);
+    });
+
+    it("should be remove from contributors after withdrawRaisedToken", async () => {
+      await customPresale.connect(otherWallet1).buy({
+        value: parseEther(maxBuy),
+      });
+
+      const length0 = (await customPresale.getContributors()).length;
+      assert.equal(length0.toString(), "1");
+      await customPresale.connect(owner).cancelPresale();
+
+      await customPresale.connect(otherWallet1).withdrawRaisedToken();
+      const length1 = (await customPresale.getContributors()).length;
+      assert.equal(length1.toString(), "0");
     });
   });
 
@@ -529,7 +813,7 @@ describe("SummitCustomPresale", () => {
       );
     });
 
-    it("should send 10% to service fee address", async () => {
+    it("should send 10% BNB to service fee address if bought with BNB", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuy),
       });
@@ -542,7 +826,32 @@ describe("SummitCustomPresale", () => {
       );
     });
 
-    it("should be equal withdrawalBNB amount and BuyBNB amount ", async () => {
+    it("should send 10% raisedToken to service fee address if bought with raisedToken", async () => {
+      raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [otherWallet1.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther("0.4")],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+
+      await raisedToken.connect(otherWallet1).approve(customPresale.address, parseEther(minBuy));
+      await customPresale.connect(otherWallet1).buyCustomCurrency(parseEther(minBuy));
+
+      const initialBalance = await raisedToken.balanceOf(otherOwner.address);
+      await customPresale.connect(otherWallet1).emergencyWithdrawRaisedToken();
+      const finalBalance = await raisedToken.balanceOf(otherOwner.address);
+      assert.equal(
+        finalBalance.sub(initialBalance).toString(),
+        parseUnits(minBuy).mul(EMERGENCY_WITHDRAW_FEE).div(FEE_DENOMINATOR).toString()
+      );
+    });
+
+    it("should be equal withdrawal BNB amount and Buy BNB amount ", async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuy),
       });
@@ -550,6 +859,32 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet1).emergencyWithdrawRaisedToken();
       const finalBoughtAmount = await customPresale.bought(otherWallet1.address);
       assert.equal(initialBoughtAmount.sub(finalBoughtAmount).toString(), parseEther(minBuy).toString());
+    });
+
+    it("should be equal bougth raisedToken amount and withdrawal amount if raised token not native coin", async () => {
+      raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [otherWallet1.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther("0.4")],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+
+      await raisedToken.connect(otherWallet1).approve(customPresale.address, parseEther(minBuy));
+      await customPresale.connect(otherWallet1).buyCustomCurrency(parseEther(minBuy));
+
+      const balance0 = await raisedToken.balanceOf(otherWallet1.address);
+      await customPresale.connect(otherWallet1).emergencyWithdrawRaisedToken();
+      const balance1 = await raisedToken.balanceOf(otherWallet1.address);
+
+      assert.equal(
+        balance1.sub(balance0).add(parseUnits(minBuy).mul(EMERGENCY_WITHDRAW_FEE).div(FEE_DENOMINATOR)).toString(),
+        parseEther(minBuy).toString()
+      );
     });
 
     it("should be 0 bought amount after emergencyWithdrawRaisedToken", async () => {
@@ -568,9 +903,9 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet2).buy({
         value: parseEther(minBuy),
       });
-      const initialTotalBought = (await customPresale.getInfo()).totalBought;
+      const initialTotalBought = (await customPresale.getPresaleInfo()).totalBought;
       await customPresale.connect(otherWallet1).emergencyWithdrawRaisedToken();
-      const finalTotalBought = (await customPresale.getInfo()).totalBought;
+      const finalTotalBought = (await customPresale.getPresaleInfo()).totalBought;
       assert.equal(initialTotalBought.sub(finalTotalBought).toString(), parseEther(minBuy).toString());
     });
 
@@ -582,6 +917,18 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet1).emergencyWithdrawRaisedToken();
       const finalBalance = await provider.getBalance(otherWallet1.address);
       assert.equal(finalBalance.gt(initialBalance), true);
+    });
+
+    it("should be remove from contributors after emergencyWithdrawRaisedToken", async () => {
+      await customPresale.connect(otherWallet1).buy({
+        value: parseEther(maxBuy),
+      });
+
+      const length0 = (await customPresale.getContributors()).length;
+      assert.equal(length0.toString(), "1");
+      await customPresale.connect(otherWallet1).emergencyWithdrawRaisedToken();
+      const length1 = (await customPresale.getContributors()).length;
+      assert.equal(length1.toString(), "0");
     });
   });
 
@@ -673,7 +1020,7 @@ describe("SummitCustomPresale", () => {
       );
     });
 
-    it("should send 5% of Raised BNB amount to servicefeeReceiver", async () => {
+    it("should send FEE_RAISED_TOKEN to servicefeeReceiver if raised token BNB", async () => {
       const bigMaxBuy = parseEther(maxBuy);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuy,
@@ -687,7 +1034,40 @@ describe("SummitCustomPresale", () => {
       );
     });
 
-    it("should send 2% of raised presaleToken to servicefeeReceiver", async () => {
+    it("should send FEE_RAISED_TOKEN to servicefeeReceiver if raised token not BNB", async () => {
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [owner.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+      await presaleToken
+        .connect(owner)
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+
+      const bigMaxBuy = parseEther(maxBuy);
+
+      await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMaxBuy);
+      await customPresale.connect(otherWallet1).buyCustomCurrency(bigMaxBuy);
+
+      const initialBalance = await raisedToken.balanceOf(otherOwner.address);
+      await customPresale.connect(owner).finalize();
+      const finalBalance = await raisedToken.balanceOf(otherOwner.address);
+      assert.equal(
+        finalBalance.sub(initialBalance).toString(),
+        bigMaxBuy.mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR).toString()
+      );
+    });
+
+    it("should send FEE_PRESALE_TOKEN to servicefeeReceiver", async () => {
       const bigMaxBuy = parseEther(maxBuy);
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuy,
@@ -707,7 +1087,7 @@ describe("SummitCustomPresale", () => {
         value: bigMaxBuy,
       });
       await customPresale.connect(owner).finalize();
-      const presaleInfo = await customPresale.getInfo();
+      const presaleInfo = await customPresale.getPresaleInfo();
       assert.equal(presaleInfo.isClaimPhase, true);
     });
 
@@ -757,32 +1137,79 @@ describe("SummitCustomPresale", () => {
       );
     });
 
-    it("should reserves be equal to amount of liquidity added", async () => {
-      const bigMaxBuy = parseEther(maxBuy);
-      await customPresale.connect(otherWallet1).buy({
-        value: bigMaxBuy,
+    describe("addLiquidity", () => {
+      it("should reserves be equal to amount of liquidity added if liquidity added with native coin", async () => {
+        const bigMaxBuy = parseEther(maxBuy);
+        await customPresale.connect(otherWallet1).buy({
+          value: bigMaxBuy,
+        });
+
+        const feePresaleToken = parseEther((Number(maxBuy) * Number(presalePrice)).toString())
+          .mul(FEE_PRESALE_TOKEN)
+          .div(FEE_DENOMINATOR);
+        const tokensForLiquidity = parseEther(
+          ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+        ).sub(feePresaleToken);
+
+        const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
+        const amountBNBAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+
+        await customPresale.connect(owner).finalize();
+
+        const pairAddress = await summitFactory.getPair(presaleToken.address, await summitRouter.WETH());
+        const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
+        const summitswapPair = SummitswapPair.attach(pairAddress);
+
+        const reserves = await summitswapPair.getReserves();
+
+        assert.equal(reserves[1].toString(), amountBNBAdded.toString());
+        assert.equal(reserves[0].toString(), tokensForLiquidity.toString());
       });
 
-      const feePresaleToken = parseEther((Number(maxBuy) * Number(presalePrice)).toString())
-        .mul(FEE_PRESALE_TOKEN)
-        .div(FEE_DENOMINATOR);
-      const tokensForLiquidity = parseEther(
-        ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
-      ).sub(feePresaleToken);
+      it("should reserves be equal to amount of liquidity added if liquidity added with native coin", async () => {
+        const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+        const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
+        const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+        raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
+        customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+          [owner.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+          [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          liquidityLockTime,
+          startPresaleTime,
+          endPresaleTime,
+          refundType,
+          isWhiteListPhase,
+        ])) as SummitCustomPresale;
+        await presaleToken
+          .connect(owner)
+          .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
 
-      const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-      const amountBNBAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+        const bigMaxBuy = parseEther(maxBuy);
+        await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMaxBuy);
+        await customPresale.connect(otherWallet1).buyCustomCurrency(bigMaxBuy);
 
-      await customPresale.connect(owner).finalize();
+        const feePresaleToken = parseEther((Number(maxBuy) * Number(presalePrice)).toString())
+          .mul(FEE_PRESALE_TOKEN)
+          .div(FEE_DENOMINATOR);
+        const liquidityTokensAdded = parseEther(
+          ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+        ).sub(feePresaleToken);
 
-      const pairAddress = await summitFactory.getPair(presaleToken.address, await summitRouter.WETH());
-      const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
-      const summitswapPair = SummitswapPair.attach(pairAddress);
+        const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
+        const raisedTokenAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
 
-      const reserves = await summitswapPair.getReserves();
+        await customPresale.connect(owner).finalize();
 
-      assert.equal(reserves[0].toString(), tokensForLiquidity.toString());
-      assert.equal(reserves[1].toString(), amountBNBAdded.toString()); // reserve1 is bnb
+        const pairAddress = await summitFactory.getPair(presaleToken.address, raisedToken.address);
+        const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
+        const summitswapPair = SummitswapPair.attach(pairAddress);
+
+        const reserves = await summitswapPair.getReserves();
+
+        assert.equal(reserves[0].toString(), raisedTokenAdded.toString());
+        assert.equal(reserves[1].toString(), liquidityTokensAdded.toString());
+      });
     });
   });
 
@@ -841,10 +1268,32 @@ describe("SummitCustomPresale", () => {
     });
   });
 
+  describe("setFee()", () => {
+    it("should be reverted, if set with otherOwner", async () => {
+      await expect(
+        customPresale.connect(otherOwner).setFee(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should set fees to new fess", async () => {
+      const newFeeRaisedToken = BigNumber.from(FEE_RAISED_TOKEN).add("1");
+      const newFeePresaleToken = BigNumber.from(FEE_PRESALE_TOKEN).add("1");
+      const newEmergencyWithdrawFee = BigNumber.from(EMERGENCY_WITHDRAW_FEE).add("1");
+
+      await customPresale.connect(owner).setFee(newFeeRaisedToken, newFeePresaleToken, newEmergencyWithdrawFee);
+
+      const feeInfo = await customPresale.getFeeInfo();
+
+      assert.equal(newFeeRaisedToken.toString(), feeInfo.feeRaisedToken.toString());
+      assert.equal(newFeePresaleToken.toString(), feeInfo.feePresaleToken.toString());
+      assert.equal(newEmergencyWithdrawFee.toString(), feeInfo.emergencyWithdrawFee.toString());
+    });
+  });
+
   describe("enablewhitelist()", () => {
     it("should set whitelist phase to true", async () => {
       await customPresale.connect(owner).toggleWhitelistPhase();
-      const whitelistPhase = (await customPresale.getInfo()).isWhiteListPhase;
+      const whitelistPhase = (await customPresale.getPresaleInfo()).isWhiteListPhase;
       assert.equal(whitelistPhase, true);
     });
 
@@ -858,7 +1307,7 @@ describe("SummitCustomPresale", () => {
   describe("cancelPresale()", () => {
     it("should cancel presale", async () => {
       await customPresale.connect(owner).cancelPresale();
-      const isPresaleCancelled = (await customPresale.getInfo()).isPresaleCancelled;
+      const isPresaleCancelled = (await customPresale.getPresaleInfo()).isPresaleCancelled;
       assert.equal(isPresaleCancelled, true);
     });
 
@@ -884,10 +1333,12 @@ describe("SummitCustomPresale", () => {
   });
 
   describe("withdrawBNBOwner()", () => {
-    it("should send BNB to otherWallet2", async () => {
+    beforeEach(async () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuy),
       });
+    });
+    it("should send BNB to otherWallet2", async () => {
       const initialBalance = await provider.getBalance(otherWallet2.address);
       await customPresale.connect(owner).withdrawBNBOwner(parseEther(maxBuy), otherWallet2.address);
       const finalBalance = await provider.getBalance(otherWallet2.address);
@@ -895,11 +1346,47 @@ describe("SummitCustomPresale", () => {
     });
 
     it("should be reverted, if set with otherWallet", async () => {
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(maxBuy),
-      });
       await expect(
         customPresale.connect(otherOwner).withdrawBNBOwner(parseEther(maxBuy), otherWallet2.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+
+  describe("withdrawRaisedTokenOwner()", () => {
+    const bigMaxBuy = parseEther(maxBuy);
+    let raisedToken: DummyToken;
+    beforeEach(async () => {
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
+      customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+        [owner.address, presaleToken.address, summitRouter.address, raisedToken.address, otherOwner.address],
+        [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        liquidityLockTime,
+        startPresaleTime,
+        endPresaleTime,
+        refundType,
+        isWhiteListPhase,
+      ])) as SummitCustomPresale;
+      await presaleToken
+        .connect(owner)
+        .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+
+      await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMaxBuy);
+      await customPresale.connect(otherWallet1).buyCustomCurrency(bigMaxBuy);
+    });
+    it("should send raised Token to otherWallet2", async () => {
+      const initialBalance = await raisedToken.balanceOf(otherWallet2.address);
+      await customPresale.connect(owner).withdrawRaisedTokenOwner(parseEther(maxBuy), otherWallet2.address);
+      const finalBalance = await raisedToken.balanceOf(otherWallet2.address);
+      assert.equal(finalBalance.sub(initialBalance).toString(), parseEther(maxBuy).toString());
+    });
+
+    it("should be reverted, if set with otherWallet", async () => {
+      await expect(
+        customPresale.connect(otherOwner).withdrawRaisedTokenOwner(parseEther(maxBuy), otherWallet2.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });

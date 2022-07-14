@@ -106,7 +106,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     return feeInfo;
   }
 
-  function getInfo() external view returns (PresaleInfo memory) {
+  function getPresaleInfo() external view returns (PresaleInfo memory) {
     return presale;
   }
 
@@ -210,6 +210,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
         block.timestamp
       );
     } else {
+      IERC20(feeInfo.raisedTokenAddress).approve(presale.router, amountRaised);
       summitswapV2Router.addLiquidity(
         presale.presaleToken,
         feeInfo.raisedTokenAddress,

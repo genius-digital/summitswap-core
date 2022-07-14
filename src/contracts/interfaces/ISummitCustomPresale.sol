@@ -27,7 +27,7 @@ interface ISummitCustomPresale {
     bool isWithdrawCancelledTokens;
   }
 
-  function getInfo() external view returns (PresaleInfo memory);
+  function getPresaleInfo() external view returns (PresaleInfo memory);
 
   function getContributors() external view returns (address[] memory);
 

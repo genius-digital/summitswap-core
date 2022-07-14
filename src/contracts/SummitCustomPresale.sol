@@ -3,6 +3,8 @@
 
 pragma solidity 0.7.6;
 
+import "hardhat/console.sol";
+
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -34,6 +36,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   struct PresaleInfo {
     address presaleToken;
     address router;
+    address pairToken;
     uint256 presalePrice; // in wei
     uint256 listingPrice; // in wei
     uint256 liquidityLockTime; // in seconds
@@ -56,7 +59,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   FeeInfo private feeInfo;
 
   constructor(
-    address[5] memory _addresses, // owner, token, router, raisedTokenAddress, serviceFeeReceiver
+    address[6] memory _addresses, // owner, token, router, raisedTokenAddress, pairToken, serviceFeeReceiver
     uint256[3] memory _tokenDetails, // _presalePrice, _listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256 _liquidityLockTime,
@@ -66,9 +69,10 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     bool _isWhiteListPhase
   ) {
     transferOwnership(_addresses[0]);
-    serviceFeeReceiver = _addresses[4];
+    serviceFeeReceiver = _addresses[5];
     presale.presaleToken = _addresses[1];
     presale.router = _addresses[2];
+    presale.pairToken = _addresses[4];
     presale.presalePrice = _tokenDetails[0];
     presale.listingPrice = _tokenDetails[1];
     presale.liquidityPercentage = (_tokenDetails[2] * FEE_DENOMINATOR) / 100;
@@ -198,31 +202,134 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   }
 
   function addLiquidity(uint256 amountToken, uint256 amountRaised) internal {
-    IERC20(presale.presaleToken).approve(presale.router, amountToken);
-    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
     if (feeInfo.raisedTokenAddress == address(0)) {
-      summitswapV2Router.addLiquidityETH{value: amountRaised}(
-        presale.presaleToken,
-        amountToken,
-        0,
-        0,
-        owner(),
-        block.timestamp
-      );
+      if (presale.pairToken == address(0)) {
+        _addLiquidityETH(amountToken, amountRaised);
+      } else {
+        swapETHForTokenAndLiquify(amountToken, amountRaised);
+      }
     } else {
-      IERC20(feeInfo.raisedTokenAddress).approve(presale.router, amountRaised);
-      summitswapV2Router.addLiquidity(
-        presale.presaleToken,
-        feeInfo.raisedTokenAddress,
-        amountToken,
-        amountRaised,
-        0,
-        0,
-        owner(),
-        block.timestamp
-      );
+      if (presale.pairToken == address(0)) {
+        swapTokenForETHAndLiquify(amountToken, amountRaised); // raisedToken == BUSD & liquidity with BNB
+      } else {
+        if (feeInfo.raisedTokenAddress == presale.pairToken) {
+          _addLiquidityTokens(amountToken, amountRaised, presale.pairToken);
+        } else {
+          swapTokenForTokenAndLiquify(amountToken, amountRaised);
+        }
+      }
     }
   }
+
+  function swapETHForTokenAndLiquify(uint256 amountToken, uint256 amountRaised) internal {
+    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
+    address[] memory path = new address[](2);
+    path[0] = summitswapV2Router.WETH();
+    path[1] = presale.pairToken;
+
+    uint256[] memory amounts = summitswapV2Router.swapExactETHForTokens{value: amountRaised}(
+      0,
+      path,
+      address(this),
+      block.timestamp
+    );
+    console.log(amounts[0], amounts[1], amounts.length);
+    _addLiquidityTokens(amountToken, amounts[1], presale.pairToken);
+  }
+
+  function swapTokenForETHAndLiquify(uint256 amountToken, uint256 amountRaised) internal {
+    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
+    address[] memory path = new address[](2);
+    path[0] = feeInfo.raisedTokenAddress;
+    path[1] = summitswapV2Router.WETH();
+
+    IERC20(feeInfo.raisedTokenAddress).approve(presale.router, amountRaised);
+    uint256[] memory amounts = summitswapV2Router.swapExactTokensForETH(
+      amountRaised,
+      0,
+      path,
+      address(this),
+      block.timestamp
+    );
+    console.log(amounts[0], amounts[1], amounts.length);
+    _addLiquidityETH(amountToken, amounts[1]);
+  }
+
+  function swapTokenForTokenAndLiquify(uint256 amountToken, uint256 amountRaised) internal {
+    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
+    address[] memory path = new address[](3);
+    path[0] = feeInfo.raisedTokenAddress;
+    path[1] = summitswapV2Router.WETH();
+    path[2] = presale.pairToken;
+
+    IERC20(feeInfo.raisedTokenAddress).approve(presale.router, amountRaised);
+    uint256[] memory amounts = summitswapV2Router.swapExactTokensForTokens(
+      amountRaised,
+      0,
+      path,
+      address(this),
+      block.timestamp
+    );
+    _addLiquidityTokens(amountToken, amounts[2], presale.pairToken);
+  }
+
+  function _addLiquidityETH(uint256 amountToken, uint256 amountBNB) internal {
+    IERC20(presale.presaleToken).approve(presale.router, amountToken);
+    ISummitswapRouter02(presale.router).addLiquidityETH{value: amountBNB}(
+      presale.presaleToken,
+      amountToken,
+      0,
+      0,
+      owner(),
+      block.timestamp
+    );
+  }
+
+  function _addLiquidityTokens(
+    uint256 amountToken,
+    uint256 amountRaised,
+    address pairAddress
+  ) internal {
+    IERC20(presale.presaleToken).approve(presale.router, amountToken);
+    IERC20(pairAddress).approve(presale.router, amountRaised);
+    ISummitswapRouter02(presale.router).addLiquidity(
+      presale.presaleToken,
+      pairAddress,
+      amountToken,
+      amountRaised,
+      0,
+      0,
+      owner(),
+      block.timestamp
+    );
+  }
+
+  // function addLiquidity(uint256 amountToken, uint256 amountRaised) internal {
+  //   IERC20(presale.presaleToken).approve(presale.router, amountToken);
+  //   ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
+  //   if (feeInfo.raisedTokenAddress == address(0)) {
+  //     summitswapV2Router.addLiquidityETH{value: amountRaised}(
+  //       presale.presaleToken,
+  //       amountToken,
+  //       0,
+  //       0,
+  //       owner(),
+  //       block.timestamp
+  //     );
+  //   } else {
+  //     IERC20(feeInfo.raisedTokenAddress).approve(presale.router, amountRaised);
+  //     summitswapV2Router.addLiquidity(
+  //       presale.presaleToken,
+  //       feeInfo.raisedTokenAddress,
+  //       amountToken,
+  //       amountRaised,
+  //       0,
+  //       0,
+  //       owner(),
+  //       block.timestamp
+  //     );
+  //   }
+  // }
 
   function withdrawRaisedToken() external nonReentrant {
     require(presale.isPresaleCancelled, "Presale Not Cancelled");

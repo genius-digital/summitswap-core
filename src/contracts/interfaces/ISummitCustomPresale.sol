@@ -12,15 +12,14 @@ interface ISummitCustomPresale {
     uint256 presalePrice; // in wei
     uint256 listingPrice; // in wei
     uint256 liquidityLockTime; // in seconds
-    uint256 minBuyBnb; // in wei
-    uint256 maxBuyBnb; // in wei
+    uint256 minBuy; // in wei
+    uint256 maxBuy; // in wei
     uint256 softCap; // in wei
     uint256 hardCap; // in wei
     uint256 liquidityPercentage;
     uint256 startPresaleTime;
     uint256 endPresaleTime;
     uint256 totalBought; // in wei
-    uint8 feeType; // 0 == 5% raised Bnb || 1 == 2% raised Bnb and 2% raised tokens
     uint8 refundType; // 0 refund, 1 burn
     bool isWhiteListPhase;
     bool isClaimPhase;
@@ -28,7 +27,7 @@ interface ISummitCustomPresale {
     bool isWithdrawCancelledTokens;
   }
 
-  function getInfo() external view returns (PresaleInfo memory);
+  function getPresaleInfo() external view returns (PresaleInfo memory);
 
   function getContributors() external view returns (address[] memory);
 

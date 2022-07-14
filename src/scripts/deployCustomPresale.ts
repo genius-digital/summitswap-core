@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
-import { environment, MAX_VALUE } from "src/environment";
+import { environment, MAX_VALUE, ZERO_ADDRESS } from "src/environment";
 import { deployDummyToken } from "./deployDummyToken";
 import { deploySummitPresaleFactory } from "./deploySummitPresaleFactory";
 
@@ -22,18 +22,15 @@ export async function deployCustomPresale(
   createPresaleFee: BigNumber,
   serviceFeeReciever: string,
   router: string,
+  raisedToken: string,
   tokenDetails: TokenDetails,
   bnbAmounts: BnbAmounts,
   liquidityLockTime: number,
   startPresaleTime: number,
   endPresaleTime: number,
-  feeType: number,
   refundType: number,
   isWhiteListPhase: boolean
 ) {
-  const FEE_DENOMINATOR = 10 ** 9;
-  const BNB_FEE_TYPE_1 = 20000000;
-
   const summitFactoryPresale = await deploySummitPresaleFactory(createPresaleFee, serviceFeeReciever);
   const dummyToken = await deployDummyToken();
 
@@ -46,13 +43,12 @@ export async function deployCustomPresale(
   const presaleTokenAmount = Number(tokenDetails.presalePrice) * Number(bnbAmounts.hardCap);
   const tokensForLiquidity =
     Number(tokenDetails.liquidityPrecentage / 100) * Number(bnbAmounts.hardCap) * Number(tokenDetails.listingPrice);
-  const feeTokens = feeType === 0 ? 0 : (presaleTokenAmount * BNB_FEE_TYPE_1) / FEE_DENOMINATOR;
-  const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
+  const tokenAmount = presaleTokenAmount + tokensForLiquidity;
 
   const tokenDecimals = await dummyToken.decimals();
 
   const presale = await summitFactoryPresale.createPresale(
-    [dummyToken.address, router],
+    [dummyToken.address, router, raisedToken],
     [
       parseUnits(tokenAmount.toString(), tokenDecimals),
       parseEther(tokenDetails.presalePrice),
@@ -68,7 +64,6 @@ export async function deployCustomPresale(
     liquidityLockTime,
     startPresaleTime,
     endPresaleTime,
-    feeType,
     refundType,
     isWhiteListPhase,
     {
@@ -89,7 +84,7 @@ async function main() {
   const createPresaleFee = parseEther("0.0001");
   const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
   const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
-
+  const raisedToken = ZERO_ADDRESS; // raisedToken == ZERO_ADDRESS ? native coin to be raised: raisedToken
   const presalePrice = "100";
   const listingPrice = "100";
   const liquidityLockTime = 12 * 60;
@@ -100,7 +95,6 @@ async function main() {
   const liquidityPrecentage = 70;
   const startPresaleTime = dayjs().add(1, "day").unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
-  const feeType = 0;
   const refundType = 0;
   const isWhiteListPhase = false;
 
@@ -108,12 +102,12 @@ async function main() {
     createPresaleFee,
     serviceFeeReciever,
     router,
+    raisedToken,
     { presalePrice, listingPrice, liquidityPrecentage },
     { minBuyBnb, maxBuyBnb, softCap, hardCap },
     liquidityLockTime,
     startPresaleTime,
     endPresaleTime,
-    feeType,
     refundType,
     isWhiteListPhase
   );

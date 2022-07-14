@@ -1162,8 +1162,8 @@ describe("SummitCustomPresale", () => {
 
         const reserves = await summitswapPair.getReserves();
 
-        assert.equal(reserves[1].toString(), amountBNBAdded.toString());
-        assert.equal(reserves[0].toString(), tokensForLiquidity.toString());
+        assert.equal(reserves[0].eq(amountBNBAdded) || reserves[1].eq(amountBNBAdded), true);
+        assert.equal(reserves[0].eq(tokensForLiquidity) || reserves[1].eq(tokensForLiquidity), true);
       });
 
       it("should reserves be equal to amount of liquidity added if liquidity added with native coin", async () => {
@@ -1207,8 +1207,8 @@ describe("SummitCustomPresale", () => {
 
         const reserves = await summitswapPair.getReserves();
 
-        assert.equal(reserves[0].toString(), raisedTokenAdded.toString());
-        assert.equal(reserves[1].toString(), liquidityTokensAdded.toString());
+        assert.equal(reserves[0].eq(raisedTokenAdded) || reserves[1].eq(raisedTokenAdded), true);
+        assert.equal(reserves[0].eq(liquidityTokensAdded) || reserves[1].eq(liquidityTokensAdded), true);
       });
     });
   });

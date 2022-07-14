@@ -270,7 +270,7 @@ describe("SummitLiquidityGeneratorToken", () => {
         0,
         0,
         owner.address,
-        dayjs().add(1000, "seconds").unix(),
+        dayjs().add(10000, "seconds").unix(),
         {
           value: parseEther("80"),
           gasLimit: 3000000,
@@ -288,11 +288,11 @@ describe("SummitLiquidityGeneratorToken", () => {
       const balance = await liquidityGeneratorToken.balanceOf(liquidityGeneratorToken.address);
       assert.equal(balance.toString(), numTokensSellToAddToLiquidity.toString());
 
-      const reserve0 = (await summitswapPair.getReserves())[1];
+      const reserves0 = await summitswapPair.getReserves();
       await liquidityGeneratorToken.connect(owner).transfer(otherWallet1.address, parseUnits("100", "9"));
-      const reserve1 = (await summitswapPair.getReserves())[1];
+      const reserves1 = await summitswapPair.getReserves();
 
-      assert.equal(reserve1.gt(reserve0), true);
+      assert.equal(reserves1[0].gt(reserves0[0]) || reserves1[1].gt(reserves0[1]), true);
     });
   });
 

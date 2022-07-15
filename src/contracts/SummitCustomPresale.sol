@@ -3,8 +3,6 @@
 
 pragma solidity 0.7.6;
 
-import "hardhat/console.sol";
-
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -201,6 +199,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     }
   }
 
+  receive() external payable {}
+
   function addLiquidity(uint256 amountToken, uint256 amountRaised) internal {
     if (feeInfo.raisedTokenAddress == address(0)) {
       if (presale.pairToken == address(0)) {
@@ -233,7 +233,6 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       address(this),
       block.timestamp
     );
-    console.log(amounts[0], amounts[1], amounts.length);
     _addLiquidityTokens(amountToken, amounts[1], presale.pairToken);
   }
 
@@ -251,7 +250,6 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       address(this),
       block.timestamp
     );
-    console.log(amounts[0], amounts[1], amounts.length);
     _addLiquidityETH(amountToken, amounts[1]);
   }
 

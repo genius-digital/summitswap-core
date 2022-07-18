@@ -21,8 +21,7 @@ contract SummitFactoryPresale is Ownable {
   }
 
   function createPresale(
-    address[3] memory _addresses, // tokenAdress, raisedTokenAddress, pairToken
-    address[2] memory _routerAddreses, // SS router, PS router
+    address[5] memory _addresses, // tokenAdress, raisedTokenAddress, pairToken, SS router, PS router
     uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256 _liquidityLockTime,
@@ -47,8 +46,7 @@ contract SummitFactoryPresale is Ownable {
     }
 
     SummitCustomPresale presale = new SummitCustomPresale(
-      [msg.sender, _addresses[0], _addresses[1], _addresses[2], serviceFeeReceiver],
-      _routerAddreses,
+      [msg.sender, _addresses[0], _addresses[1], _addresses[2], _addresses[3], _addresses[4], serviceFeeReceiver],
       [_tokenDetails[1], _tokenDetails[2], _tokenDetails[3]],
       _bnbAmounts,
       _liquidityLockTime,

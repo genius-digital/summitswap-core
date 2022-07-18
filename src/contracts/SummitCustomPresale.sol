@@ -59,8 +59,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   FeeInfo private feeInfo;
 
   constructor(
-    address[5] memory _addresses, // owner, token, raisedTokenAddress, pairToken, serviceFeeReceiver
-    address[2] memory _routerAddreses, // SummitSwap, PancakeSwap
+    address[7] memory _addresses, // owner, token, raisedTokenAddress, pairToken, SummitSwap, PancakeSwap, serviceFeeReceiver
     uint256[3] memory _tokenDetails, // _presalePrice, _listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256 _liquidityLockTime,
@@ -71,9 +70,9 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     bool _isWhiteListPhase
   ) {
     transferOwnership(_addresses[0]);
-    presale.router0 = _routerAddreses[0];
-    presale.router1 = _routerAddreses[1];
-    serviceFeeReceiver = _addresses[4];
+    serviceFeeReceiver = _addresses[6];
+    presale.router0 = _addresses[4];
+    presale.router1 = _addresses[5];
     presale.presaleToken = _addresses[1];
     presale.pairToken = _addresses[3];
     presale.presalePrice = _tokenDetails[0];

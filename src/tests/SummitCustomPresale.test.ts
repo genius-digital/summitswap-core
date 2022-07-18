@@ -39,6 +39,7 @@ describe("SummitCustomPresale", () => {
   const startPresaleTime = dayjs().unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
   const refundType = 0;
+  const listingChoice = 0;
   const isWhiteListPhase = false;
   const isClaimPhase = false;
   const isPresaleCancelled = false;
@@ -58,13 +59,22 @@ describe("SummitCustomPresale", () => {
     const tokenAmount = presaleTokenAmount + tokensForLiquidity;
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
     customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-      [owner.address, presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS, otherOwner.address],
+      [
+        owner.address,
+        presaleToken.address,
+        ZERO_ADDRESS,
+        ZERO_ADDRESS,
+        summitRouter.address,
+        summitRouter.address,
+        otherOwner.address,
+      ],
       [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
       [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
       liquidityLockTime,
       startPresaleTime,
       endPresaleTime,
       refundType,
+      listingChoice,
       isWhiteListPhase,
     ])) as SummitCustomPresale;
     await presaleToken
@@ -119,9 +129,10 @@ describe("SummitCustomPresale", () => {
         [
           owner.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -130,6 +141,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         dayjs().unix(),
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
 
@@ -150,7 +162,7 @@ describe("SummitCustomPresale", () => {
       assert.equal(tokenAddress, presaleToken.address);
     });
     it("should be router", () => {
-      const routerAddresss = presaleInfo.router;
+      const routerAddresss = presaleInfo.router0;
       assert.equal(routerAddresss, summitRouter.address);
     });
     it("should be presalePrice", () => {
@@ -234,9 +246,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
           summitRouter.address,
-          ZERO_ADDRESS,
-          ZERO_ADDRESS,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -245,6 +258,7 @@ describe("SummitCustomPresale", () => {
         dayjs().add(1, "day").unix(),
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -266,9 +280,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
           summitRouter.address,
-          ZERO_ADDRESS,
-          ZERO_ADDRESS,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -277,6 +292,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         dayjs().unix(),
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -335,9 +351,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
           summitRouter.address,
-          ZERO_ADDRESS,
-          ZERO_ADDRESS,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -346,6 +363,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -425,9 +443,10 @@ describe("SummitCustomPresale", () => {
         [
           owner.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           raisedToken.address, // pairTokenAddress == raisedTokenAddress
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -436,6 +455,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -448,9 +468,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -459,6 +480,7 @@ describe("SummitCustomPresale", () => {
         dayjs().add(1, "day").unix(),
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
@@ -472,9 +494,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
           summitRouter.address,
-          ZERO_ADDRESS,
-          ZERO_ADDRESS,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -483,6 +506,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         dayjs().unix(),
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
@@ -513,9 +537,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
           summitRouter.address,
-          ZERO_ADDRESS,
-          ZERO_ADDRESS,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -524,6 +549,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
@@ -549,9 +575,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -560,6 +587,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await expect(
@@ -656,9 +684,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
           summitRouter.address,
-          ZERO_ADDRESS,
-          ZERO_ADDRESS,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -667,6 +696,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await customPresale.connect(otherWallet1).buy({
@@ -744,9 +774,10 @@ describe("SummitCustomPresale", () => {
         [
           owner.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -755,6 +786,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -828,9 +860,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
           summitRouter.address,
-          ZERO_ADDRESS,
-          ZERO_ADDRESS,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -839,6 +872,7 @@ describe("SummitCustomPresale", () => {
         dayjs().add(1, "day").unix(),
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -858,9 +892,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
           summitRouter.address,
-          ZERO_ADDRESS,
-          ZERO_ADDRESS,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -869,6 +904,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         dayjs().unix(),
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -924,9 +960,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -935,6 +972,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
 
@@ -966,9 +1004,10 @@ describe("SummitCustomPresale", () => {
         [
           otherWallet1.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -977,6 +1016,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
 
@@ -1108,13 +1148,22 @@ describe("SummitCustomPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [owner.address, presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS, otherOwner.address],
+        [
+          owner.address,
+          presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
+          otherOwner.address,
+        ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         dayjs().unix(),
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -1149,9 +1198,10 @@ describe("SummitCustomPresale", () => {
         [
           owner.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           raisedToken.address, // raisedTokenAddress == pairTokenAddress
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -1160,6 +1210,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -1225,13 +1276,22 @@ describe("SummitCustomPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + excessTokens;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [owner.address, presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS, otherOwner.address],
+        [
+          owner.address,
+          presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
+          otherOwner.address,
+        ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
         1,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken
@@ -1305,9 +1365,10 @@ describe("SummitCustomPresale", () => {
           [
             owner.address,
             presaleToken.address,
-            summitRouter.address,
             ZERO_ADDRESS,
             pairToken.address,
+            summitRouter.address,
+            summitRouter.address,
             otherOwner.address,
           ],
           [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -1316,6 +1377,7 @@ describe("SummitCustomPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
         ])) as SummitCustomPresale;
         await presaleToken
@@ -1362,9 +1424,10 @@ describe("SummitCustomPresale", () => {
           [
             owner.address,
             presaleToken.address,
-            summitRouter.address,
             raisedToken.address,
             raisedToken.address, // raisedTokenAddress == pairTokenAddress
+            summitRouter.address,
+            summitRouter.address,
             otherOwner.address,
           ],
           [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -1373,6 +1436,7 @@ describe("SummitCustomPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
         ])) as SummitCustomPresale;
         await presaleToken
@@ -1430,9 +1494,11 @@ describe("SummitCustomPresale", () => {
           [
             owner.address,
             presaleToken.address,
-            summitRouter.address,
             raisedToken.address,
             ZERO_ADDRESS, // pairToken is BNB
+            summitRouter.address,
+            summitRouter.address,
+
             otherOwner.address,
           ],
           [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -1441,6 +1507,7 @@ describe("SummitCustomPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
         ])) as SummitCustomPresale;
         await presaleToken
@@ -1519,9 +1586,11 @@ describe("SummitCustomPresale", () => {
           [
             owner.address,
             presaleToken.address,
-            summitRouter.address,
             raisedToken.address,
             pairToken.address,
+            summitRouter.address,
+            summitRouter.address,
+
             otherOwner.address,
           ],
           [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -1530,6 +1599,7 @@ describe("SummitCustomPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
         ])) as SummitCustomPresale;
         await presaleToken
@@ -1593,13 +1663,22 @@ describe("SummitCustomPresale", () => {
     it("should be reverted, if contract does not have tokens", async () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       customPresale = (await deployContract(owner, CustomPresaleArtifact, [
-        [owner.address, presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS, otherOwner.address],
+        [
+          owner.address,
+          presaleToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
+          otherOwner.address,
+        ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
         liquidityLockTime,
         startPresaleTime,
         endPresaleTime,
         1,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await customPresale.connect(owner).cancelPresale();
@@ -1721,9 +1800,10 @@ describe("SummitCustomPresale", () => {
         [
           owner.address,
           presaleToken.address,
-          summitRouter.address,
           raisedToken.address,
           ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
           otherOwner.address,
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
@@ -1732,6 +1812,7 @@ describe("SummitCustomPresale", () => {
         startPresaleTime,
         endPresaleTime,
         refundType,
+        listingChoice,
         isWhiteListPhase,
       ])) as SummitCustomPresale;
       await presaleToken

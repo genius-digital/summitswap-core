@@ -35,6 +35,7 @@ describe("SummitFactoryPresale", () => {
   const liquidityPrecentage = 70;
   const startPresaleTime = dayjs().add(1, "day").unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
+  const listingChoice = 0;
   const refundType = 0;
   const isWhiteListPhase = false;
 
@@ -126,7 +127,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -138,6 +139,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -164,7 +166,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -176,6 +178,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -201,7 +204,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -213,6 +216,7 @@ describe("SummitFactoryPresale", () => {
             startPresaleTime,
             endPresaleTime,
             refundType,
+            listingChoice,
             isWhiteListPhase,
             {
               value: BigNumber.from(serviceFee).sub("1"),
@@ -225,7 +229,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -237,6 +241,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -246,7 +251,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -258,6 +263,7 @@ describe("SummitFactoryPresale", () => {
             startPresaleTime,
             endPresaleTime,
             refundType,
+            listingChoice,
             isWhiteListPhase,
             {
               value: serviceFee,
@@ -271,7 +277,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -283,6 +289,7 @@ describe("SummitFactoryPresale", () => {
             dayjs(startPresaleTime).subtract(2, "day").unix(),
             endPresaleTime,
             refundType,
+            listingChoice,
             isWhiteListPhase,
             {
               value: serviceFee,
@@ -296,7 +303,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -308,6 +315,7 @@ describe("SummitFactoryPresale", () => {
             startPresaleTime,
             dayjs(endPresaleTime).subtract(2, "day").unix(),
             refundType,
+            listingChoice,
             isWhiteListPhase,
             {
               value: serviceFee,
@@ -321,7 +329,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -338,6 +346,7 @@ describe("SummitFactoryPresale", () => {
             startPresaleTime,
             endPresaleTime,
             refundType,
+            listingChoice,
             isWhiteListPhase,
             {
               value: serviceFee,
@@ -351,7 +360,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -368,6 +377,7 @@ describe("SummitFactoryPresale", () => {
             startPresaleTime,
             endPresaleTime,
             refundType,
+            listingChoice,
             isWhiteListPhase,
             {
               value: serviceFee,
@@ -381,7 +391,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -393,6 +403,7 @@ describe("SummitFactoryPresale", () => {
             startPresaleTime,
             endPresaleTime,
             refundType,
+            listingChoice,
             isWhiteListPhase,
             {
               value: serviceFee,
@@ -405,7 +416,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -417,6 +428,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -432,7 +444,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -444,6 +456,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -459,7 +472,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -471,6 +484,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -488,7 +502,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -500,6 +514,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -512,7 +527,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -524,6 +539,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -537,7 +553,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, feeToken.address, ZERO_ADDRESS],
+          [presaleToken.address, feeToken.address, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -549,6 +565,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,
@@ -567,7 +584,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, summitRouter.address, ZERO_ADDRESS, ZERO_ADDRESS],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -579,6 +596,7 @@ describe("SummitFactoryPresale", () => {
           startPresaleTime,
           endPresaleTime,
           refundType,
+          listingChoice,
           isWhiteListPhase,
           {
             value: serviceFee,

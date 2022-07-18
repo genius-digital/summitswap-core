@@ -21,13 +21,15 @@ contract SummitFactoryPresale is Ownable {
   }
 
   function createPresale(
-    address[4] memory _addresses, // tokenAdress, routerAddress, raisedTokenAddress, pairToken
+    address[3] memory _addresses, // tokenAdress, raisedTokenAddress, pairToken
+    address[2] memory _routerAddreses, // SS router, PS router
     uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256 _liquidityLockTime,
     uint256 _startPresaleTime,
     uint256 _endPresaleTime,
     uint8 _refundType, // 0 refund, 1 burn
+    uint8 _listingChoice, // 0 SS, 1 PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
     bool _isWhiteListPhase
   ) external payable {
     require(msg.value >= preSaleFee, "Not Enough Fee");
@@ -45,13 +47,15 @@ contract SummitFactoryPresale is Ownable {
     }
 
     SummitCustomPresale presale = new SummitCustomPresale(
-      [msg.sender, _addresses[0], _addresses[1], _addresses[2], _addresses[3], serviceFeeReceiver],
+      [msg.sender, _addresses[0], _addresses[1], _addresses[2], serviceFeeReceiver],
+      _routerAddreses,
       [_tokenDetails[1], _tokenDetails[2], _tokenDetails[3]],
       _bnbAmounts,
       _liquidityLockTime,
       _startPresaleTime,
       _endPresaleTime,
       _refundType,
+      _listingChoice,
       _isWhiteListPhase
     );
     tokenPresales[_addresses[0]].push(address(presale));

@@ -33,7 +33,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
   struct PresaleInfo {
     address presaleToken;
-    address router;
+    address router0; // router SummitSwap
+    address router1; // router pancakeSwap
     address pairToken;
     uint256 presalePrice; // in wei
     uint256 listingPrice; // in wei
@@ -47,6 +48,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     uint256 endPresaleTime;
     uint256 totalBought; // in wei
     uint8 refundType; // 0 refund, 1 burn
+    uint8 listingChoice; // 0 SS, 1 PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
     bool isWhiteListPhase;
     bool isClaimPhase;
     bool isPresaleCancelled;
@@ -57,20 +59,23 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   FeeInfo private feeInfo;
 
   constructor(
-    address[6] memory _addresses, // owner, token, router, raisedTokenAddress, pairToken, serviceFeeReceiver
+    address[5] memory _addresses, // owner, token, raisedTokenAddress, pairToken, serviceFeeReceiver
+    address[2] memory _routerAddreses, // SummitSwap, PancakeSwap
     uint256[3] memory _tokenDetails, // _presalePrice, _listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256 _liquidityLockTime,
     uint256 _startPresaleTime,
     uint256 _endPresaleTime,
     uint8 _refundType,
+    uint8 _listingChoice,
     bool _isWhiteListPhase
   ) {
     transferOwnership(_addresses[0]);
-    serviceFeeReceiver = _addresses[5];
+    presale.router0 = _routerAddreses[0];
+    presale.router1 = _routerAddreses[1];
+    serviceFeeReceiver = _addresses[4];
     presale.presaleToken = _addresses[1];
-    presale.router = _addresses[2];
-    presale.pairToken = _addresses[4];
+    presale.pairToken = _addresses[3];
     presale.presalePrice = _tokenDetails[0];
     presale.listingPrice = _tokenDetails[1];
     presale.liquidityPercentage = (_tokenDetails[2] * FEE_DENOMINATOR) / 100;
@@ -82,9 +87,10 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     presale.startPresaleTime = _startPresaleTime;
     presale.endPresaleTime = _endPresaleTime;
     presale.refundType = _refundType;
+    presale.listingChoice = _listingChoice;
     presale.isWhiteListPhase = _isWhiteListPhase;
 
-    feeInfo.raisedTokenAddress = _addresses[3]; // address(0) native coin
+    feeInfo.raisedTokenAddress = _addresses[2]; // address(0) native coin
     feeInfo.feeRaisedToken = 50000000; // 5%
     feeInfo.feePresaleToken = 20000000; // 2%
     feeInfo.emergencyWithdrawFee = 100000000; // 10%
@@ -201,10 +207,39 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
   receive() external payable {}
 
-  function addLiquidity(uint256 amountToken, uint256 amountRaised) internal {
+  function addLiquidity(uint256 _amountToken, uint256 _amountRaised) internal {
+    uint256 listingSS = 100; // listing percentage summitswap
+    uint256 listingPS = 100; // listing percentage pancake
+    if (presale.listingChoice == 0) {
+      listingPS = 0;
+    } else if (presale.listingChoice == 1) {
+      listingSS = 0;
+    } else if (presale.listingChoice == 2) {
+      listingSS = 75;
+      listingPS = 25;
+    } else {
+      listingSS = 25;
+      listingPS = 75;
+    }
+    if (listingSS > 0) addLiquiditySS((_amountToken * listingSS) / 100, (_amountRaised * listingSS) / 100);
+    if (listingPS > 0) {
+      if (feeInfo.raisedTokenAddress == address(0)) {
+        _addLiquidityETH((_amountToken * listingPS) / 100, (_amountRaised * listingPS) / 100, presale.router1);
+      } else {
+        _addLiquidityTokens(
+          (_amountToken * listingPS) / 100,
+          (_amountRaised * listingPS) / 100,
+          presale.pairToken,
+          presale.router1
+        );
+      }
+    }
+  }
+
+  function addLiquiditySS(uint256 amountToken, uint256 amountRaised) internal {
     if (feeInfo.raisedTokenAddress == address(0)) {
       if (presale.pairToken == address(0)) {
-        _addLiquidityETH(amountToken, amountRaised);
+        _addLiquidityETH(amountToken, amountRaised, presale.router0);
       } else {
         swapETHForTokenAndLiquify(amountToken, amountRaised);
       }
@@ -213,7 +248,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
         swapTokenForETHAndLiquify(amountToken, amountRaised); // raisedToken == BUSD & liquidity with BNB
       } else {
         if (feeInfo.raisedTokenAddress == presale.pairToken) {
-          _addLiquidityTokens(amountToken, amountRaised, presale.pairToken);
+          _addLiquidityTokens(amountToken, amountRaised, presale.pairToken, presale.router0);
         } else {
           swapTokenForTokenAndLiquify(amountToken, amountRaised);
         }
@@ -221,8 +256,8 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     }
   }
 
-  function swapETHForTokenAndLiquify(uint256 amountToken, uint256 amountRaised) internal {
-    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
+  function swapETHForTokenAndLiquify(uint256 amountToken, uint256 amountRaised) private {
+    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router0);
     address[] memory path = new address[](2);
     path[0] = summitswapV2Router.WETH();
     path[1] = presale.pairToken;
@@ -233,16 +268,16 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       address(this),
       block.timestamp
     );
-    _addLiquidityTokens(amountToken, amounts[1], presale.pairToken);
+    _addLiquidityTokens(amountToken, amounts[1], presale.pairToken, presale.router0);
   }
 
-  function swapTokenForETHAndLiquify(uint256 amountToken, uint256 amountRaised) internal {
-    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
+  function swapTokenForETHAndLiquify(uint256 amountToken, uint256 amountRaised) private {
+    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router0);
     address[] memory path = new address[](2);
     path[0] = feeInfo.raisedTokenAddress;
     path[1] = summitswapV2Router.WETH();
 
-    IERC20(feeInfo.raisedTokenAddress).approve(presale.router, amountRaised);
+    IERC20(feeInfo.raisedTokenAddress).approve(presale.router0, amountRaised);
     uint256[] memory amounts = summitswapV2Router.swapExactTokensForETH(
       amountRaised,
       0,
@@ -250,17 +285,17 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       address(this),
       block.timestamp
     );
-    _addLiquidityETH(amountToken, amounts[1]);
+    _addLiquidityETH(amountToken, amounts[1], presale.router0);
   }
 
-  function swapTokenForTokenAndLiquify(uint256 amountToken, uint256 amountRaised) internal {
-    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
+  function swapTokenForTokenAndLiquify(uint256 amountToken, uint256 amountRaised) private {
+    ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router0);
     address[] memory path = new address[](3);
     path[0] = feeInfo.raisedTokenAddress;
     path[1] = summitswapV2Router.WETH();
     path[2] = presale.pairToken;
 
-    IERC20(feeInfo.raisedTokenAddress).approve(presale.router, amountRaised);
+    IERC20(feeInfo.raisedTokenAddress).approve(presale.router0, amountRaised);
     uint256[] memory amounts = summitswapV2Router.swapExactTokensForTokens(
       amountRaised,
       0,
@@ -268,12 +303,16 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       address(this),
       block.timestamp
     );
-    _addLiquidityTokens(amountToken, amounts[2], presale.pairToken);
+    _addLiquidityTokens(amountToken, amounts[2], presale.pairToken, presale.router0);
   }
 
-  function _addLiquidityETH(uint256 amountToken, uint256 amountBNB) internal {
-    IERC20(presale.presaleToken).approve(presale.router, amountToken);
-    ISummitswapRouter02(presale.router).addLiquidityETH{value: amountBNB}(
+  function _addLiquidityETH(
+    uint256 amountToken,
+    uint256 amountBNB,
+    address router
+  ) private {
+    IERC20(presale.presaleToken).approve(router, amountToken);
+    ISummitswapRouter02(router).addLiquidityETH{value: amountBNB}(
       presale.presaleToken,
       amountToken,
       0,
@@ -286,11 +325,12 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   function _addLiquidityTokens(
     uint256 amountToken,
     uint256 amountRaised,
-    address pairAddress
-  ) internal {
-    IERC20(presale.presaleToken).approve(presale.router, amountToken);
-    IERC20(pairAddress).approve(presale.router, amountRaised);
-    ISummitswapRouter02(presale.router).addLiquidity(
+    address pairAddress,
+    address router
+  ) private {
+    IERC20(presale.presaleToken).approve(router, amountToken);
+    IERC20(pairAddress).approve(router, amountRaised);
+    ISummitswapRouter02(router).addLiquidity(
       presale.presaleToken,
       pairAddress,
       amountToken,
@@ -301,33 +341,6 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       block.timestamp
     );
   }
-
-  // function addLiquidity(uint256 amountToken, uint256 amountRaised) internal {
-  //   IERC20(presale.presaleToken).approve(presale.router, amountToken);
-  //   ISummitswapRouter02 summitswapV2Router = ISummitswapRouter02(presale.router);
-  //   if (feeInfo.raisedTokenAddress == address(0)) {
-  //     summitswapV2Router.addLiquidityETH{value: amountRaised}(
-  //       presale.presaleToken,
-  //       amountToken,
-  //       0,
-  //       0,
-  //       owner(),
-  //       block.timestamp
-  //     );
-  //   } else {
-  //     IERC20(feeInfo.raisedTokenAddress).approve(presale.router, amountRaised);
-  //     summitswapV2Router.addLiquidity(
-  //       presale.presaleToken,
-  //       feeInfo.raisedTokenAddress,
-  //       amountToken,
-  //       amountRaised,
-  //       0,
-  //       0,
-  //       owner(),
-  //       block.timestamp
-  //     );
-  //   }
-  // }
 
   function withdrawRaisedToken() external nonReentrant {
     require(presale.isPresaleCancelled, "Presale Not Cancelled");

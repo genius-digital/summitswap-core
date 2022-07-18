@@ -8,7 +8,9 @@ pragma experimental ABIEncoderV2;
 interface ISummitCustomPresale {
   struct PresaleInfo {
     address presaleToken;
-    address router;
+    address router0; // router SummitSwap
+    address router1; // router pancakeSwap
+    address pairToken;
     uint256 presalePrice; // in wei
     uint256 listingPrice; // in wei
     uint256 liquidityLockTime; // in seconds
@@ -21,6 +23,7 @@ interface ISummitCustomPresale {
     uint256 endPresaleTime;
     uint256 totalBought; // in wei
     uint8 refundType; // 0 refund, 1 burn
+    uint8 listingChoice; // 0 SS, 1 PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
     bool isWhiteListPhase;
     bool isClaimPhase;
     bool isPresaleCancelled;

@@ -21,7 +21,8 @@ interface BnbAmounts {
 export async function deployCustomPresale(
   createPresaleFee: BigNumber,
   serviceFeeReciever: string,
-  router: string,
+  router0: string,
+  router1: string,
   raisedToken: string,
   pairToken: string,
   tokenDetails: TokenDetails,
@@ -30,6 +31,7 @@ export async function deployCustomPresale(
   startPresaleTime: number,
   endPresaleTime: number,
   refundType: number,
+  listingChoice: number,
   isWhiteListPhase: boolean
 ) {
   const summitFactoryPresale = await deploySummitPresaleFactory(createPresaleFee, serviceFeeReciever);
@@ -49,7 +51,7 @@ export async function deployCustomPresale(
   const tokenDecimals = await dummyToken.decimals();
 
   const presale = await summitFactoryPresale.createPresale(
-    [dummyToken.address, router, raisedToken, pairToken],
+    [dummyToken.address, raisedToken, pairToken, router0, router1],
     [
       parseUnits(tokenAmount.toString(), tokenDecimals),
       parseEther(tokenDetails.presalePrice),
@@ -66,6 +68,7 @@ export async function deployCustomPresale(
     startPresaleTime,
     endPresaleTime,
     refundType,
+    listingChoice,
     isWhiteListPhase,
     {
       value: createPresaleFee,
@@ -84,7 +87,8 @@ export async function deployCustomPresale(
 async function main() {
   const createPresaleFee = parseEther("0.0001");
   const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
-  const router = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
+  const router0 = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
+  const router1 = environment.PANCAKESWAP_ROUTER ?? "0x10ed43c718714eb63d5aa57b78b54704e256024e";
   const raisedToken = ZERO_ADDRESS; // raisedToken == ZERO_ADDRESS ? native coin to be raised: raisedToken
   const pairToken = ZERO_ADDRESS; // pairToken == ZERO_ADDRESS ? native coin to be paired: pairToken
   const presalePrice = "100";
@@ -98,12 +102,14 @@ async function main() {
   const startPresaleTime = dayjs().add(1, "day").unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
   const refundType = 0;
+  const listingChoice = 0;
   const isWhiteListPhase = false;
 
   await deployCustomPresale(
     createPresaleFee,
     serviceFeeReciever,
-    router,
+    router0,
+    router1,
     raisedToken,
     pairToken,
     { presalePrice, listingPrice, liquidityPrecentage },
@@ -112,6 +118,7 @@ async function main() {
     startPresaleTime,
     endPresaleTime,
     refundType,
+    listingChoice,
     isWhiteListPhase
   );
 }

@@ -28,7 +28,7 @@ contract SummitFactoryPresale is Ownable {
     uint256 _startPresaleTime,
     uint256 _endPresaleTime,
     uint8 _refundType, // 0 refund, 1 burn
-    uint8 _listingChoice, // 0 SS, 1 PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
+    uint8 _listingChoice, // 0 100% SS, 1 100% PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
     bool _isWhiteListPhase
   ) external payable {
     require(msg.value >= preSaleFee, "Not Enough Fee");

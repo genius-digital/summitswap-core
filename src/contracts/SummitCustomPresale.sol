@@ -9,17 +9,22 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
+import "./libraries/BokkyPooBahsDateTimeLibrary.sol";
 
 contract SummitCustomPresale is Ownable, ReentrancyGuard {
+  using BokkyPooBahsDateTimeLibrary for uint256;
+
   address private constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
   address public serviceFeeReceiver;
+  uint256 public startDateClaim; // Timestamp
   address[] public contributors;
   address[] public whitelist;
   mapping(address => uint256) private contributorIndex;
   mapping(address => uint256) private whitelistIndex;
+  mapping(address => uint256) public totalClaimToken;
   mapping(address => uint256) public bought; // account => boughtAmount
-  mapping(address => bool) public isTokenClaimed; // if account has claimed the tokens
+  // mapping(address => bool) public isTokenClaimed; // if account has claimed the tokens
 
   uint256 public constant FEE_DENOMINATOR = 10**9; // fee denominator
   uint256 public liquidity;
@@ -46,13 +51,17 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     uint256 liquidityPercentage;
     uint256 startPresaleTime;
     uint256 endPresaleTime;
+    uint256 claimIntervalDay;
+    uint256 claimIntervalHour;
     uint256 totalBought; // in wei
+    uint256 maxClaimPercentage;
     uint8 refundType; // 0 refund, 1 burn
     uint8 listingChoice; // 0 100% SS, 1 100% PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
     bool isWhiteListPhase;
     bool isClaimPhase;
     bool isPresaleCancelled;
     bool isWithdrawCancelledTokens;
+    bool isVestingEnabled;
   }
 
   PresaleInfo private presale;
@@ -60,14 +69,15 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
   constructor(
     address[7] memory _addresses, // owner, token, raisedTokenAddress, pairToken, SummitSwap, PancakeSwap, serviceFeeReceiver
-    uint256[3] memory _tokenDetails, // _presalePrice, _listingPrice, liquidityPercent
+    uint256[3] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
+    uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
     uint256 _liquidityLockTime,
-    uint256 _startPresaleTime,
-    uint256 _endPresaleTime,
+    uint256 _maxClaimPercentage,
     uint8 _refundType,
     uint8 _listingChoice,
-    bool _isWhiteListPhase
+    bool _isWhiteListPhase,
+    bool _isVestingEnabled
   ) {
     transferOwnership(_addresses[0]);
     serviceFeeReceiver = _addresses[6];
@@ -83,11 +93,15 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     presale.maxBuy = _bnbAmounts[1];
     presale.softCap = _bnbAmounts[2];
     presale.hardCap = _bnbAmounts[3];
-    presale.startPresaleTime = _startPresaleTime;
-    presale.endPresaleTime = _endPresaleTime;
+    presale.startPresaleTime = _presaleTimeDetails[0];
+    presale.endPresaleTime = _presaleTimeDetails[1];
+    presale.claimIntervalDay = _presaleTimeDetails[2];
+    presale.claimIntervalHour = _presaleTimeDetails[3];
+    presale.maxClaimPercentage = (_maxClaimPercentage * FEE_DENOMINATOR) / 100;
     presale.refundType = _refundType;
     presale.listingChoice = _listingChoice;
     presale.isWhiteListPhase = _isWhiteListPhase;
+    presale.isVestingEnabled = _isVestingEnabled;
 
     feeInfo.raisedTokenAddress = _addresses[2]; // address(0) native coin
     feeInfo.feeRaisedToken = 50000000; // 5%
@@ -142,6 +156,35 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     return tokens;
   }
 
+  function getAvailableTokenToClaim(address _address) public view returns (uint256) {
+    uint256 totalToken = calculateBnbToPresaleToken(bought[_address], presale.presalePrice);
+    return ((totalToken * getTotalClaimPercentage()) / FEE_DENOMINATOR) - totalClaimToken[_address];
+  }
+
+  function getTotalClaimPercentage() private view returns (uint256) {
+    uint256 currentClaimDate = block.timestamp;
+
+    if (startDateClaim == 0 || startDateClaim > currentClaimDate) return 0;
+
+    if (!presale.isVestingEnabled) {
+      return FEE_DENOMINATOR;
+    }
+
+    (, , uint256 startClaimDay, , , ) = BokkyPooBahsDateTimeLibrary.timestampToDateTime(startDateClaim);
+    (, , uint256 day, uint256 hour, , ) = BokkyPooBahsDateTimeLibrary.timestampToDateTime(currentClaimDate);
+    uint256 interval = BokkyPooBahsDateTimeLibrary.diffMonths(startDateClaim, currentClaimDate);
+    if (presale.claimIntervalDay > startClaimDay) {
+      interval += 1;
+    }
+    if (day > presale.claimIntervalDay || (day == presale.claimIntervalDay && hour >= presale.claimIntervalHour)) {
+      interval += 1;
+    }
+    uint256 totalIntervalPercentage = interval * presale.maxClaimPercentage > FEE_DENOMINATOR
+      ? FEE_DENOMINATOR
+      : interval * presale.maxClaimPercentage;
+    return totalIntervalPercentage;
+  }
+
   function buy() external payable validContribution nonReentrant {
     require(feeInfo.raisedTokenAddress == address(0), "Raised token is not native coin");
     require(bought[msg.sender] + msg.value <= presale.hardCap, "Cannot buy more than HardCap amount");
@@ -175,7 +218,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     }
   }
 
-  function claim() external nonReentrant {
+  function claim(uint256 requestedAmount) external nonReentrant {
     require(!presale.isPresaleCancelled, "Presale Cancelled");
     require(
       block.timestamp > presale.endPresaleTime || presale.hardCap == presale.totalBought,
@@ -183,15 +226,23 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     );
     require(presale.isClaimPhase, "Not Claim Phase");
     require(bought[msg.sender] > 0, "You do not have any tokens to claim");
-    require(!isTokenClaimed[msg.sender], "Tokens already Claimed");
 
-    uint256 userTokens = calculateBnbToPresaleToken(bought[msg.sender], presale.presalePrice);
+    uint256 remainingToken = calculateBnbToPresaleToken(bought[msg.sender], presale.presalePrice) -
+      totalClaimToken[msg.sender];
+    require(remainingToken >= requestedAmount, "User don't have enough token to claim");
+
     require(
-      IERC20(presale.presaleToken).balanceOf(address(this)) >= userTokens,
+      IERC20(presale.presaleToken).balanceOf(address(this)) >= requestedAmount,
       "Contract doesn't have enough presale tokens. Please contact owner to add more supply"
     );
-    IERC20(presale.presaleToken).transfer(msg.sender, userTokens);
-    isTokenClaimed[msg.sender] = true;
+
+    require(
+      (requestedAmount <= getAvailableTokenToClaim(msg.sender)),
+      "User claim more than max claim amount in this interval"
+    );
+
+    totalClaimToken[msg.sender] += requestedAmount;
+    IERC20(presale.presaleToken).transfer(msg.sender, requestedAmount);
   }
 
   function removeContributor(address _address) internal {
@@ -426,6 +477,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     );
     uint256 remainingTokenAmount = contractBal - liquidityTokens - raisedTokenAmount - feePresaleToken;
     presale.isClaimPhase = true;
+    startDateClaim = block.timestamp;
 
     addLiquidity(
       liquidityTokens,

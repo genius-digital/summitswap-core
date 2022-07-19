@@ -21,6 +21,8 @@ interface ISummitCustomPresale {
     uint256 liquidityPercentage;
     uint256 startPresaleTime;
     uint256 endPresaleTime;
+    uint256 claimIntervalDay;
+    uint256 claimIntervalHour;
     uint256 totalBought; // in wei
     uint8 refundType; // 0 refund, 1 burn
     uint8 listingChoice; // 0 100% SS, 1 100% PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
@@ -28,6 +30,7 @@ interface ISummitCustomPresale {
     bool isClaimPhase;
     bool isPresaleCancelled;
     bool isWithdrawCancelledTokens;
+    bool isVestingEnabled;
   }
 
   function getPresaleInfo() external view returns (PresaleInfo memory);

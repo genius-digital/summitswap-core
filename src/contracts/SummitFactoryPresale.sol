@@ -24,16 +24,20 @@ contract SummitFactoryPresale is Ownable {
     address[5] memory _addresses, // tokenAdress, raisedTokenAddress, pairToken, SS router, PS router
     uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
+    uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
     uint256 _liquidityLockTime,
-    uint256 _startPresaleTime,
-    uint256 _endPresaleTime,
+    uint256 _maxClaimPercentage,
     uint8 _refundType, // 0 refund, 1 burn
     uint8 _listingChoice, // 0 100% SS, 1 100% PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
-    bool _isWhiteListPhase
+    bool _isWhiteListPhase,
+    bool _isVestingEnabled
   ) external payable {
     require(msg.value >= preSaleFee, "Not Enough Fee");
-    require(_startPresaleTime > block.timestamp, "Presale start time should be greater than block.timestamp");
-    require(_endPresaleTime > _startPresaleTime, "Presale End time should be greater than presale start time");
+    require(_presaleTimeDetails[0] > block.timestamp, "Presale start time should be greater than block.timestamp");
+    require(
+      _presaleTimeDetails[1] > _presaleTimeDetails[0],
+      "Presale End time should be greater than presale start time"
+    );
     require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
     require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
     require(_tokenDetails[3] >= 51, "Liquidity Percentage should be Greater than or equal to 51%");
@@ -49,12 +53,13 @@ contract SummitFactoryPresale is Ownable {
       [msg.sender, _addresses[0], _addresses[1], _addresses[2], _addresses[3], _addresses[4], serviceFeeReceiver],
       [_tokenDetails[1], _tokenDetails[2], _tokenDetails[3]],
       _bnbAmounts,
+      _presaleTimeDetails,
       _liquidityLockTime,
-      _startPresaleTime,
-      _endPresaleTime,
+      _maxClaimPercentage,
       _refundType,
       _listingChoice,
-      _isWhiteListPhase
+      _isWhiteListPhase,
+      _isVestingEnabled
     );
     tokenPresales[_addresses[0]].push(address(presale));
     accountPresales[msg.sender].push(address(presale));

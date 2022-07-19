@@ -27,12 +27,13 @@ export async function deployCustomPresale(
   pairToken: string,
   tokenDetails: TokenDetails,
   bnbAmounts: BnbAmounts,
+  presaleTimeDetails: [number, number, number, number],
   liquidityLockTime: number,
-  startPresaleTime: number,
-  endPresaleTime: number,
+  maxClaimPercentage: number,
   refundType: number,
   listingChoice: number,
-  isWhiteListPhase: boolean
+  isWhiteListPhase: boolean,
+  isVestingEnabled: boolean
 ) {
   const summitFactoryPresale = await deploySummitPresaleFactory(createPresaleFee, serviceFeeReciever);
   const dummyToken = await deployDummyToken();
@@ -64,12 +65,13 @@ export async function deployCustomPresale(
       parseEther(bnbAmounts.softCap),
       parseEther(bnbAmounts.hardCap),
     ],
+    presaleTimeDetails,
     liquidityLockTime,
-    startPresaleTime,
-    endPresaleTime,
+    maxClaimPercentage,
     refundType,
     listingChoice,
     isWhiteListPhase,
+    isVestingEnabled,
     {
       value: createPresaleFee,
     }
@@ -88,7 +90,7 @@ async function main() {
   const createPresaleFee = parseEther("0.0001");
   const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
   const router0 = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
-  const router1 = environment.PANCAKESWAP_ROUTER ?? "0x10ed43c718714eb63d5aa57b78b54704e256024e";
+  const router1 = environment.PANCAKESWAP_ROUTER ?? "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3";
   const raisedToken = ZERO_ADDRESS; // raisedToken == ZERO_ADDRESS ? native coin to be raised: raisedToken
   const pairToken = ZERO_ADDRESS; // pairToken == ZERO_ADDRESS ? native coin to be paired: pairToken
   const presalePrice = "100";
@@ -99,11 +101,15 @@ async function main() {
   const softCap = "0.1";
   const hardCap = "0.2";
   const liquidityPrecentage = 70;
+  const maxClaimPercentage = 100;
   const startPresaleTime = dayjs().add(1, "day").unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
+  const dayClaimInterval = 15;
+  const hourClaimInterval = 16;
   const refundType = 0;
   const listingChoice = 0;
   const isWhiteListPhase = false;
+  const isVestingEnabled = false;
 
   await deployCustomPresale(
     createPresaleFee,
@@ -114,12 +120,13 @@ async function main() {
     pairToken,
     { presalePrice, listingPrice, liquidityPrecentage },
     { minBuyBnb, maxBuyBnb, softCap, hardCap },
+    [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
     liquidityLockTime,
-    startPresaleTime,
-    endPresaleTime,
+    maxClaimPercentage,
     refundType,
     listingChoice,
-    isWhiteListPhase
+    isWhiteListPhase,
+    isVestingEnabled
   );
 }
 

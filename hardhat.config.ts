@@ -97,7 +97,7 @@ export default {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       accounts,
       timeout: 200000,
-      gas: 5000000,
+      gas: 7000000,
     },
   },
   gasReporter: {

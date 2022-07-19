@@ -27,7 +27,7 @@ const SummitswapRouters = {
 
 const PancakeswapRouters = {
   "56": "0x10ed43c718714eb63d5aa57b78b54704e256024e",
-  "97": "0x10ed43c718714eb63d5aa57b78b54704e256024e",
+  "97": "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3",
 } as Record<string, string>;
 
 const RpcUrls = {

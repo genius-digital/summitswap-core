@@ -31,6 +31,7 @@ interface ISummitCustomPresale {
     bool isPresaleCancelled;
     bool isWithdrawCancelledTokens;
     bool isVestingEnabled;
+    bool isApproved;
   }
 
   function getPresaleInfo() external view returns (PresaleInfo memory);
@@ -62,6 +63,8 @@ interface ISummitCustomPresale {
   function toggleWhitelistPhase() external;
 
   function cancelPresale() external;
+
+  function approvePresale() external;
 
   function setServiceFeeReceiver(address _feeReceiver) external;
 

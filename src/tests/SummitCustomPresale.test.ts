@@ -3,15 +3,18 @@ import SummitFactoryArtifact from "@built-contracts/SummitswapFactory.sol/Summit
 import SummitRouterArtifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import WbnbArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
-import { DummyToken, SummitCustomPresale, SummitswapFactory, SummitswapRouter02, WBNB } from "build/typechain";
+import { DummyToken, SummitswapFactory, SummitCustomPresale, SummitswapRouter02, WBNB } from "build/typechain";
 import { assert, expect } from "chai";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { BigNumber } from "ethers";
 import { parseEther, formatUnits, parseUnits } from "ethers/lib/utils";
+import timeMachine from "ganache-time-traveler";
 import { ethers, waffle } from "hardhat";
 import { BURN_ADDRESS, ZERO_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
+dayjs.extend(utc);
 
 describe("SummitCustomPresale", () => {
   const [owner, otherOwner, otherWallet1, otherWallet2, summitFactoryFeeToSetter] = provider.getWallets();
@@ -36,14 +39,20 @@ describe("SummitCustomPresale", () => {
   const softCap = "0.1";
   const hardCap = "0.2";
   const liquidityPrecentage = 70;
+  const maxClaimPercentage = 100;
   const startPresaleTime = dayjs().unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
+  const dayClaimInterval = 15;
+  const hourClaimInterval = 16;
   const refundType = 0;
   const listingChoice = 0;
   const isWhiteListPhase = false;
+  const isVestingEnabled = false;
   const isClaimPhase = false;
   const isPresaleCancelled = false;
   const isWithdrawCancelledTokens = false;
+
+  const presaleTimeDetails = [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval];
 
   beforeEach(async () => {
     wbnb = (await deployContract(owner, WbnbArtifact, [])) as WBNB;
@@ -70,12 +79,13 @@ describe("SummitCustomPresale", () => {
       ],
       [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
       [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+      presaleTimeDetails,
       liquidityLockTime,
-      startPresaleTime,
-      endPresaleTime,
+      maxClaimPercentage,
       refundType,
       listingChoice,
       isWhiteListPhase,
+      isVestingEnabled,
     ])) as SummitCustomPresale;
     await presaleToken
       .connect(owner)
@@ -137,12 +147,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, dayjs().unix(), dayClaimInterval, hourClaimInterval],
         liquidityLockTime,
-        startPresaleTime,
-        dayjs().unix(),
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
 
       feeInfo = await customPresale.getFeeInfo();
@@ -161,7 +172,7 @@ describe("SummitCustomPresale", () => {
       const tokenAddress = presaleInfo.presaleToken;
       assert.equal(tokenAddress, presaleToken.address);
     });
-    it("should be router", () => {
+    it("should be router0", () => {
       const routerAddresss = presaleInfo.router0;
       assert.equal(routerAddresss, summitRouter.address);
     });
@@ -199,14 +210,32 @@ describe("SummitCustomPresale", () => {
     it("should be endPresaleTime", () => {
       assert.equal(endPresaleTime.toString(), presaleInfo.endPresaleTime.toString());
     });
+    it("should be claimIntervalDay", () => {
+      assert.equal(dayClaimInterval.toString(), presaleInfo.claimIntervalDay.toString());
+    });
+    it("should be claimIntervalHour", () => {
+      assert.equal(hourClaimInterval.toString(), presaleInfo.claimIntervalHour.toString());
+    });
     it("should be totalBought", () => {
       assert.equal((0).toString(), presaleInfo.totalBought.toString());
+    });
+    it("should be maxClaimPercentage", () => {
+      assert.equal(
+        BigNumber.from(maxClaimPercentage).mul(FEE_DENOMINATOR).div(100).toString(),
+        presaleInfo.maxClaimPercentage.toString()
+      );
     });
     it("should be refundType", () => {
       assert.equal(refundType, presaleInfo.refundType);
     });
+    it("should be listingChoice", () => {
+      assert.equal(listingChoice, presaleInfo.listingChoice);
+    });
     it("should be isWhiteListPhase", () => {
       assert.equal(isWhiteListPhase, presaleInfo.isWhiteListPhase);
+    });
+    it("should be isVestingEnabled", () => {
+      assert.equal(isVestingEnabled, presaleInfo.isVestingEnabled);
     });
     it("should be isClaimPhase", () => {
       assert.equal(isClaimPhase, presaleInfo.isClaimPhase);
@@ -254,12 +283,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [dayjs().add(1, "day").unix(), endPresaleTime, dayClaimInterval, hourClaimInterval],
         liquidityLockTime,
-        dayjs().add(1, "day").unix(),
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -288,12 +318,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, dayjs().unix(), dayClaimInterval, hourClaimInterval],
         liquidityLockTime,
-        startPresaleTime,
-        dayjs().unix(),
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -359,9 +390,9 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther("0.4")],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
@@ -451,12 +482,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -476,12 +508,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [dayjs().add(1, "day").unix(), endPresaleTime, dayClaimInterval, hourClaimInterval],
         liquidityLockTime,
-        dayjs().add(1, "day").unix(),
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
         "Presale Not started Yet"
@@ -502,12 +535,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, dayjs().unix(), dayClaimInterval, hourClaimInterval],
         liquidityLockTime,
-        startPresaleTime,
-        dayjs().unix(),
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
         "Presale Ended"
@@ -545,12 +579,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
         "Raised token is native coin"
@@ -583,12 +618,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther("0.4")],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await expect(
         customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy).add("1"))
@@ -675,8 +711,9 @@ describe("SummitCustomPresale", () => {
       });
     });
     it("should be reverted, if presale cancelled", async () => {
+      const claimAmount = await customPresale.getAvailableTokenToClaim(otherWallet1.address);
       await customPresale.connect(owner).cancelPresale();
-      await expect(customPresale.connect(otherWallet1).claim()).to.be.revertedWith("Presale Cancelled");
+      await expect(customPresale.connect(otherWallet1).claim(claimAmount)).to.be.revertedWith("Presale Cancelled");
     });
 
     it("should be reverted, if not claim phase", async () => {
@@ -692,46 +729,297 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther("0.4")],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuy),
       });
-      await expect(customPresale.connect(otherWallet1).claim()).to.be.revertedWith("Claim hasn't started yet");
+      const claimAmount = await customPresale.getAvailableTokenToClaim(otherWallet1.address);
+      await expect(customPresale.connect(otherWallet1).claim(claimAmount)).to.be.revertedWith(
+        "Claim hasn't started yet"
+      );
     });
 
     it("should be reverted, if user don't have any token to claim", async () => {
       await customPresale.connect(owner).finalize();
-      await expect(customPresale.connect(otherWallet2).claim()).to.be.revertedWith(
+      await expect(customPresale.connect(otherWallet2).claim("1")).to.be.revertedWith(
         "You do not have any tokens to claim"
       );
     });
 
     it("should be reverted, if tokens already claimed", async () => {
       await customPresale.connect(owner).finalize();
-      await customPresale.connect(otherWallet1).claim();
-      await expect(customPresale.connect(otherWallet1).claim()).to.be.revertedWith("Tokens already Claimed");
+      const claimAmount = await customPresale.getAvailableTokenToClaim(otherWallet1.address);
+      await customPresale.connect(otherWallet1).claim(claimAmount);
+      await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+        "User don't have enough token to claim"
+      );
     });
 
     it("should be equal boughtAmount and transferred Amount", async () => {
       await customPresale.connect(owner).finalize();
-      await customPresale.connect(otherWallet1).claim();
+      const claimAmount = await customPresale.getAvailableTokenToClaim(otherWallet1.address);
+      const tokenAmountTransfer = parseEther(maxBuy).mul(presalePrice);
+      await customPresale.connect(otherWallet1).claim(claimAmount);
 
-      const tokenAmountTransfer = parseEther(maxBuy).mul(presalePrice).toString();
-      const tokenBalance = (await presaleToken.balanceOf(otherWallet1.address)).toString();
-      assert.equal(tokenAmountTransfer, tokenBalance);
+      const tokenBalance = await presaleToken.balanceOf(otherWallet1.address);
+      assert.equal(tokenAmountTransfer.toString(), claimAmount.toString());
+      assert.equal(claimAmount.toString(), tokenBalance.toString());
     });
 
-    it("should be true isTokenClaimed", async () => {
+    it("should be equal totalClaimToken, transferred Amount and claim Amount", async () => {
       await customPresale.connect(owner).finalize();
-      await customPresale.connect(otherWallet1).claim();
-      const isAccountClaimed = await customPresale.isTokenClaimed(otherWallet1.address);
-      assert.equal(isAccountClaimed, true);
+      const claimAmount = await customPresale.getAvailableTokenToClaim(otherWallet1.address);
+      const tokenAmountTransfer = parseEther(maxBuy).mul(presalePrice);
+      await customPresale.connect(otherWallet1).claim(claimAmount);
+
+      const tokenBalance = await presaleToken.balanceOf(otherWallet1.address);
+      assert.equal(claimAmount.toString(), tokenAmountTransfer.toString());
+      assert.equal(claimAmount.toString(), tokenBalance.toString());
+      assert.equal(claimAmount.toString(), (await customPresale.totalClaimToken(otherWallet1.address)).toString());
+    });
+    describe("Vesting Enabled", () => {
+      const maxClaimPercentage = 10;
+      beforeEach(async () => {
+        const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+        const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
+        const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+        presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+        customPresale = (await deployContract(owner, CustomPresaleArtifact, [
+          [
+            owner.address,
+            presaleToken.address,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            summitRouter.address,
+            summitRouter.address,
+            otherOwner.address,
+          ],
+          [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          presaleTimeDetails,
+          liquidityLockTime,
+          10, // maxClaimPercentage
+          refundType,
+          listingChoice,
+          isWhiteListPhase,
+          true, // vesting is enabled
+        ])) as SummitCustomPresale;
+        await presaleToken
+          .connect(owner)
+          .transfer(customPresale.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+        await customPresale.connect(otherWallet1).buy({
+          value: parseEther(maxBuy),
+        });
+      });
+
+      it("should have 0 availableTokenToClaim, if claim phase not started", async () => {
+        const presaleInfo = await customPresale.getPresaleInfo();
+        assert.equal(presaleInfo.isClaimPhase, false);
+        const availableTokens = await customPresale.getAvailableTokenToClaim(otherWallet1.address);
+        assert.equal(availableTokens.toString(), "0");
+      });
+
+      it("should be 0 startClaimDate, if claim phase not started", async () => {
+        const presaleInfo = await customPresale.getPresaleInfo();
+        assert.equal(presaleInfo.isClaimPhase, false);
+        const startDateClaim = await customPresale.startDateClaim();
+        assert.equal(startDateClaim.toString(), "0");
+      });
+
+      it("should be reverted if claim more than maxClaim in this interval", async () => {
+        await customPresale.connect(owner).finalize();
+        const bigMaxClaimPercentage = (maxClaimPercentage * FEE_DENOMINATOR) / 100;
+        const totalPurchaseInToken = parseEther(maxBuy).mul(presalePrice);
+
+        const maxClaimInInterval = totalPurchaseInToken.mul(bigMaxClaimPercentage).div(FEE_DENOMINATOR.toString());
+        await expect(
+          customPresale.connect(otherWallet1).claim(maxClaimInInterval.add(1).toString())
+        ).to.be.revertedWith("User claim more than max claim amount in this interval");
+
+        let currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
+
+        const tenPercentOfMaxClaim = maxClaimInInterval.mul(10).div(100);
+        await customPresale.connect(otherWallet1).claim(tenPercentOfMaxClaim.toString());
+        assert.equal(
+          currentAccountToken.add(tenPercentOfMaxClaim.toString()).toString(),
+          (await presaleToken.balanceOf(otherWallet1.address)).toString()
+        );
+
+        const ninetyPercentOfMaxClaim = maxClaimInInterval.mul(90).div(100);
+        currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
+        await customPresale.connect(otherWallet1).claim(ninetyPercentOfMaxClaim.toString());
+        assert.equal(
+          currentAccountToken.add(ninetyPercentOfMaxClaim.toString()).toString(),
+          (await presaleToken.balanceOf(otherWallet1.address)).toString()
+        );
+
+        await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+          "User claim more than max claim amount in this interval"
+        );
+      });
+
+      it("should be able to claim {maxClaim} Token in the second interval", async () => {
+        const snapshot = await timeMachine.takeSnapshot();
+        const snapshotId = snapshot.result;
+
+        await customPresale.connect(owner).finalize();
+        const bigMaxClaimPercentage = (maxClaimPercentage * FEE_DENOMINATOR) / 100;
+        const totalPurchaseInToken = parseEther(maxBuy).mul(presalePrice);
+
+        const maxClaimInInterval = totalPurchaseInToken.mul(bigMaxClaimPercentage).div(FEE_DENOMINATOR.toString());
+        assert.equal(
+          (await customPresale.getAvailableTokenToClaim(otherWallet1.address)).toString(),
+          maxClaimInInterval.toString()
+        );
+        let currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
+        await customPresale.connect(otherWallet1).claim(maxClaimInInterval.toString());
+        assert.equal(
+          currentAccountToken.add(maxClaimInInterval.toString()).toString(),
+          (await presaleToken.balanceOf(otherWallet1.address)).toString()
+        );
+
+        await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+          "User claim more than max claim amount in this interval"
+        );
+
+        let nextIntervalTimestamp;
+        if (
+          dayjs().date() > dayClaimInterval ||
+          (dayjs().date() === dayClaimInterval && dayjs().hour() >= hourClaimInterval)
+        ) {
+          nextIntervalTimestamp = dayjs
+            .utc()
+            .date(dayClaimInterval)
+            .hour(hourClaimInterval)
+            .second(0)
+            .add(1, "month")
+            .unix();
+        } else {
+          nextIntervalTimestamp = dayjs.utc().date(dayClaimInterval).hour(hourClaimInterval).second(0).unix();
+        }
+        await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
+
+        currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
+        await customPresale.connect(otherWallet1).claim(maxClaimInInterval.toString());
+        assert.equal(
+          currentAccountToken.add(maxClaimInInterval.toString()).toString(),
+          (await presaleToken.balanceOf(otherWallet1.address)).toString()
+        );
+
+        await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+          "User claim more than max claim amount in this interval"
+        );
+        await timeMachine.revertToSnapshot(snapshotId);
+      });
+
+      it("should be able to claim 1 x {maxClaim} for the first interval and 2 * {maxCLaim} after 2 interval", async () => {
+        const snapshot = await timeMachine.takeSnapshot();
+        const snapshotId = snapshot.result;
+
+        await customPresale.connect(owner).finalize();
+        const bigMaxClaimPercentage = (maxClaimPercentage * FEE_DENOMINATOR) / 100;
+        const totalPurchaseInToken = parseEther(maxBuy).mul(presalePrice);
+        const maxClaimInInterval = totalPurchaseInToken.mul(bigMaxClaimPercentage).div(FEE_DENOMINATOR.toString());
+
+        let currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
+        await customPresale.connect(otherWallet1).claim(maxClaimInInterval.toString());
+        assert.equal(
+          currentAccountToken.add(maxClaimInInterval.toString()).toString(),
+          (await presaleToken.balanceOf(otherWallet1.address)).toString()
+        );
+
+        await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+          "User claim more than max claim amount in this interval"
+        );
+
+        let nextTwoIntervalTimestamp;
+        if (
+          dayjs().date() > dayClaimInterval ||
+          (dayjs().date() === dayClaimInterval && dayjs().hour() >= hourClaimInterval)
+        ) {
+          nextTwoIntervalTimestamp = dayjs
+            .utc()
+            .date(dayClaimInterval)
+            .hour(hourClaimInterval)
+            .second(0)
+            .add(2, "month")
+            .unix();
+        } else {
+          nextTwoIntervalTimestamp = dayjs
+            .utc()
+            .date(dayClaimInterval)
+            .hour(hourClaimInterval)
+            .second(0)
+            .add(1, "month")
+            .unix();
+        }
+        await timeMachine.advanceTimeAndBlock(nextTwoIntervalTimestamp - dayjs().unix());
+
+        currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
+        await customPresale.connect(otherWallet1).claim(maxClaimInInterval.mul(2).toString());
+        assert.equal(
+          currentAccountToken.add(maxClaimInInterval.mul(2).toString()).toString(),
+          (await presaleToken.balanceOf(otherWallet1.address)).toString()
+        );
+
+        await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+          "User claim more than max claim amount in this interval"
+        );
+        await timeMachine.revertToSnapshot(snapshotId);
+      });
+
+      describe("claim all token", () => {
+        it("should be able to claim all token after 10 interval", async () => {
+          const snapshot = await timeMachine.takeSnapshot();
+          const snapshotId = snapshot.result;
+
+          await customPresale.connect(owner).finalize();
+          const bigMaxClaimPercentage = (maxClaimPercentage * FEE_DENOMINATOR) / 100;
+          const totalPurchaseInToken = parseEther(maxBuy).mul(presalePrice);
+          const maxClaimInInterval = totalPurchaseInToken.mul(bigMaxClaimPercentage).div(FEE_DENOMINATOR.toString());
+
+          const nextIntervalTimestamp = dayjs
+            .utc()
+            .date(dayClaimInterval)
+            .hour(hourClaimInterval)
+            .second(0)
+            .add(9, "month")
+            .unix();
+          await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
+
+          const currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
+          await customPresale.connect(otherWallet1).claim(maxClaimInInterval.mul(10).toString());
+          assert.equal(
+            currentAccountToken.add(maxClaimInInterval.mul(10).toString()).toString(),
+            (await presaleToken.balanceOf(otherWallet1.address)).toString()
+          );
+
+          await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+            "User don't have enough token to claim"
+          );
+
+          const nextTwoIntervalTimestamp = dayjs
+            .utc()
+            .date(dayClaimInterval)
+            .hour(hourClaimInterval)
+            .second(0)
+            .add(2, "month")
+            .unix();
+          await timeMachine.advanceTimeAndBlock(nextTwoIntervalTimestamp - dayjs().unix());
+
+          await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+            "User don't have enough token to claim"
+          );
+          await timeMachine.revertToSnapshot(snapshotId);
+        });
+      });
     });
   });
 
@@ -782,12 +1070,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -868,12 +1157,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [dayjs().add(1, "day").unix(), endPresaleTime, dayClaimInterval, hourClaimInterval],
         liquidityLockTime,
-        dayjs().add(1, "day").unix(),
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -900,12 +1190,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, dayjs().unix(), dayClaimInterval, hourClaimInterval],
         liquidityLockTime,
-        startPresaleTime,
-        dayjs().unix(),
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -968,12 +1259,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther("0.4")],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
 
       await raisedToken.connect(otherWallet1).approve(customPresale.address, parseEther(minBuy));
@@ -1012,12 +1304,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther("0.4")],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
 
       await raisedToken.connect(otherWallet1).approve(customPresale.address, parseEther(minBuy));
@@ -1159,12 +1452,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, dayjs().unix(), dayClaimInterval, hourClaimInterval],
         liquidityLockTime,
-        startPresaleTime,
-        dayjs().unix(),
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -1206,12 +1500,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -1287,12 +1582,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
-        1,
+        maxClaimPercentage,
+        1, // refundType
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)
@@ -1373,9 +1669,9 @@ describe("SummitCustomPresale", () => {
           ],
           [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          presaleTimeDetails,
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
@@ -1432,9 +1728,9 @@ describe("SummitCustomPresale", () => {
           ],
           [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          presaleTimeDetails,
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
@@ -1503,9 +1799,9 @@ describe("SummitCustomPresale", () => {
           ],
           [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          presaleTimeDetails,
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
@@ -1595,9 +1891,9 @@ describe("SummitCustomPresale", () => {
           ],
           [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          presaleTimeDetails,
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
@@ -1666,9 +1962,9 @@ describe("SummitCustomPresale", () => {
             ],
             [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            presaleTimeDetails,
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             listingChoice,
             isWhiteListPhase,
@@ -1719,9 +2015,9 @@ describe("SummitCustomPresale", () => {
             ],
             [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            presaleTimeDetails,
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             1, // listingChoice, 100% Pankcakeswap router
             isWhiteListPhase,
@@ -1772,9 +2068,9 @@ describe("SummitCustomPresale", () => {
             ],
             [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            presaleTimeDetails,
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             2, // listingChoice, 75% Summitswap router & 25% Summitswap router
             isWhiteListPhase,
@@ -1845,9 +2141,9 @@ describe("SummitCustomPresale", () => {
             ],
             [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            presaleTimeDetails,
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             3, // listingChoice, 25% Summitswap router & 75% Summitswap router
             isWhiteListPhase,
@@ -1919,9 +2215,9 @@ describe("SummitCustomPresale", () => {
             ],
             [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            presaleTimeDetails,
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             3, // listingChoice, 25% Summitswap router & 75% Summitswap router
             isWhiteListPhase,
@@ -2016,12 +2312,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         1,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await customPresale.connect(owner).cancelPresale();
       await expect(customPresale.connect(owner).withdrawCancelledTokens()).to.be.revertedWith(
@@ -2150,12 +2447,13 @@ describe("SummitCustomPresale", () => {
         ],
         [parseEther(presalePrice), parseEther(listingPrice), liquidityPrecentage],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        presaleTimeDetails,
         liquidityLockTime,
-        startPresaleTime,
-        endPresaleTime,
+        maxClaimPercentage,
         refundType,
         listingChoice,
         isWhiteListPhase,
+        isVestingEnabled,
       ])) as SummitCustomPresale;
       await presaleToken
         .connect(owner)

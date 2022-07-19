@@ -33,11 +33,15 @@ describe("SummitFactoryPresale", () => {
   const softCap = "0.1";
   const hardCap = "0.2";
   const liquidityPrecentage = 70;
+  const maxClaimPercentage = 100; // vesting is diabled
   const startPresaleTime = dayjs().add(1, "day").unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
+  const dayClaimInterval = 15;
+  const hourClaimInterval = 16;
   const listingChoice = 0;
   const refundType = 0;
   const isWhiteListPhase = false;
+  const isVestingEnabled = false;
 
   beforeEach(async () => {
     presaleFactory = (await deployContract(owner, PresaleFactoryArtifact, [
@@ -135,12 +139,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -174,12 +179,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -212,12 +218,13 @@ describe("SummitFactoryPresale", () => {
               liquidityPrecentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             listingChoice,
             isWhiteListPhase,
+            isVestingEnabled,
             {
               value: BigNumber.from(serviceFee).sub("1"),
             }
@@ -237,12 +244,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -259,12 +267,13 @@ describe("SummitFactoryPresale", () => {
               liquidityPrecentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             listingChoice,
             isWhiteListPhase,
+            isVestingEnabled,
             {
               value: serviceFee,
             }
@@ -285,12 +294,13 @@ describe("SummitFactoryPresale", () => {
               liquidityPrecentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [dayjs(startPresaleTime).subtract(2, "day").unix(), endPresaleTime, dayClaimInterval, hourClaimInterval],
             liquidityLockTime,
-            dayjs(startPresaleTime).subtract(2, "day").unix(),
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             listingChoice,
             isWhiteListPhase,
+            isVestingEnabled,
             {
               value: serviceFee,
             }
@@ -311,12 +321,13 @@ describe("SummitFactoryPresale", () => {
               liquidityPrecentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [startPresaleTime, dayjs(endPresaleTime).subtract(2, "day").unix(), dayClaimInterval, hourClaimInterval],
             liquidityLockTime,
-            startPresaleTime,
-            dayjs(endPresaleTime).subtract(2, "day").unix(),
+            maxClaimPercentage,
             refundType,
             listingChoice,
             isWhiteListPhase,
+            isVestingEnabled,
             {
               value: serviceFee,
             }
@@ -342,12 +353,13 @@ describe("SummitFactoryPresale", () => {
               parseEther(softCap),
               parseEther(hardCap),
             ],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             listingChoice,
             isWhiteListPhase,
+            isVestingEnabled,
             {
               value: serviceFee,
             }
@@ -373,12 +385,13 @@ describe("SummitFactoryPresale", () => {
               parseEther((Number(hardCap) * 0.4).toString()),
               parseEther(hardCap),
             ],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             listingChoice,
             isWhiteListPhase,
+            isVestingEnabled,
             {
               value: serviceFee,
             }
@@ -399,12 +412,13 @@ describe("SummitFactoryPresale", () => {
               liquidityPrecentage - 30,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
             liquidityLockTime,
-            startPresaleTime,
-            endPresaleTime,
+            maxClaimPercentage,
             refundType,
             listingChoice,
             isWhiteListPhase,
+            isVestingEnabled,
             {
               value: serviceFee,
             }
@@ -424,12 +438,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -452,12 +467,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -480,12 +496,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -510,12 +527,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -535,12 +553,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -561,12 +580,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }
@@ -592,12 +612,13 @@ describe("SummitFactoryPresale", () => {
             liquidityPrecentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime,
-          startPresaleTime,
-          endPresaleTime,
+          maxClaimPercentage,
           refundType,
           listingChoice,
           isWhiteListPhase,
+          isVestingEnabled,
           {
             value: serviceFee,
           }

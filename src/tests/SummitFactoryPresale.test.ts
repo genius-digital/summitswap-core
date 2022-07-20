@@ -14,7 +14,7 @@ import { MAX_VALUE, ZERO_ADDRESS } from "src/environment";
 const { deployContract, provider } = waffle;
 
 describe("SummitFactoryPresale", () => {
-  const [owner, serviceFeeReceiver, otherWallet1, summitFactoryFeeToSetter] = provider.getWallets();
+  const [owner, serviceFeeReceiver, otherWallet1, summitFactoryFeeToSetter, admin] = provider.getWallets();
 
   let presaleFactory: SummitFactoryPresale;
   let presaleToken: DummyToken;
@@ -47,6 +47,7 @@ describe("SummitFactoryPresale", () => {
     presaleFactory = (await deployContract(owner, PresaleFactoryArtifact, [
       serviceFee,
       serviceFeeReceiver.address,
+      admin.address,
     ])) as SummitFactoryPresale;
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
     wbnb = (await deployContract(owner, WbnbArtifact, [])) as WBNB;
@@ -131,7 +132,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -171,7 +172,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -210,7 +211,14 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -236,7 +244,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -259,7 +267,14 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -286,7 +301,14 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -313,7 +335,14 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -340,7 +369,14 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -372,7 +408,14 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -404,7 +447,14 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
-            [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
             [
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
@@ -430,7 +480,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -449,7 +499,7 @@ describe("SummitFactoryPresale", () => {
             value: serviceFee,
           }
         );
-      const presaleAddress = await presaleFactory.presaleAddresses(0);
+      const presaleAddress = await presaleFactory.pendingPresales(0);
       const presaleAddressFromTokenPresales = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
       assert.equal(presaleAddress, presaleAddressFromTokenPresales);
     });
@@ -459,7 +509,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -488,7 +538,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -519,7 +569,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -545,7 +595,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -572,7 +622,14 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, feeToken.address, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [
+            presaleToken.address,
+            feeToken.address,
+            ZERO_ADDRESS,
+            summitRouter.address,
+            summitRouter.address,
+            admin.address,
+          ],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -604,7 +661,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address],
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
@@ -625,6 +682,183 @@ describe("SummitFactoryPresale", () => {
         );
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       assert.equal(tokenPresales.length, 1);
+    });
+  });
+
+  describe("approvePresales()", () => {
+    beforeEach(async () => {
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+          liquidityLockTime,
+          maxClaimPercentage,
+          refundType,
+          listingChoice,
+          isWhiteListPhase,
+          isVestingEnabled,
+          {
+            value: serviceFee,
+          }
+        );
+    });
+    it("should be pendingPresales.length == 1", async () => {
+      const pendingPresales = await presaleFactory.getPendingPresales();
+      assert.equal(pendingPresales.length, 1);
+    });
+    it("should pendingPresale be custom presale", async () => {
+      const pendingPresales = await presaleFactory.getPendingPresales();
+      const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
+      assert.equal(pendingPresales[0], tokenPresale[0]);
+    });
+
+    it("should ADMIN be only able to approve presale", async () => {
+      let pendingPresales = await presaleFactory.getPendingPresales();
+      let approvePresales = await presaleFactory.getApprovedPresales();
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      const summitCustomPresale = SummitCustomPresale.attach(tokenPresales[0]);
+
+      assert.equal(pendingPresales.length, 1);
+      assert.equal(approvePresales.length, 0);
+      assert.equal(tokenPresales.length, 1);
+      assert.equal((await summitCustomPresale.getPresaleInfo()).isApproved, false);
+
+      await expect(presaleFactory.connect(owner).approvePresales(tokenPresales)).to.be.revertedWith(
+        "msg.sender does not have ADMIN role"
+      );
+      await expect(presaleFactory.connect(otherWallet1).approvePresales(tokenPresales)).to.be.revertedWith(
+        "msg.sender does not have ADMIN role"
+      );
+
+      await presaleFactory.connect(admin).approvePresales(tokenPresales);
+
+      pendingPresales = await presaleFactory.getPendingPresales();
+      approvePresales = await presaleFactory.getApprovedPresales();
+
+      assert.equal(pendingPresales.length, 0);
+      assert.equal(approvePresales.length, 1);
+      assert.equal((await summitCustomPresale.getPresaleInfo()).isApproved, true);
+    });
+
+    it("should not add duplicate addresses", async () => {
+      let pendingPresales = await presaleFactory.getPendingPresales();
+      let approvePresales = await presaleFactory.getApprovedPresales();
+      assert.equal(pendingPresales.length, 1);
+      assert.equal(approvePresales.length, 0);
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      assert.equal(tokenPresales.length, 1);
+
+      await presaleFactory.connect(admin).approvePresales([tokenPresales[0], tokenPresales[0], tokenPresales[0]]);
+
+      pendingPresales = await presaleFactory.getPendingPresales();
+      approvePresales = await presaleFactory.getApprovedPresales();
+
+      assert.equal(pendingPresales.length, 0);
+      assert.equal(approvePresales.length, 1);
+    });
+
+    it("should not add address if not is pendingPreseles", async () => {
+      let pendingPresales = await presaleFactory.getPendingPresales();
+      let approvePresales = await presaleFactory.getApprovedPresales();
+      assert.equal(pendingPresales.length, 1);
+      assert.equal(approvePresales.length, 0);
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      assert.equal(tokenPresales.length, 1);
+
+      await presaleFactory.connect(admin).approvePresales([otherWallet1.address]);
+
+      pendingPresales = await presaleFactory.getPendingPresales();
+      approvePresales = await presaleFactory.getApprovedPresales();
+
+      assert.equal(pendingPresales.length, 1);
+      assert.equal(approvePresales.length, 0);
+    });
+  });
+
+  describe("grantRole()", () => {
+    it("should admin be only able to grant ADMIN role", async () => {
+      const adminRole = await presaleFactory.ADMIN();
+
+      await expect(presaleFactory.connect(otherWallet1).grantRole(adminRole, otherWallet1.address)).to.be.revertedWith(
+        "AccessControl: sender must be an admin to grant"
+      );
+
+      assert.equal(await presaleFactory.hasRole(adminRole, otherWallet1.address), false);
+      await presaleFactory.connect(admin).grantRole(adminRole, otherWallet1.address);
+      assert.equal(await presaleFactory.hasRole(adminRole, otherWallet1.address), true);
+    });
+  });
+
+  describe("setRolesForPresale()", () => {
+    beforeEach(async () => {
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+          liquidityLockTime,
+          maxClaimPercentage,
+          refundType,
+          listingChoice,
+          isWhiteListPhase,
+          isVestingEnabled,
+          {
+            value: serviceFee,
+          }
+        );
+    });
+    it("should admin be only able to grant ADMIN role to presale", async () => {
+      const tokenPresale = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
+
+      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      const summitCustomPresale = SummitCustomPresale.attach(tokenPresale);
+      const adminRole = await presaleFactory.ADMIN();
+
+      await expect(
+        presaleFactory.connect(otherWallet1).setRolesForPresale(adminRole, tokenPresale, otherWallet1.address)
+      ).to.be.revertedWith("msg.sender does not have ADMIN role");
+      assert.equal(await summitCustomPresale.hasRole(adminRole, otherWallet1.address), false);
+      await presaleFactory.connect(admin).setRolesForPresale(adminRole, tokenPresale, otherWallet1.address);
+      assert.equal(await summitCustomPresale.hasRole(adminRole, otherWallet1.address), true);
+    });
+
+    it("should be reverted, if presale not in pending presales does", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      const adminRole = await presaleFactory.ADMIN();
+      let pendingPresales = await presaleFactory.getPendingPresales();
+      assert.equal(pendingPresales.length, 1);
+
+      await presaleFactory.connect(admin).approvePresales(tokenPresales);
+      pendingPresales = await presaleFactory.getPendingPresales();
+
+      assert.equal(pendingPresales.length, 0);
+      await expect(
+        presaleFactory.connect(admin).setRolesForPresale(adminRole, tokenPresales[0], otherWallet1.address)
+      ).to.be.revertedWith("Presale not in pending presales.");
     });
   });
 });

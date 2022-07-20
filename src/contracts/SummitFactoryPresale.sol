@@ -123,6 +123,14 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     }
   }
 
+  function getPendingPresales() external view returns (address[] memory) {
+    return pendingPresales;
+  }
+
+  function getApprovedPresales() external view returns (address[] memory) {
+    return approvedPresales;
+  }
+
   function getTokenPresales(address _address) external view returns (address[] memory) {
     return tokenPresales[_address];
   }
@@ -131,8 +139,16 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     return accountPresales[_address];
   }
 
-  function setAdminForPresale(address _address) external onlyAdmin {
-    IAccessControl(_address).grantRole(ADMIN, _address);
+  function setRolesForPresale(
+    bytes32 role,
+    address presaleAddress,
+    address newAdmin
+  ) external onlyAdmin {
+    require(
+      pendingPresales.length > 0 && pendingPresales[pendingIndex[presaleAddress]] == presaleAddress,
+      "Presale not in pending presales."
+    );
+    IAccessControl(presaleAddress).grantRole(role, newAdmin);
   }
 
   function setServiceFeeReceiver(address _feeReceiver) external onlyOwner {

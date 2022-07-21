@@ -17,7 +17,6 @@ contract SummitFactoryPresale is Ownable, AccessControl {
   mapping(address => uint256) private approvedIndex;
   mapping(address => uint256) private pendingIndex;
 
-  // address[] public presaleAddresses;
   address[] public approvedPresales;
   address[] public pendingPresales;
   address public serviceFeeReceiver;
@@ -52,14 +51,16 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     bool _isVestingEnabled
   ) external payable {
     require(msg.value >= preSaleFee, "Not Enough Fee");
-    require(_presaleTimeDetails[0] > block.timestamp, "Presale start time should be greater than block.timestamp");
-    require(
-      _presaleTimeDetails[1] > _presaleTimeDetails[0],
-      "Presale End time should be greater than presale start time"
-    );
+    require(_presaleTimeDetails[0] > block.timestamp, "Presale startTime > block.timestamp");
+    require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
+    require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
+    require(_presaleTimeDetails[3] >= 0 && _presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
     require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
     require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
-    require(_tokenDetails[3] >= 51, "Liquidity Percentage should be Greater than or equal to 51%");
+    require(_tokenDetails[3] >= 25 && _tokenDetails[3] <= 100, "Liquidity Percentage should be between 25% & 100%");
+    require(_maxClaimPercentage > 0 && _maxClaimPercentage <= 100, "maxClaimPercentage should be between 0 & 100");
+    require(_refundType == 0 || _refundType == 1, "refundType should be between 0 & 100");
+    require(_listingChoice >= 0 && _listingChoice <= 3, "listingChoice should be between 0 & 3");
 
     if (tokenPresales[_addresses[0]].length > 0) {
       ISummitCustomPresale _presale = ISummitCustomPresale(
@@ -148,7 +149,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
       pendingPresales.length > 0 && pendingPresales[pendingIndex[presaleAddress]] == presaleAddress,
       "Presale not in pending presales."
     );
-    IAccessControl(presaleAddress).grantRole(role, newAdmin);
+    ISummitCustomPresale(presaleAddress).grantRole(role, newAdmin);
   }
 
   function setServiceFeeReceiver(address _feeReceiver) external onlyOwner {

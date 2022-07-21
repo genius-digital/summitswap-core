@@ -7,7 +7,7 @@ export async function deploySummitPresaleFactory(serviceFee: BigNumber, serviceF
   console.log("Starting to deploy SummitPresaleFactory");
 
   const SummitFactoryPresale = await ethers.getContractFactory("SummitFactoryPresale");
-  const summitFactoryPresale = await SummitFactoryPresale.deploy(serviceFee, serviceFeeAddress);
+  const summitFactoryPresale = await SummitFactoryPresale.deploy(serviceFee, serviceFeeAddress, serviceFeeAddress);
   await summitFactoryPresale.deployed();
 
   console.log("summitFactoryPresale deployed to:", summitFactoryPresale.address);

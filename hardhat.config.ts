@@ -7,6 +7,7 @@ import "tsconfig-paths/register";
 import "hardhat-gas-reporter";
 import "@typechain/hardhat";
 import "solidity-coverage";
+import "hardhat-contract-sizer";
 
 dotenv.config();
 
@@ -89,6 +90,9 @@ export default {
     ],
   },
   networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true,
+    },
     56: {
       url: "https://bsc-dataseed.binance.org/",
       accounts,
@@ -96,8 +100,9 @@ export default {
     97: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       accounts,
-      timeout: 200000,
+      timeout: 500000,
       gas: 7000000,
+      allowUnlimitedContractSize: true,
     },
   },
   gasReporter: {

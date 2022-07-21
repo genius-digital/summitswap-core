@@ -149,6 +149,7 @@ describe("SummitFactoryPresale", () => {
           isVestingEnabled,
           {
             value: serviceFee,
+            gasLimit: 30000000,
           }
         );
       const accountPresales = await presaleFactory.getAccountPresales(owner.address);
@@ -327,7 +328,7 @@ describe("SummitFactoryPresale", () => {
               value: serviceFee,
             }
           )
-      ).to.be.revertedWith("Presale start time should be greater than block.timestamp");
+      ).to.be.revertedWith("Presale startTime > block.timestamp");
     });
 
     it("should be reverted, if presale end time less than start time", async () => {
@@ -361,7 +362,7 @@ describe("SummitFactoryPresale", () => {
               value: serviceFee,
             }
           )
-      ).to.be.revertedWith("Presale End time should be greater than presale start time");
+      ).to.be.revertedWith("Presale End time > presale start time");
     });
 
     it("should be reverted, if minBuy greater than maxBuy", async () => {
@@ -442,7 +443,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("Softcap should be greater than or equal to 50% of hardcap");
     });
 
-    it("should be reverted, if liquidity% less than 51%", async () => {
+    it("should be reverted, if liquidity% less than 25%", async () => {
       await expect(
         presaleFactory
           .connect(owner)
@@ -459,7 +460,7 @@ describe("SummitFactoryPresale", () => {
               parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
               parseEther(presalePrice),
               parseEther(listingPrice),
-              liquidityPrecentage - 30,
+              24,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
             [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
@@ -473,7 +474,7 @@ describe("SummitFactoryPresale", () => {
               value: serviceFee,
             }
           )
-      ).to.be.revertedWith("Liquidity Percentage should be Greater than or equal to 51%");
+      ).to.be.revertedWith("Liquidity Percentage should be between 25% & 100%");
     });
 
     it("should be able to set insert newly created presale address into presaleAddresses and tokenPresales", async () => {

@@ -7,12 +7,12 @@ import "hardhat/console.sol";
 
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./libraries/BokkyPooBahsDateTimeLibrary.sol";
 import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
-import "./libraries/BokkyPooBahsDateTimeLibrary.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./shared/Ownable.sol";
 
 contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   using BokkyPooBahsDateTimeLibrary for uint256;
@@ -82,7 +82,7 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     bool _isWhiteListPhase,
     bool _isVestingEnabled
   ) {
-    transferOwnership(_addresses[0]);
+    _transferOwnership(_addresses[0]);
     serviceFeeReceiver = _addresses[6];
     presale.router0 = _addresses[4];
     presale.router1 = _addresses[5];

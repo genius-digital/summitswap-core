@@ -3,11 +3,12 @@
 
 pragma solidity 0.7.6;
 
-import "./SummitCustomPresale.sol";
-import "./interfaces/ISummitCustomPresale.sol";
 import "./interfaces/IAccessControl.sol";
+import "./interfaces/ISummitCustomPresale.sol";
+import "./interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract SummitFactoryPresale is Ownable, AccessControl {
   bytes32 public constant ADMIN = keccak256("ADMIN");
@@ -20,6 +21,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
   address[] public approvedPresales;
   address[] public pendingPresales;
   address public serviceFeeReceiver;
+  address public libraryAddress;
   uint256 public preSaleFee = 0.001 ether;
 
   constructor(
@@ -50,6 +52,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     bool _isWhiteListPhase,
     bool _isVestingEnabled
   ) external payable {
+    require(libraryAddress != address(0), "Set library address first");
     require(msg.value >= preSaleFee, "Not Enough Fee");
     require(_presaleTimeDetails[0] > block.timestamp, "Presale startTime > block.timestamp");
     require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
@@ -69,7 +72,9 @@ contract SummitFactoryPresale is Ownable, AccessControl {
       require(_presale.isPresaleCancelled(), "Presale Already Exists");
     }
 
-    SummitCustomPresale presale = new SummitCustomPresale(
+    address presaleClone = Clones.clone(libraryAddress);
+
+    ISummitCustomPresale(presaleClone).initialize(
       [
         msg.sender,
         _addresses[0],
@@ -90,15 +95,16 @@ contract SummitFactoryPresale is Ownable, AccessControl {
       _isWhiteListPhase,
       _isVestingEnabled
     );
-    tokenPresales[_addresses[0]].push(address(presale));
-    accountPresales[msg.sender].push(address(presale));
-    pendingPresales.push(address(presale));
+
+    tokenPresales[_addresses[0]].push(address(presaleClone));
+    accountPresales[msg.sender].push(address(presaleClone));
+    pendingPresales.push(address(presaleClone));
     if (serviceFeeReceiver != address(this)) {
       address payable feeReceiver = payable(serviceFeeReceiver);
       feeReceiver.transfer(preSaleFee);
     }
 
-    IERC20(_addresses[0]).transferFrom(msg.sender, address(presale), _tokenDetails[0]);
+    IERC20(_addresses[0]).transferFrom(msg.sender, address(presaleClone), _tokenDetails[0]);
   }
 
   function removeFromPending(address _address) private {
@@ -138,6 +144,10 @@ contract SummitFactoryPresale is Ownable, AccessControl {
 
   function getAccountPresales(address _address) external view returns (address[] memory) {
     return accountPresales[_address];
+  }
+
+  function setLibraryAddress(address _libraryAddress) external onlyOwner {
+    libraryAddress = _libraryAddress;
   }
 
   function setRolesForPresale(

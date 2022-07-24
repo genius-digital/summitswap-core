@@ -1,29 +1,42 @@
+import CustomPresaleArtifact from "@built-contracts/SummitCustomPresale.sol/SummitCustomPresale.json";
 import PresaleFactoryArtifact from "@built-contracts/SummitFactoryPresale.sol/SummitFactoryPresale.json";
 import SummitFactoryArtifact from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
 import SummitRouterArtifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import WbnbArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
-import { DummyToken, SummitFactoryPresale, SummitswapFactory, SummitswapRouter02, WBNB } from "build/typechain";
+import {
+  DummyToken,
+  SummitFactoryPresale,
+  SummitCustomPresale,
+  SummitswapFactory,
+  SummitswapRouter02,
+  WBNB,
+} from "build/typechain";
 import { assert, expect } from "chai";
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
-import { MAX_VALUE, ZERO_ADDRESS } from "src/environment";
+import { MAX_VALUE, ZERO_ADDRESS, ADMIN_ROLE } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
 describe("SummitFactoryPresale", () => {
   const [owner, serviceFeeReceiver, otherWallet1, summitFactoryFeeToSetter, admin] = provider.getWallets();
 
-  let presaleFactory: SummitFactoryPresale;
   let presaleToken: DummyToken;
   let wbnb: WBNB;
   let summitFactory: SummitswapFactory;
   let summitRouter: SummitswapRouter02;
+  let customPresale: SummitCustomPresale;
+  let presaleFactory: SummitFactoryPresale;
 
   const serviceFee = parseEther("0.00010");
   const updatedServiceFee = parseEther("0.00012");
+
+  const FEE_RAISED_TOKEN = 30000000; // 5%
+  const FEE_PRESALE_TOKEN = 30000000; // 2%
+  const EMERGENCY_WITHDRAW_FEE = 100000000; // 10%
 
   const presalePrice = "100";
   const listingPrice = "100";
@@ -58,6 +71,8 @@ describe("SummitFactoryPresale", () => {
       summitFactory.address,
       wbnb.address,
     ])) as SummitswapRouter02;
+    customPresale = (await deployContract(owner, CustomPresaleArtifact)) as SummitCustomPresale;
+    await presaleFactory.connect(owner).setLibraryAddress(customPresale.address);
   });
 
   describe("owner", () => {
@@ -791,15 +806,215 @@ describe("SummitFactoryPresale", () => {
 
   describe("grantRole()", () => {
     it("should admin be only able to grant ADMIN role", async () => {
-      const adminRole = await presaleFactory.ADMIN();
-
-      await expect(presaleFactory.connect(otherWallet1).grantRole(adminRole, otherWallet1.address)).to.be.revertedWith(
+      await expect(presaleFactory.connect(otherWallet1).grantRole(ADMIN_ROLE, otherWallet1.address)).to.be.revertedWith(
         "AccessControl: sender must be an admin to grant"
       );
 
-      assert.equal(await presaleFactory.hasRole(adminRole, otherWallet1.address), false);
-      await presaleFactory.connect(admin).grantRole(adminRole, otherWallet1.address);
-      assert.equal(await presaleFactory.hasRole(adminRole, otherWallet1.address), true);
+      assert.equal(await presaleFactory.hasRole(ADMIN_ROLE, otherWallet1.address), false);
+      await presaleFactory.connect(admin).grantRole(ADMIN_ROLE, otherWallet1.address);
+      assert.equal(await presaleFactory.hasRole(ADMIN_ROLE, otherWallet1.address), true);
+    });
+  });
+
+  describe("setFeeInfo()", () => {
+    beforeEach(async () => {
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+          liquidityLockTime,
+          maxClaimPercentage,
+          refundType,
+          listingChoice,
+          isWhiteListPhase,
+          isVestingEnabled,
+          {
+            value: serviceFee,
+          }
+        );
+    });
+
+    it("should admin be only able to set feeInfo", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      customPresale = SummitCustomPresale.attach(tokenPresales[0]);
+
+      await expect(
+        presaleFactory
+          .connect(otherWallet1)
+          .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS, tokenPresales[0])
+      ).to.be.revertedWith("msg.sender does not have ADMIN role");
+      assert.equal(await customPresale.hasRole(ADMIN_ROLE, otherWallet1.address), false);
+      assert.equal(await customPresale.hasRole(ADMIN_ROLE, admin.address), true);
+
+      await presaleFactory
+        .connect(admin)
+        .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS, tokenPresales[0]);
+
+      const updatedFeeInfo = await customPresale.getFeeInfo();
+      assert.equal(updatedFeeInfo.feeRaisedToken.toString(), FEE_RAISED_TOKEN.toString());
+      assert.equal(updatedFeeInfo.feePresaleToken.toString(), FEE_PRESALE_TOKEN.toString());
+      assert.equal(updatedFeeInfo.emergencyWithdrawFee.toString(), EMERGENCY_WITHDRAW_FEE.toString());
+      assert.equal(updatedFeeInfo.raisedTokenAddress.toString(), ZERO_ADDRESS);
+    });
+
+    it("should be reverted, if presale not in pending presales does", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      let pendingPresales = await presaleFactory.getPendingPresales();
+      assert.equal(pendingPresales.length, 1);
+
+      await presaleFactory.connect(admin).approvePresales(tokenPresales);
+      pendingPresales = await presaleFactory.getPendingPresales();
+
+      assert.equal(pendingPresales.length, 0);
+      await expect(
+        presaleFactory
+          .connect(admin)
+          .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS, tokenPresales[0])
+      ).to.be.revertedWith("Presale not in pending presales.");
+    });
+  });
+
+  describe("setPresaleInfo()", () => {
+    beforeEach(async () => {
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+          liquidityLockTime,
+          maxClaimPercentage,
+          refundType,
+          listingChoice,
+          isWhiteListPhase,
+          isVestingEnabled,
+          {
+            value: serviceFee,
+          }
+        );
+    });
+
+    it("should admin be only able to set presaleInfo", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      customPresale = SummitCustomPresale.attach(tokenPresales[0]);
+
+      await expect(
+        presaleFactory
+          .connect(otherWallet1)
+          .setPresaleInfo(
+            tokenPresales[0],
+            ZERO_ADDRESS,
+            [parseEther(presalePrice).add("1"), parseEther(listingPrice).add("1"), liquidityPrecentage + 1],
+            [
+              parseEther(minBuy).add("1"),
+              parseEther(maxBuy).add("1"),
+              parseEther(softCap).add("1"),
+              parseEther(hardCap).add("1"),
+            ],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+            liquidityLockTime,
+            maxClaimPercentage,
+            refundType,
+            listingChoice,
+            isWhiteListPhase,
+            isVestingEnabled
+          )
+      ).to.be.revertedWith("msg.sender does not have ADMIN role");
+      assert.equal(await customPresale.hasRole(ADMIN_ROLE, otherWallet1.address), false);
+      assert.equal(await customPresale.hasRole(ADMIN_ROLE, admin.address), true);
+
+      await presaleFactory
+        .connect(admin)
+        .setPresaleInfo(
+          tokenPresales[0],
+          ZERO_ADDRESS,
+          [parseEther(presalePrice).add("1"), parseEther(listingPrice).add("1"), liquidityPrecentage + 1],
+          [
+            parseEther(minBuy).add("1"),
+            parseEther(maxBuy).add("1"),
+            parseEther(softCap).add("1"),
+            parseEther(hardCap).add("1"),
+          ],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+          liquidityLockTime + 1,
+          maxClaimPercentage - 1,
+          refundType + 1,
+          listingChoice + 1,
+          true,
+          true
+        );
+
+      const updatedPresaleInfo = await customPresale.getPresaleInfo();
+      assert.equal(updatedPresaleInfo.presalePrice.toString(), parseEther(presalePrice).add("1").toString());
+      assert.equal(updatedPresaleInfo.listingPrice.toString(), parseEther(listingPrice).add("1").toString());
+      assert.equal(updatedPresaleInfo.liquidityPercentage.toString(), (700000000 + 10000000).toString());
+      assert.equal(updatedPresaleInfo.minBuy.toString(), parseEther(minBuy).add("1").toString());
+      assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).add("1").toString());
+      assert.equal(updatedPresaleInfo.softCap.toString(), parseEther(softCap).add("1").toString());
+      assert.equal(updatedPresaleInfo.hardCap.toString(), parseEther(hardCap).add("1").toString());
+      assert.equal(updatedPresaleInfo.liquidityLockTime.toString(), (liquidityLockTime + 1).toString());
+      assert.equal(updatedPresaleInfo.maxClaimPercentage.toString(), (1000000000 - 10000000).toString());
+      assert.equal(updatedPresaleInfo.refundType.toString(), "1");
+      assert.equal(updatedPresaleInfo.listingChoice.toString(), "1");
+      assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
+      assert.equal(updatedPresaleInfo.isVestingEnabled, true);
+    });
+
+    it("should be reverted, if presale not in pending presales does", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      let pendingPresales = await presaleFactory.getPendingPresales();
+      assert.equal(pendingPresales.length, 1);
+
+      await presaleFactory.connect(admin).approvePresales(tokenPresales);
+      pendingPresales = await presaleFactory.getPendingPresales();
+
+      assert.equal(pendingPresales.length, 0);
+      await expect(
+        presaleFactory
+          .connect(admin)
+          .setPresaleInfo(
+            tokenPresales[0],
+            ZERO_ADDRESS,
+            [parseEther(presalePrice).add("1"), parseEther(listingPrice).add("1"), liquidityPrecentage + 1],
+            [
+              parseEther(minBuy).add("1"),
+              parseEther(maxBuy).add("1"),
+              parseEther(softCap).add("1"),
+              parseEther(hardCap).add("1"),
+            ],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+            liquidityLockTime + 1,
+            maxClaimPercentage - 1,
+            refundType + 1,
+            listingChoice + 1,
+            true,
+            true
+          )
+      ).to.be.revertedWith("Presale not in pending presales.");
     });
   });
 
@@ -832,24 +1047,23 @@ describe("SummitFactoryPresale", () => {
           }
         );
     });
+
     it("should admin be only able to grant ADMIN role to presale", async () => {
       const tokenPresale = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
 
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       const summitCustomPresale = SummitCustomPresale.attach(tokenPresale);
-      const adminRole = await presaleFactory.ADMIN();
 
       await expect(
-        presaleFactory.connect(otherWallet1).setRolesForPresale(adminRole, tokenPresale, otherWallet1.address)
+        presaleFactory.connect(otherWallet1).setRolesForPresale(ADMIN_ROLE, tokenPresale, otherWallet1.address)
       ).to.be.revertedWith("msg.sender does not have ADMIN role");
-      assert.equal(await summitCustomPresale.hasRole(adminRole, otherWallet1.address), false);
-      await presaleFactory.connect(admin).setRolesForPresale(adminRole, tokenPresale, otherWallet1.address);
-      assert.equal(await summitCustomPresale.hasRole(adminRole, otherWallet1.address), true);
+      assert.equal(await summitCustomPresale.hasRole(ADMIN_ROLE, otherWallet1.address), false);
+      await presaleFactory.connect(admin).setRolesForPresale(ADMIN_ROLE, tokenPresale, otherWallet1.address);
+      assert.equal(await summitCustomPresale.hasRole(ADMIN_ROLE, otherWallet1.address), true);
     });
 
     it("should be reverted, if presale not in pending presales does", async () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
-      const adminRole = await presaleFactory.ADMIN();
       let pendingPresales = await presaleFactory.getPendingPresales();
       assert.equal(pendingPresales.length, 1);
 
@@ -858,7 +1072,7 @@ describe("SummitFactoryPresale", () => {
 
       assert.equal(pendingPresales.length, 0);
       await expect(
-        presaleFactory.connect(admin).setRolesForPresale(adminRole, tokenPresales[0], otherWallet1.address)
+        presaleFactory.connect(admin).setRolesForPresale(ADMIN_ROLE, tokenPresales[0], otherWallet1.address)
       ).to.be.revertedWith("Presale not in pending presales.");
     });
   });

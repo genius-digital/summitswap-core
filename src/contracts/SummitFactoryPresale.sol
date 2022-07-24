@@ -40,6 +40,14 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     _;
   }
 
+  modifier presalePending(address _presale) {
+    require(
+      pendingPresales.length > 0 && pendingPresales[pendingIndex[_presale]] == _presale,
+      "Presale not in pending presales."
+    );
+    _;
+  }
+
   function createPresale(
     address[6] memory _addresses, // tokenAdress, raisedTokenAddress, pairToken, SS router, PS router, admin
     uint256[4] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent
@@ -150,15 +158,64 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     libraryAddress = _libraryAddress;
   }
 
+  function setFeeInfo(
+    uint256 feeRaisedToken,
+    uint256 feePresaleToken,
+    uint256 emergencyWithdrawFee,
+    address raisedTokenAddress,
+    address presaleAddress
+  ) external onlyAdmin presalePending(presaleAddress) {
+    ISummitCustomPresale(presaleAddress).setFeeInfo(
+      feeRaisedToken,
+      feePresaleToken,
+      emergencyWithdrawFee,
+      raisedTokenAddress
+    );
+  }
+
+  function setPresaleInfo(
+    address _presale,
+    address _pairToken,
+    uint256[3] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent
+    uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
+    uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
+    uint256 _liquidityLockTime,
+    uint256 _maxClaimPercentage,
+    uint8 _refundType,
+    uint8 _listingChoice,
+    bool _isWhiteListPhase,
+    bool _isVestingEnabled
+  ) external onlyAdmin presalePending(_presale) {
+    require(_presaleTimeDetails[0] > block.timestamp, "Presale startTime > block.timestamp");
+    require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
+    require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
+    require(_presaleTimeDetails[3] >= 0 && _presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
+    require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
+    require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
+    require(_tokenDetails[2] >= 25 && _tokenDetails[2] <= 100, "Liquidity Percentage should be between 25% & 100%");
+    require(_maxClaimPercentage > 0 && _maxClaimPercentage <= 100, "maxClaimPercentage should be between 0 & 100");
+    require(_refundType == 0 || _refundType == 1, "refundType should be between 0 & 100");
+    require(_listingChoice >= 0 && _listingChoice <= 3, "listingChoice should be between 0 & 3");
+
+    ISummitCustomPresale(_presale).setPresaleInfo(
+      _pairToken,
+      _tokenDetails,
+      _bnbAmounts,
+      _presaleTimeDetails,
+      _liquidityLockTime,
+      _maxClaimPercentage,
+      _refundType,
+      _listingChoice,
+      _isWhiteListPhase,
+      _isVestingEnabled
+    );
+  }
+
   function setRolesForPresale(
     bytes32 role,
     address presaleAddress,
     address newAdmin
-  ) external onlyAdmin {
-    require(
-      pendingPresales.length > 0 && pendingPresales[pendingIndex[presaleAddress]] == presaleAddress,
-      "Presale not in pending presales."
-    );
+  ) external onlyAdmin presalePending(presaleAddress) {
     ISummitCustomPresale(presaleAddress).grantRole(role, newAdmin);
   }
 

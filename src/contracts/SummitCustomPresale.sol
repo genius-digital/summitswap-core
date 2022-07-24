@@ -12,12 +12,14 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./libraries/BokkyPooBahsDateTimeLibrary.sol";
 import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
+import "../helpers/PresaleInfo.sol";
+import "../helpers/PresaleFee.sol";
 import "./shared/Ownable.sol";
 
 contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   using BokkyPooBahsDateTimeLibrary for uint256;
 
-  bytes32 public constant ADMIN = keccak256("ADMIN");
+  bytes32 private constant ADMIN = keccak256("ADMIN");
   address private constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
   address public serviceFeeReceiver;
@@ -31,46 +33,10 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   uint256 public constant FEE_DENOMINATOR = 10**9; // fee denominator
   uint256 public startDateClaim; // Timestamp
 
-  struct FeeInfo {
-    address raisedTokenAddress; // BNB/BUSD/..
-    uint256 feeRaisedToken; // BNB/BUSD/...
-    uint256 feePresaleToken; // presaleToken
-    uint256 emergencyWithdrawFee;
-  }
-
-  struct PresaleInfo {
-    address presaleToken;
-    address router0; // router SummitSwap
-    address router1; // router pancakeSwap
-    address pairToken;
-    uint256 presalePrice; // in wei
-    uint256 listingPrice; // in wei
-    uint256 liquidityLockTime; // in seconds
-    uint256 minBuy; // in wei
-    uint256 maxBuy; // in wei
-    uint256 softCap; // in wei
-    uint256 hardCap; // in wei
-    uint256 liquidityPercentage;
-    uint256 startPresaleTime;
-    uint256 endPresaleTime;
-    uint256 claimIntervalDay;
-    uint256 claimIntervalHour;
-    uint256 totalBought; // in wei
-    uint256 maxClaimPercentage;
-    uint8 refundType; // 0 refund, 1 burn
-    uint8 listingChoice; // 0 100% SS, 1 100% PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
-    bool isWhiteListPhase;
-    bool isClaimPhase;
-    bool isPresaleCancelled;
-    bool isWithdrawCancelledTokens;
-    bool isVestingEnabled;
-    bool isApproved;
-  }
-
   PresaleInfo private presale;
   FeeInfo private feeInfo;
 
-  constructor(
+  function initialize(
     address[8] memory _addresses, // owner, token, raisedTokenAddress, pairToken, SummitSwap, PancakeSwap, serviceFeeReceiver, admin
     uint256[3] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
@@ -81,7 +47,8 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     uint8 _listingChoice,
     bool _isWhiteListPhase,
     bool _isVestingEnabled
-  ) {
+  ) external {
+    require(presale.startPresaleTime == 0, "Presale is Initialized.");
     _transferOwnership(_addresses[0]);
     serviceFeeReceiver = _addresses[6];
     presale.router0 = _addresses[4];

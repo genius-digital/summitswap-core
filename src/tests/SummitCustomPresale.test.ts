@@ -66,7 +66,7 @@ describe("SummitCustomPresale", () => {
   const isPresaleCancelled = false;
   const isWithdrawCancelledTokens = false;
 
-  const presaleTimeDetails = [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval];
+  const projectDetails = ["icon_Url", "Name", "Contact", "Position", "Telegram Id", "Discord Id", "Email", "Twitter"];
 
   beforeEach(async () => {
     presaleFactory = (await deployContract(owner, PresaleFactoryArtifact, [
@@ -92,21 +92,19 @@ describe("SummitCustomPresale", () => {
     await presaleFactory
       .connect(owner)
       .createPresale(
+        projectDetails,
         [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
         [
           parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
           parseEther(presalePrice),
           parseEther(listingPrice),
           liquidityPrecentage,
+          maxClaimPercentage,
         ],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-        liquidityLockTime,
-        maxClaimPercentage,
-        refundType,
-        listingChoice,
-        isWhiteListPhase,
-        isVestingEnabled,
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
           gasLimit: 30000000,
@@ -134,6 +132,15 @@ describe("SummitCustomPresale", () => {
       await expect(customPresale.connect(otherOwner).transferOwnership(otherOwner.address)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
+    });
+  });
+
+  describe("getProjectsDetails", () => {
+    it("should be projectDetails", async () => {
+      const _projectDetails = await customPresale.getProjectsDetails();
+      _projectDetails.forEach((detail, i) => {
+        assert.equal(detail, projectDetails[i]);
+      });
     });
   });
 
@@ -171,6 +178,7 @@ describe("SummitCustomPresale", () => {
         .connect(owner)
         .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
       await presaleFactory.createPresale(
+        projectDetails,
         [
           presaleToken.address,
           raisedToken.address,
@@ -184,15 +192,12 @@ describe("SummitCustomPresale", () => {
           parseEther(presalePrice),
           parseEther(listingPrice),
           liquidityPrecentage,
+          maxClaimPercentage,
         ],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-        liquidityLockTime,
-        maxClaimPercentage,
-        refundType,
-        listingChoice,
-        isWhiteListPhase,
-        isVestingEnabled,
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
         }
@@ -393,21 +398,19 @@ describe("SummitCustomPresale", () => {
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
 
       await presaleFactory.createPresale(
+        projectDetails,
         [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
         [
           parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
           parseEther(presalePrice),
           parseEther(listingPrice),
           liquidityPrecentage,
+          maxClaimPercentage,
         ],
         [parseEther(minBuy), parseEther(maxBuy), parseEther("0.2"), parseEther("0.4")],
-        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-        liquidityLockTime,
-        maxClaimPercentage,
-        refundType,
-        listingChoice,
-        isWhiteListPhase,
-        isVestingEnabled,
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
           gasLimit: 3000000,
@@ -507,6 +510,7 @@ describe("SummitCustomPresale", () => {
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
 
       await presaleFactory.connect(owner).createPresale(
+        projectDetails,
         [
           presaleToken.address,
           raisedToken.address,
@@ -520,15 +524,12 @@ describe("SummitCustomPresale", () => {
           parseEther(presalePrice),
           parseEther(listingPrice),
           liquidityPrecentage,
+          maxClaimPercentage,
         ],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-        liquidityLockTime,
-        maxClaimPercentage,
-        refundType,
-        listingChoice,
-        isWhiteListPhase,
-        isVestingEnabled,
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
           gasLimit: 3000000,
@@ -589,28 +590,25 @@ describe("SummitCustomPresale", () => {
     it("should be reverted, if raised token is native coin", async () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory
-        .connect(owner)
-        .createPresale(
-          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
-          [
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            parseEther(presalePrice),
-            parseEther(listingPrice),
-            liquidityPrecentage,
-          ],
-          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
+      await presaleFactory.connect(owner).createPresale(
+        projectDetails,
+        [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+        [
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
           maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
-          {
-            value: createPresaleFee,
-          }
-        );
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+        }
+      );
 
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -642,35 +640,32 @@ describe("SummitCustomPresale", () => {
     it("should be reverted, if contributionAmount greater than maxBuy", async () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory
-        .connect(owner)
-        .createPresale(
-          [
-            presaleToken.address,
-            raisedToken.address,
-            ZERO_ADDRESS,
-            summitRouter.address,
-            summitRouter.address,
-            admin.address,
-          ],
-          [
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            parseEther(presalePrice),
-            parseEther(listingPrice),
-            liquidityPrecentage,
-          ],
-          [parseEther(minBuy), parseEther(maxBuy), parseEther("0.2"), parseEther("0.4")],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
+      await presaleFactory.connect(owner).createPresale(
+        projectDetails,
+        [
+          presaleToken.address,
+          raisedToken.address,
+          ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
+          admin.address,
+        ],
+        [
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
           maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
-          {
-            value: createPresaleFee,
-          }
-        );
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther("0.2"), parseEther("0.4")],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+        }
+      );
 
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -838,6 +833,7 @@ describe("SummitCustomPresale", () => {
         await presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -851,15 +847,12 @@ describe("SummitCustomPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            enableVesting,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, enableVesting],
             {
               value: createPresaleFee,
               gasLimit: 3000000,
@@ -1145,6 +1138,7 @@ describe("SummitCustomPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [
             presaleToken.address,
             raisedToken.address,
@@ -1158,15 +1152,12 @@ describe("SummitCustomPresale", () => {
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: createPresaleFee,
             gasLimit: 30000000,
@@ -1333,36 +1324,33 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory
-        .connect(owner)
-        .createPresale(
-          [
-            presaleToken.address,
-            raisedToken.address,
-            ZERO_ADDRESS,
-            summitRouter.address,
-            summitRouter.address,
-            admin.address,
-          ],
-          [
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            parseEther(presalePrice),
-            parseEther(listingPrice),
-            liquidityPrecentage,
-          ],
-          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
+      await presaleFactory.connect(owner).createPresale(
+        projectDetails,
+        [
+          presaleToken.address,
+          raisedToken.address,
+          ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
+          admin.address,
+        ],
+        [
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
           maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
-          {
-            value: createPresaleFee,
-            gasLimit: 30000000,
-          }
-        );
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+          gasLimit: 30000000,
+        }
+      );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1398,36 +1386,33 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory
-        .connect(owner)
-        .createPresale(
-          [
-            presaleToken.address,
-            raisedToken.address,
-            ZERO_ADDRESS,
-            summitRouter.address,
-            summitRouter.address,
-            admin.address,
-          ],
-          [
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            parseEther(presalePrice),
-            parseEther(listingPrice),
-            liquidityPrecentage,
-          ],
-          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
+      await presaleFactory.connect(owner).createPresale(
+        projectDetails,
+        [
+          presaleToken.address,
+          raisedToken.address,
+          ZERO_ADDRESS,
+          summitRouter.address,
+          summitRouter.address,
+          admin.address,
+        ],
+        [
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
           maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
-          {
-            value: createPresaleFee,
-            gasLimit: 30000000,
-          }
-        );
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+          gasLimit: 30000000,
+        }
+      );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1617,36 +1602,33 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory
-        .connect(owner)
-        .createPresale(
-          [
-            presaleToken.address,
-            raisedToken.address,
-            raisedToken.address,
-            summitRouter.address,
-            summitRouter.address,
-            admin.address,
-          ],
-          [
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            parseEther(presalePrice),
-            parseEther(listingPrice),
-            liquidityPrecentage,
-          ],
-          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
+      await presaleFactory.connect(owner).createPresale(
+        projectDetails,
+        [
+          presaleToken.address,
+          raisedToken.address,
+          raisedToken.address,
+          summitRouter.address,
+          summitRouter.address,
+          admin.address,
+        ],
+        [
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
           maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
-          {
-            value: createPresaleFee,
-            gasLimit: 30000000,
-          }
-        );
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+          gasLimit: 30000000,
+        }
+      );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1718,21 +1700,22 @@ describe("SummitCustomPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
       await presaleFactory.connect(owner).createPresale(
+        projectDetails,
         [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
         [
           parseUnits((tokenAmount + excessTokens).toString(), await presaleToken.decimals()),
           parseEther(presalePrice),
           parseEther(listingPrice),
           liquidityPrecentage,
+          maxClaimPercentage,
         ],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-        liquidityLockTime,
-        maxClaimPercentage,
-        1, // refundType == 1
-        listingChoice,
-        isWhiteListPhase,
-        isVestingEnabled,
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [
+          1, // refundType == 1
+          listingChoice,
+        ],
+        [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
           gasLimit: 30000000,
@@ -1814,6 +1797,7 @@ describe("SummitCustomPresale", () => {
         await presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -1827,15 +1811,12 @@ describe("SummitCustomPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
               gasLimit: 30000000,
@@ -1885,6 +1866,7 @@ describe("SummitCustomPresale", () => {
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
         await presaleFactory.connect(owner).createPresale(
+          projectDetails,
           [
             presaleToken.address,
             raisedToken.address,
@@ -1898,15 +1880,13 @@ describe("SummitCustomPresale", () => {
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: createPresaleFee,
             gasLimit: 30000000,
@@ -1967,6 +1947,7 @@ describe("SummitCustomPresale", () => {
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
         await presaleFactory.connect(owner).createPresale(
+          projectDetails,
           [
             presaleToken.address,
             raisedToken.address,
@@ -1980,15 +1961,13 @@ describe("SummitCustomPresale", () => {
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: createPresaleFee,
             gasLimit: 30000000,
@@ -2072,6 +2051,7 @@ describe("SummitCustomPresale", () => {
         await presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               raisedToken.address,
@@ -2085,15 +2065,12 @@ describe("SummitCustomPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
               gasLimit: 30000000,
@@ -2160,6 +2137,7 @@ describe("SummitCustomPresale", () => {
           await presaleFactory
             .connect(owner)
             .createPresale(
+              projectDetails,
               [
                 presaleToken.address,
                 ZERO_ADDRESS,
@@ -2173,15 +2151,12 @@ describe("SummitCustomPresale", () => {
                 parseEther(presalePrice),
                 parseEther(listingPrice),
                 liquidityPrecentage,
+                maxClaimPercentage,
               ],
               [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-              [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-              liquidityLockTime,
-              maxClaimPercentage,
-              refundType,
-              listingChoice,
-              isWhiteListPhase,
-              isVestingEnabled,
+              [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+              [refundType, listingChoice],
+              [isWhiteListPhase, isVestingEnabled],
               {
                 value: createPresaleFee,
                 gasLimit: 30000000,
@@ -2227,6 +2202,7 @@ describe("SummitCustomPresale", () => {
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
           await presaleFactory.connect(owner).createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -2240,15 +2216,15 @@ describe("SummitCustomPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            1, // listingChoice, 100% Pankcakeswap router,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [
+              refundType,
+              1, // listingChoice, 100% Pankcakeswap router,
+            ],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
               gasLimit: 30000000,
@@ -2294,6 +2270,7 @@ describe("SummitCustomPresale", () => {
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
           await presaleFactory.connect(owner).createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -2307,15 +2284,15 @@ describe("SummitCustomPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            2, // listingChoice, 75% Summitswap router & 25% Summitswap router
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [
+              refundType,
+              2, // listingChoice, 75% Summitswap router & 25% Summitswap router
+            ],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
               gasLimit: 30000000,
@@ -2381,6 +2358,7 @@ describe("SummitCustomPresale", () => {
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
           await presaleFactory.connect(owner).createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -2394,15 +2372,15 @@ describe("SummitCustomPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            3, // listingChoice, 25% Summitswap router & 75% Summitswap router
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [
+              refundType,
+              3, // listingChoice, 25% Summitswap router & 75% Summitswap router
+            ],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
               gasLimit: 30000000,
@@ -2469,6 +2447,7 @@ describe("SummitCustomPresale", () => {
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
           await presaleFactory.connect(owner).createPresale(
+            projectDetails,
             [
               presaleToken.address,
               raisedToken.address,
@@ -2482,15 +2461,15 @@ describe("SummitCustomPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            3, // listingChoice, 25% Summitswap router & 75% Summitswap router
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [
+              refundType,
+              3, // listingChoice, 25% Summitswap router & 75% Summitswap router
+            ],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
               gasLimit: 30000000,
@@ -2816,36 +2795,33 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory
-        .connect(owner)
-        .createPresale(
-          [
-            presaleToken.address,
-            raisedToken.address,
-            raisedToken.address,
-            summitRouter.address,
-            summitRouter.address,
-            admin.address,
-          ],
-          [
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            parseEther(presalePrice),
-            parseEther(listingPrice),
-            liquidityPrecentage,
-          ],
-          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
+      await presaleFactory.connect(owner).createPresale(
+        projectDetails,
+        [
+          presaleToken.address,
+          raisedToken.address,
+          raisedToken.address,
+          summitRouter.address,
+          summitRouter.address,
+          admin.address,
+        ],
+        [
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
           maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
-          {
-            value: createPresaleFee,
-            gasLimit: 30000000,
-          }
-        );
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+          gasLimit: 30000000,
+        }
+      );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2916,21 +2892,22 @@ describe("SummitCustomPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
       await presaleFactory.connect(owner).createPresale(
+        projectDetails,
         [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, pancakeRouter.address, admin.address],
         [
           parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
           parseEther(presalePrice),
           parseEther(listingPrice),
           liquidityPrecentage,
+          maxClaimPercentage,
         ],
         [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-        liquidityLockTime,
-        maxClaimPercentage,
-        refundType,
-        2, // listingChoice, 75% Summitswap router & 25% Summitswap router
-        isWhiteListPhase,
-        isVestingEnabled,
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [
+          refundType,
+          2, // listingChoice, 75% Summitswap router & 25% Summitswap router
+        ],
+        [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
           gasLimit: 30000000,

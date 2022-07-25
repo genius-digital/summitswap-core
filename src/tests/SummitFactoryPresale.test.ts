@@ -56,6 +56,8 @@ describe("SummitFactoryPresale", () => {
   const isWhiteListPhase = false;
   const isVestingEnabled = false;
 
+  const projectDetails = ["icon_Url", "Name", "Contact", "Position", "Telegram Id", "Discord Id", "Email", "Twitter"];
+
   beforeEach(async () => {
     presaleFactory = (await deployContract(owner, PresaleFactoryArtifact, [
       serviceFee,
@@ -147,21 +149,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
             gasLimit: 30000000,
@@ -188,21 +188,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -227,6 +225,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -240,15 +239,12 @@ describe("SummitFactoryPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: BigNumber.from(serviceFee).sub("1"),
             }
@@ -260,21 +256,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -283,6 +277,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -296,15 +291,12 @@ describe("SummitFactoryPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: serviceFee,
             }
@@ -317,6 +309,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -330,15 +323,18 @@ describe("SummitFactoryPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [dayjs(startPresaleTime).subtract(2, "day").unix(), endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [
+              dayjs(startPresaleTime).subtract(2, "day").unix(),
+              endPresaleTime,
+              dayClaimInterval,
+              hourClaimInterval,
+              liquidityLockTime,
+            ],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: serviceFee,
             }
@@ -351,6 +347,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -364,15 +361,18 @@ describe("SummitFactoryPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, dayjs(endPresaleTime).subtract(2, "day").unix(), dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [
+              startPresaleTime,
+              dayjs(endPresaleTime).subtract(2, "day").unix(),
+              dayClaimInterval,
+              hourClaimInterval,
+              liquidityLockTime,
+            ],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: serviceFee,
             }
@@ -385,6 +385,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -398,6 +399,7 @@ describe("SummitFactoryPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [
               parseEther((Number(minBuy) + Number(maxBuy)).toString()),
@@ -405,13 +407,9 @@ describe("SummitFactoryPresale", () => {
               parseEther(softCap),
               parseEther(hardCap),
             ],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: serviceFee,
             }
@@ -424,6 +422,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -437,6 +436,7 @@ describe("SummitFactoryPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               liquidityPrecentage,
+              maxClaimPercentage,
             ],
             [
               parseEther(minBuy),
@@ -444,13 +444,9 @@ describe("SummitFactoryPresale", () => {
               parseEther((Number(hardCap) * 0.4).toString()),
               parseEther(hardCap),
             ],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: serviceFee,
             }
@@ -463,6 +459,7 @@ describe("SummitFactoryPresale", () => {
         presaleFactory
           .connect(owner)
           .createPresale(
+            projectDetails,
             [
               presaleToken.address,
               ZERO_ADDRESS,
@@ -476,15 +473,12 @@ describe("SummitFactoryPresale", () => {
               parseEther(presalePrice),
               parseEther(listingPrice),
               24,
+              maxClaimPercentage,
             ],
             [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled,
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
             {
               value: serviceFee,
             }
@@ -496,21 +490,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -525,21 +517,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -554,21 +544,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -585,21 +573,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -611,21 +597,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -638,6 +622,7 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [
             presaleToken.address,
             feeToken.address,
@@ -651,15 +636,12 @@ describe("SummitFactoryPresale", () => {
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -677,21 +659,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -710,21 +690,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -825,21 +803,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -896,21 +872,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }
@@ -1006,21 +980,19 @@ describe("SummitFactoryPresale", () => {
       await presaleFactory
         .connect(owner)
         .createPresale(
+          projectDetails,
           [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
           [
             parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
             parseEther(presalePrice),
             parseEther(listingPrice),
             liquidityPrecentage,
+            maxClaimPercentage,
           ],
           [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime,
-          maxClaimPercentage,
-          refundType,
-          listingChoice,
-          isWhiteListPhase,
-          isVestingEnabled,
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
           }

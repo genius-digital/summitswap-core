@@ -13,16 +13,13 @@ interface ISummitCustomPresale is IAccessControl {
   function approvePresale() external;
 
   function initialize(
+    string[8] memory,
     address[8] memory,
-    uint256[3] memory,
     uint256[4] memory,
     uint256[4] memory,
-    uint256,
-    uint256,
-    uint8,
-    uint8,
-    bool,
-    bool
+    uint256[5] memory,
+    uint8[2] memory,
+    bool[2] memory
   ) external;
 
   function setFeeInfo(

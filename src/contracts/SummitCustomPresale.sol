@@ -28,6 +28,8 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   mapping(address => uint256) public totalClaimToken;
   mapping(address => uint256) public bought; // account => boughtAmount
 
+  string[8] private projectDetails;
+
   uint256 public constant FEE_DENOMINATOR = 10**9; // fee denominator
   uint256 public startDateClaim; // Timestamp
 
@@ -35,18 +37,16 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   FeeInfo private feeInfo;
 
   function initialize(
+    string[8] memory _projectDetails,
     address[8] memory _addresses, // owner, token, raisedTokenAddress, pairToken, SummitSwap, PancakeSwap, serviceFeeReceiver, admin
-    uint256[3] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent
+    uint256[4] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent, maxClaimPercentage
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
-    uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
-    uint256 _liquidityLockTime,
-    uint256 _maxClaimPercentage,
-    uint8 _refundType,
-    uint8 _listingChoice,
-    bool _isWhiteListPhase,
-    bool _isVestingEnabled
+    uint256[5] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour, liquidityLockTime
+    uint8[2] memory _choices, // refund, listing
+    bool[2] memory phases // refund, listing
   ) external {
     require(presale.startPresaleTime == 0, "Presale is Initialized.");
+    projectDetails = _projectDetails;
     _transferOwnership(_addresses[0]);
     serviceFeeReceiver = _addresses[6];
     presale.router0 = _addresses[4];
@@ -56,7 +56,7 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     presale.presalePrice = _tokenDetails[0];
     presale.listingPrice = _tokenDetails[1];
     presale.liquidityPercentage = (_tokenDetails[2] * FEE_DENOMINATOR) / 100;
-    presale.liquidityLockTime = _liquidityLockTime;
+    presale.liquidityLockTime = _presaleTimeDetails[4];
     presale.minBuy = _bnbAmounts[0];
     presale.maxBuy = _bnbAmounts[1];
     presale.softCap = _bnbAmounts[2];
@@ -65,11 +65,11 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     presale.endPresaleTime = _presaleTimeDetails[1];
     presale.claimIntervalDay = _presaleTimeDetails[2];
     presale.claimIntervalHour = _presaleTimeDetails[3];
-    presale.maxClaimPercentage = (_maxClaimPercentage * FEE_DENOMINATOR) / 100;
-    presale.refundType = _refundType;
-    presale.listingChoice = _listingChoice;
-    presale.isWhiteListPhase = _isWhiteListPhase;
-    presale.isVestingEnabled = _isVestingEnabled;
+    presale.maxClaimPercentage = (_tokenDetails[3] * FEE_DENOMINATOR) / 100;
+    presale.refundType = _choices[0]; // 0 refund, 1 burn
+    presale.listingChoice = _choices[1]; // 0 100% SS, 1 100% PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
+    presale.isWhiteListPhase = phases[0];
+    presale.isVestingEnabled = phases[1];
 
     feeInfo.raisedTokenAddress = _addresses[2]; // address(0) native coin
     feeInfo.feeRaisedToken = 50000000; // 5%
@@ -99,6 +99,10 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   }
 
   // getters
+
+  function getProjectsDetails() external view returns (string[8] memory) {
+    return projectDetails;
+  }
 
   function getFeeInfo() external view returns (FeeInfo memory) {
     return feeInfo;

@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
+import { ethers } from "hardhat";
 import { environment, MAX_VALUE, ZERO_ADDRESS } from "src/environment";
 import { deployDummyToken } from "./deployDummyToken";
 import { deploySummitPresaleFactory } from "./deploySummitPresaleFactory";
@@ -9,6 +10,7 @@ interface TokenDetails {
   presalePrice: string;
   listingPrice: string;
   liquidityPrecentage: number;
+  maxClaimPercentage: number;
 }
 
 interface BnbAmounts {
@@ -21,27 +23,41 @@ interface BnbAmounts {
 export async function deployCustomPresale(
   createPresaleFee: BigNumber,
   serviceFeeReciever: string,
+  admin: string,
   router0: string,
   router1: string,
   raisedToken: string,
   pairToken: string,
   tokenDetails: TokenDetails,
   bnbAmounts: BnbAmounts,
-  presaleTimeDetails: [number, number, number, number],
-  liquidityLockTime: number,
-  maxClaimPercentage: number,
+  presaleTimeDetails: [number, number, number, number, number],
   refundType: number,
   listingChoice: number,
   isWhiteListPhase: boolean,
-  isVestingEnabled: boolean
+  isVestingEnabled: boolean,
+  projectDetails: string[]
 ) {
-  const summitFactoryPresale = await deploySummitPresaleFactory(createPresaleFee, serviceFeeReciever);
+  const summitFactoryPresale = await deploySummitPresaleFactory(createPresaleFee, serviceFeeReciever, admin);
   const dummyToken = await deployDummyToken();
 
   console.log("Approving Factory");
   await dummyToken.approve(summitFactoryPresale.address, MAX_VALUE);
 
   console.log("Factory Approved");
+  console.log("Starting to deploy SummitCustomPresaleLibrary");
+
+  const SummitCustomPresaleLibrary = await ethers.getContractFactory("SummitCustomPresale");
+  const summitCustomPresaleLibrary = await SummitCustomPresaleLibrary.deploy();
+  await summitCustomPresaleLibrary.deployed();
+
+  console.log("SummitCustomPresaleLibrary deployed to:", summitCustomPresaleLibrary.address);
+
+  console.log("Setting library Address for factory Presale");
+
+  await summitFactoryPresale.setLibraryAddress(summitCustomPresaleLibrary.address);
+
+  console.log("Library Address for factory Presale set to: ", summitCustomPresaleLibrary.address);
+
   console.log("Starting to deploy SummitCustomPresale");
 
   const presaleTokenAmount = Number(tokenDetails.presalePrice) * Number(bnbAmounts.hardCap);
@@ -52,12 +68,14 @@ export async function deployCustomPresale(
   const tokenDecimals = await dummyToken.decimals();
 
   const presale = await summitFactoryPresale.createPresale(
-    [dummyToken.address, raisedToken, pairToken, router0, router1],
+    projectDetails,
+    [dummyToken.address, raisedToken, pairToken, router0, router1, admin],
     [
       parseUnits(tokenAmount.toString(), tokenDecimals),
       parseEther(tokenDetails.presalePrice),
       parseEther(tokenDetails.listingPrice),
       tokenDetails.liquidityPrecentage,
+      tokenDetails.maxClaimPercentage,
     ],
     [
       parseEther(bnbAmounts.minBuyBnb),
@@ -66,12 +84,8 @@ export async function deployCustomPresale(
       parseEther(bnbAmounts.hardCap),
     ],
     presaleTimeDetails,
-    liquidityLockTime,
-    maxClaimPercentage,
-    refundType,
-    listingChoice,
-    isWhiteListPhase,
-    isVestingEnabled,
+    [refundType, listingChoice],
+    [isWhiteListPhase, isVestingEnabled],
     {
       value: createPresaleFee,
     }
@@ -83,12 +97,15 @@ export async function deployCustomPresale(
 
   console.log("CustomPresale deployed to:", presaleAddress);
 
-  return presale;
+  const summitCustomPresale = SummitCustomPresaleLibrary.attach(presaleAddress);
+
+  return summitCustomPresale;
 }
 
 async function main() {
   const createPresaleFee = parseEther("0.0001");
   const serviceFeeReciever = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
+  const admin = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
   const router0 = environment.SUMMITSWAP_ROUTER ?? "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B";
   const router1 = environment.PANCAKESWAP_ROUTER ?? "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3";
   const raisedToken = ZERO_ADDRESS; // raisedToken == ZERO_ADDRESS ? native coin to be raised: raisedToken
@@ -110,23 +127,24 @@ async function main() {
   const listingChoice = 0;
   const isWhiteListPhase = false;
   const isVestingEnabled = false;
+  const projectDetails = ["icon_Url", "Name", "Contact", "Position", "Telegram Id", "Discord Id", "Email", "Twitter"];
 
   await deployCustomPresale(
     createPresaleFee,
     serviceFeeReciever,
+    admin,
     router0,
     router1,
     raisedToken,
     pairToken,
-    { presalePrice, listingPrice, liquidityPrecentage },
+    { presalePrice, listingPrice, liquidityPrecentage, maxClaimPercentage },
     { minBuyBnb, maxBuyBnb, softCap, hardCap },
-    [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-    liquidityLockTime,
-    maxClaimPercentage,
+    [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
     refundType,
     listingChoice,
     isWhiteListPhase,
-    isVestingEnabled
+    isVestingEnabled,
+    projectDetails
   );
 }
 

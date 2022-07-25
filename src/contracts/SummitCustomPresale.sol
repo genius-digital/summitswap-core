@@ -3,8 +3,6 @@
 
 pragma solidity 0.7.6;
 
-import "hardhat/console.sol";
-
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -488,7 +486,7 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     IERC20(presale.presaleToken).transfer(msg.sender, tokenAmount);
   }
 
-  function withdrawLpTokens(address[2] memory addresses) external onlyOwner {
+  function withdrawLpTokens(address[2] memory addresses, address _receiver) external onlyOwner {
     require(startDateClaim != 0, "Claim phase has not started");
     require(startDateClaim + presale.liquidityLockTime < block.timestamp, "Lp Tokens are locked");
     require(addresses[0] != presale.presaleToken && addresses[1] != presale.presaleToken, "address is presale token");
@@ -498,14 +496,32 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     );
     uint256 lpBal0 = IERC20(addresses[0]).balanceOf(address(this));
     uint256 lpBal1 = IERC20(addresses[1]).balanceOf(address(this));
-    if (lpBal0 > 0) IERC20(addresses[0]).transfer(msg.sender, lpBal0);
-    if (lpBal1 > 0) IERC20(addresses[1]).transfer(msg.sender, lpBal1);
+    if (lpBal0 > 0) IERC20(addresses[0]).transfer(_receiver, lpBal0);
+    if (lpBal1 > 0) IERC20(addresses[1]).transfer(_receiver, lpBal1);
+  }
+
+  function toggleWhitelistPhase() external onlyOwner {
+    presale.isWhiteListPhase = !presale.isWhiteListPhase;
+  }
+
+  function cancelPresale() external onlyOwner {
+    presale.isClaimPhase = false;
+    presale.isPresaleCancelled = true;
+  }
+
+  function withdrawBNBOwner(uint256 _amount, address _receiver) external onlyOwner {
+    require(presale.isClaimPhase, "Claim phase has not started");
+    payable(_receiver).transfer(_amount);
+  }
+
+  function withdrawRaisedTokenOwner(uint256 _amount, address _receiver) external onlyOwner {
+    require(presale.isClaimPhase, "Claim phase has not started");
+    IERC20(feeInfo.raisedTokenAddress).transfer(_receiver, _amount);
   }
 
   function setPresaleInfo(
     address _pairToken,
-    uint256[3] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent
-    uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
+    uint256[3] memory _bnbAmounts, // minBuy, maxBuy, softcap
     uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
     uint256 _liquidityLockTime,
     uint256 _maxClaimPercentage,
@@ -515,26 +531,16 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     bool _isVestingEnabled
   ) external onlyAdmin {
     require(!presale.isApproved, "Presale is Approved");
-    require(_presaleTimeDetails[0] > block.timestamp, "Presale startTime > block.timestamp");
-    require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
-    require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
-    require(_presaleTimeDetails[3] >= 0 && _presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
-    require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
-    require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
-    require(_tokenDetails[2] >= 25 && _tokenDetails[2] <= 100, "Liquidity Percentage should be between 25% & 100%");
-    require(_maxClaimPercentage > 0 && _maxClaimPercentage <= 100, "maxClaimPercentage should be between 0 & 100");
-    require(_refundType == 0 || _refundType == 1, "refundType should be between 0 & 100");
-    require(_listingChoice >= 0 && _listingChoice <= 3, "listingChoice should be between 0 & 3");
+    require(
+      _bnbAmounts[2] >= (presale.hardCap * 50) / 100 && _bnbAmounts[2] <= presale.hardCap,
+      "50% of hardcap <= softcap <= hardcap"
+    );
 
     presale.pairToken = _pairToken;
-    presale.presalePrice = _tokenDetails[0];
-    presale.listingPrice = _tokenDetails[1];
-    presale.liquidityPercentage = (_tokenDetails[2] * FEE_DENOMINATOR) / 100;
     presale.liquidityLockTime = _liquidityLockTime;
     presale.minBuy = _bnbAmounts[0];
     presale.maxBuy = _bnbAmounts[1];
     presale.softCap = _bnbAmounts[2];
-    presale.hardCap = _bnbAmounts[3];
     presale.startPresaleTime = _presaleTimeDetails[0];
     presale.endPresaleTime = _presaleTimeDetails[1];
     presale.claimIntervalDay = _presaleTimeDetails[2];
@@ -563,26 +569,7 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     presale.isApproved = true;
   }
 
-  function toggleWhitelistPhase() external onlyOwner {
-    presale.isWhiteListPhase = !presale.isWhiteListPhase;
-  }
-
-  function cancelPresale() external onlyOwner {
-    presale.isClaimPhase = false;
-    presale.isPresaleCancelled = true;
-  }
-
   function setServiceFeeReceiver(address _feeReceiver) external onlyAdmin {
     serviceFeeReceiver = _feeReceiver;
-  }
-
-  function withdrawBNBOwner(uint256 _amount, address _receiver) external onlyOwner {
-    require(presale.isClaimPhase, "Claim phase has not started");
-    payable(_receiver).transfer(_amount);
-  }
-
-  function withdrawRaisedTokenOwner(uint256 _amount, address _receiver) external onlyOwner {
-    require(presale.isClaimPhase, "Claim phase has not started");
-    IERC20(feeInfo.raisedTokenAddress).transfer(_receiver, _amount);
   }
 }

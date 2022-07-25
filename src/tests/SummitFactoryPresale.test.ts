@@ -928,13 +928,7 @@ describe("SummitFactoryPresale", () => {
           .setPresaleInfo(
             tokenPresales[0],
             ZERO_ADDRESS,
-            [parseEther(presalePrice).add("1"), parseEther(listingPrice).add("1"), liquidityPrecentage + 1],
-            [
-              parseEther(minBuy).add("1"),
-              parseEther(maxBuy).add("1"),
-              parseEther(softCap).add("1"),
-              parseEther(hardCap).add("1"),
-            ],
+            [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
             [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
             liquidityLockTime,
             maxClaimPercentage,
@@ -952,13 +946,7 @@ describe("SummitFactoryPresale", () => {
         .setPresaleInfo(
           tokenPresales[0],
           ZERO_ADDRESS,
-          [parseEther(presalePrice).add("1"), parseEther(listingPrice).add("1"), liquidityPrecentage + 1],
-          [
-            parseEther(minBuy).add("1"),
-            parseEther(maxBuy).add("1"),
-            parseEther(softCap).add("1"),
-            parseEther(hardCap).add("1"),
-          ],
+          [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
           [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
           liquidityLockTime + 1,
           maxClaimPercentage - 1,
@@ -969,13 +957,10 @@ describe("SummitFactoryPresale", () => {
         );
 
       const updatedPresaleInfo = await customPresale.getPresaleInfo();
-      assert.equal(updatedPresaleInfo.presalePrice.toString(), parseEther(presalePrice).add("1").toString());
-      assert.equal(updatedPresaleInfo.listingPrice.toString(), parseEther(listingPrice).add("1").toString());
-      assert.equal(updatedPresaleInfo.liquidityPercentage.toString(), (700000000 + 10000000).toString());
+
       assert.equal(updatedPresaleInfo.minBuy.toString(), parseEther(minBuy).add("1").toString());
       assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).add("1").toString());
       assert.equal(updatedPresaleInfo.softCap.toString(), parseEther(softCap).add("1").toString());
-      assert.equal(updatedPresaleInfo.hardCap.toString(), parseEther(hardCap).add("1").toString());
       assert.equal(updatedPresaleInfo.liquidityLockTime.toString(), (liquidityLockTime + 1).toString());
       assert.equal(updatedPresaleInfo.maxClaimPercentage.toString(), (1000000000 - 10000000).toString());
       assert.equal(updatedPresaleInfo.refundType.toString(), "1");
@@ -999,13 +984,7 @@ describe("SummitFactoryPresale", () => {
           .setPresaleInfo(
             tokenPresales[0],
             ZERO_ADDRESS,
-            [parseEther(presalePrice).add("1"), parseEther(listingPrice).add("1"), liquidityPrecentage + 1],
-            [
-              parseEther(minBuy).add("1"),
-              parseEther(maxBuy).add("1"),
-              parseEther(softCap).add("1"),
-              parseEther(hardCap).add("1"),
-            ],
+            [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
             [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
             liquidityLockTime + 1,
             maxClaimPercentage - 1,

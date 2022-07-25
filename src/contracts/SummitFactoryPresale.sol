@@ -176,8 +176,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
   function setPresaleInfo(
     address _presale,
     address _pairToken,
-    uint256[3] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent
-    uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
+    uint256[3] memory _bnbAmounts, // minBuy, maxBuy, softcap
     uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
     uint256 _liquidityLockTime,
     uint256 _maxClaimPercentage,
@@ -191,15 +190,12 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
     require(_presaleTimeDetails[3] >= 0 && _presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
     require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
-    require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
-    require(_tokenDetails[2] >= 25 && _tokenDetails[2] <= 100, "Liquidity Percentage should be between 25% & 100%");
     require(_maxClaimPercentage > 0 && _maxClaimPercentage <= 100, "maxClaimPercentage should be between 0 & 100");
     require(_refundType == 0 || _refundType == 1, "refundType should be between 0 & 100");
     require(_listingChoice >= 0 && _listingChoice <= 3, "listingChoice should be between 0 & 3");
 
     ISummitCustomPresale(_presale).setPresaleInfo(
       _pairToken,
-      _tokenDetails,
       _bnbAmounts,
       _presaleTimeDetails,
       _liquidityLockTime,

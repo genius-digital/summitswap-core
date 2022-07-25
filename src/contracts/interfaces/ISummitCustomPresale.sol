@@ -34,8 +34,7 @@ interface ISummitCustomPresale is IAccessControl {
 
   function setPresaleInfo(
     address _pairToken,
-    uint256[3] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent
-    uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
+    uint256[3] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
     uint256 _liquidityLockTime,
     uint256 _maxClaimPercentage,

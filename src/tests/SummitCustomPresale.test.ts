@@ -2939,7 +2939,7 @@ describe("SummitCustomPresale", () => {
       ).to.be.revertedWith("Lp Tokens are locked");
     });
 
-    it("should be reverted, if pairAddress is raisedToken or presaleToken", async () => {
+    it("should be reverted, if lpTokensAddress is raisedToken or presaleToken", async () => {
       await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
       await customPresale.connect(otherWallet1).buy({ value: bigMaxBuy });
 
@@ -2964,7 +2964,7 @@ describe("SummitCustomPresale", () => {
       ).to.be.revertedWith("address is raisedTokenAddress");
     });
 
-    it("should owner be able to withdraw RaisedToken and send RaisedToken to otherWallet2", async () => {
+    it("should owner be able to withdraw lpTokens and send lpTokens to otherWallet", async () => {
       await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
       await customPresale.connect(otherWallet1).buy({ value: bigMaxBuy });
 

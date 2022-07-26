@@ -164,7 +164,6 @@ describe("SummitFactoryPresale", () => {
           [isWhiteListPhase, isVestingEnabled],
           {
             value: serviceFee,
-            gasLimit: 30000000,
           }
         );
       const accountPresales = await presaleFactory.getAccountPresales(owner.address);

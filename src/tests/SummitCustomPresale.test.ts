@@ -107,7 +107,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 30000000,
         }
       );
     const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -413,7 +412,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 3000000,
         }
       );
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -532,7 +530,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 3000000,
         }
       );
 
@@ -855,7 +852,6 @@ describe("SummitCustomPresale", () => {
             [isWhiteListPhase, enableVesting],
             {
               value: createPresaleFee,
-              gasLimit: 3000000,
             }
           );
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -1160,7 +1156,6 @@ describe("SummitCustomPresale", () => {
           [isWhiteListPhase, isVestingEnabled],
           {
             value: createPresaleFee,
-            gasLimit: 30000000,
           }
         );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -1348,7 +1343,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 30000000,
         }
       );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -1410,7 +1404,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 30000000,
         }
       );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -1626,7 +1619,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 30000000,
         }
       );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -1718,7 +1710,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 30000000,
         }
       );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -1819,7 +1810,6 @@ describe("SummitCustomPresale", () => {
             [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
-              gasLimit: 30000000,
             }
           );
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -1889,7 +1879,6 @@ describe("SummitCustomPresale", () => {
           [isWhiteListPhase, isVestingEnabled],
           {
             value: createPresaleFee,
-            gasLimit: 30000000,
           }
         );
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -1970,7 +1959,6 @@ describe("SummitCustomPresale", () => {
           [isWhiteListPhase, isVestingEnabled],
           {
             value: createPresaleFee,
-            gasLimit: 30000000,
           }
         );
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -2073,7 +2061,6 @@ describe("SummitCustomPresale", () => {
             [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
-              gasLimit: 30000000,
             }
           );
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -2159,7 +2146,6 @@ describe("SummitCustomPresale", () => {
               [isWhiteListPhase, isVestingEnabled],
               {
                 value: createPresaleFee,
-                gasLimit: 30000000,
               }
             );
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -2227,7 +2213,6 @@ describe("SummitCustomPresale", () => {
             [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
-              gasLimit: 30000000,
             }
           );
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -2295,7 +2280,6 @@ describe("SummitCustomPresale", () => {
             [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
-              gasLimit: 30000000,
             }
           );
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -2383,7 +2367,6 @@ describe("SummitCustomPresale", () => {
             [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
-              gasLimit: 30000000,
             }
           );
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -2472,7 +2455,6 @@ describe("SummitCustomPresale", () => {
             [isWhiteListPhase, isVestingEnabled],
             {
               value: createPresaleFee,
-              gasLimit: 30000000,
             }
           );
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -2819,7 +2801,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 30000000,
         }
       );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
@@ -2856,15 +2837,11 @@ describe("SummitCustomPresale", () => {
       await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
       await customPresale.connect(otherWallet1).buyCustomCurrency(bigMaxBuy);
 
-      await customPresale.connect(owner).finalize({
-        gasLimit: 3000000,
-      });
+      await customPresale.connect(owner).finalize({});
       const presaleBalance0 = await raisedToken.balanceOf(customPresale.address);
       const receiver0 = await raisedToken.balanceOf(otherWallet2.address);
 
-      await customPresale.connect(owner).withdrawRaisedTokenOwner(presaleBalance0, otherWallet2.address, {
-        gasLimit: 3000000,
-      });
+      await customPresale.connect(owner).withdrawRaisedTokenOwner(presaleBalance0, otherWallet2.address, {});
 
       const presaleBalance1 = await raisedToken.balanceOf(customPresale.address);
       const receiver1 = await raisedToken.balanceOf(otherWallet2.address);
@@ -2910,7 +2887,6 @@ describe("SummitCustomPresale", () => {
         [isWhiteListPhase, isVestingEnabled],
         {
           value: createPresaleFee,
-          gasLimit: 30000000,
         }
       );
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);

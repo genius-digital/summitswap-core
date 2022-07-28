@@ -167,9 +167,9 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   }
 
   function addContributor(address _address) private {
-    if (contributors.length == 0 || !(contributors[contributorIndex[msg.sender]] == msg.sender)) {
-      contributorIndex[msg.sender] = contributors.length;
-      contributors.push(msg.sender);
+    if (contributors.length == 0 || !(contributors[contributorIndex[_address]] == _address)) {
+      contributorIndex[_address] = contributors.length;
+      contributors.push(_address);
     }
   }
 

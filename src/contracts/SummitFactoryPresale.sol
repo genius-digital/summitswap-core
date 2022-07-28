@@ -183,8 +183,6 @@ contract SummitFactoryPresale is Ownable {
     bool _isWhiteListPhase,
     bool _isVestingEnabled
   ) external isAdminOrOwner presalePending(_presale) {
-    require(_presaleTimeDetails[0] > block.timestamp, "Presale startTime > block.timestamp");
-    require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
     require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
     require(_presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
     require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");

@@ -536,6 +536,8 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     bool _isVestingEnabled
   ) external onlyAdmin {
     require(!presale.isApproved, "Presale is Approved");
+    require(_presaleTimeDetails[0] >= presale.startPresaleTime, "Presale startTime >= start time set by owner");
+    require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
     require(
       _bnbAmounts[2] >= (presale.hardCap * 50) / 100 && _bnbAmounts[2] <= presale.hardCap,
       "50% of hardcap <= softcap <= hardcap"

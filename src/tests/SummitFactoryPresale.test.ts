@@ -17,7 +17,7 @@ import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
-import { MAX_VALUE, ZERO_ADDRESS, ADMIN_ROLE } from "src/environment";
+import { MAX_VALUE, ZERO_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
@@ -804,17 +804,30 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
-  // describe("grantRole()", () => {
-  //   it("should admin be only able to grant ADMIN role", async () => {
-  //     await expect(presaleFactory.connect(otherWallet1).grantRole(ADMIN_ROLE, otherWallet1.address)).to.be.revertedWith(
-  //       "AccessControl: sender must be an admin to grant"
-  //     );
+  describe("assignAdmins()", () => {
+    it("should owner be only able to grant ADMIN role", async () => {
+      await expect(presaleFactory.connect(otherWallet1).assignAdmins([otherWallet1.address])).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
 
-  //     assert.equal(await presaleFactory.hasRole(ADMIN_ROLE, otherWallet1.address), false);
-  //     await presaleFactory.connect(admin).grantRole(ADMIN_ROLE, otherWallet1.address);
-  //     assert.equal(await presaleFactory.hasRole(ADMIN_ROLE, otherWallet1.address), true);
-  //   });
-  // });
+      assert.equal(await presaleFactory.isAdmin(otherWallet1.address), false);
+      await presaleFactory.connect(owner).assignAdmins([otherWallet1.address]);
+      assert.equal(await presaleFactory.isAdmin(otherWallet1.address), true);
+    });
+  });
+
+  describe("revokeAdmins()", () => {
+    it("should owner be only able to grant revoke role", async () => {
+      await presaleFactory.connect(owner).assignAdmins([otherWallet1.address]);
+      await expect(presaleFactory.connect(otherWallet1).revokeAdmins([otherWallet1.address])).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+
+      assert.equal(await presaleFactory.isAdmin(otherWallet1.address), true);
+      await presaleFactory.connect(owner).revokeAdmins([otherWallet1.address]);
+      assert.equal(await presaleFactory.isAdmin(otherWallet1.address), false);
+    });
+  });
 
   describe("setFeeInfo()", () => {
     beforeEach(async () => {
@@ -854,8 +867,8 @@ describe("SummitFactoryPresale", () => {
           .connect(otherWallet1)
           .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS, tokenPresales[0])
       ).to.be.revertedWith("Only admin or owner can call this function");
-      assert.equal(await customPresale.hasRole(ADMIN_ROLE, otherWallet1.address), false);
-      assert.equal(await customPresale.hasRole(ADMIN_ROLE, admin.address), true);
+      assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
+      assert.equal(await customPresale.isAdmin(admin.address), true);
 
       await presaleFactory
         .connect(admin)
@@ -934,8 +947,8 @@ describe("SummitFactoryPresale", () => {
             isVestingEnabled
           )
       ).to.be.revertedWith("Only admin or owner can call this function");
-      assert.equal(await customPresale.hasRole(ADMIN_ROLE, otherWallet1.address), false);
-      assert.equal(await customPresale.hasRole(ADMIN_ROLE, admin.address), true);
+      assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
+      assert.equal(await customPresale.isAdmin(admin.address), true);
 
       await presaleFactory
         .connect(admin)
@@ -993,7 +1006,7 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
-  describe("setRolesForPresale()", () => {
+  describe("assignAdminsPresale()", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
@@ -1021,18 +1034,18 @@ describe("SummitFactoryPresale", () => {
         );
     });
 
-    it("should admin be only able to grant ADMIN role to presale", async () => {
+    it("should OWNER be only able to grant ADMIN role to presale", async () => {
       const tokenPresale = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
 
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       const summitCustomPresale = SummitCustomPresale.attach(tokenPresale);
 
       await expect(
-        presaleFactory.connect(otherWallet1).setRolesForPresale(ADMIN_ROLE, tokenPresale, otherWallet1.address)
-      ).to.be.revertedWith("Only admin or owner can call this function");
-      assert.equal(await summitCustomPresale.hasRole(ADMIN_ROLE, otherWallet1.address), false);
-      await presaleFactory.connect(admin).setRolesForPresale(ADMIN_ROLE, tokenPresale, otherWallet1.address);
-      assert.equal(await summitCustomPresale.hasRole(ADMIN_ROLE, otherWallet1.address), true);
+        presaleFactory.connect(otherWallet1).assignAdminsPresale([otherWallet1.address], tokenPresale)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+      assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), false);
+      await presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], tokenPresale);
+      assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), true);
     });
 
     it("should be reverted, if presale not in pending presales does", async () => {
@@ -1045,8 +1058,52 @@ describe("SummitFactoryPresale", () => {
 
       assert.equal(pendingPresales.length, 0);
       await expect(
-        presaleFactory.connect(admin).setRolesForPresale(ADMIN_ROLE, tokenPresales[0], otherWallet1.address)
+        presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], tokenPresales[0])
       ).to.be.revertedWith("Presale not in pending presales.");
+    });
+  });
+
+  describe("revokeAdminsPresale()", () => {
+    beforeEach(async () => {
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
+    });
+
+    it("should OWNER be only able to revoke ADMIN role for presale", async () => {
+      const tokenPresale = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
+
+      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      const summitCustomPresale = SummitCustomPresale.attach(tokenPresale);
+      await presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], tokenPresale);
+
+      await expect(
+        presaleFactory.connect(otherWallet1).revokeAdminsPresale([otherWallet1.address], tokenPresale)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+      assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), true);
+      await presaleFactory.connect(owner).revokeAdminsPresale([otherWallet1.address], tokenPresale);
+      assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), false);
     });
   });
 });

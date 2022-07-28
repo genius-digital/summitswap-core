@@ -43,7 +43,7 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256[5] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour, liquidityLockTime
     uint8[2] memory _choices, // refund, listing
-    bool[2] memory phases // refund, listing
+    bool[2] memory _bools // refund, listing
   ) external {
     require(presale.startPresaleTime == 0, "Presale is Initialized.");
     projectDetails = _projectDetails;
@@ -68,8 +68,8 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     presale.maxClaimPercentage = (_tokenDetails[3] * FEE_DENOMINATOR) / 100;
     presale.refundType = _choices[0]; // 0 refund, 1 burn
     presale.listingChoice = _choices[1]; // 0 100% SS, 1 100% PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
-    presale.isWhiteListPhase = phases[0];
-    presale.isVestingEnabled = phases[1];
+    presale.isWhiteListPhase = _bools[0];
+    presale.isVestingEnabled = _bools[1];
 
     feeInfo.raisedTokenAddress = _addresses[2]; // address(0) native coin
     feeInfo.feeRaisedToken = 50000000; // 5%

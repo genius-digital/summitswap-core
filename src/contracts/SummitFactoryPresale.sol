@@ -57,7 +57,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256[5] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour, liquidityLockTime
     uint8[2] memory _choices, // refund, listing
-    bool[2] memory phases // bool _isWhiteListPhase, _isVestingEnabled
+    bool[2] memory _bools // bool _isWhiteListPhase, _isVestingEnabled
   ) external payable {
     require(libraryAddress != address(0), "Set library address first");
     require(msg.value >= preSaleFee, "Not Enough Fee");
@@ -97,7 +97,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
       _bnbAmounts,
       _presaleTimeDetails,
       _choices,
-      phases
+      _bools
     );
 
     tokenPresales[_addresses[0]].push(address(presaleClone));

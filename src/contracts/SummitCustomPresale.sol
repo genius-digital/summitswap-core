@@ -43,7 +43,7 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256[5] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour, liquidityLockTime
     uint8[2] memory _choices, // refund, listing
-    bool[2] memory _bools // refund, listing
+    bool[2] memory _bools // isWhiteListPhase, isVestingEnabled
   ) external {
     require(presale.startPresaleTime == 0, "Presale is Initialized.");
     projectDetails = _projectDetails;
@@ -81,7 +81,7 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
   }
 
-  modifier validContribution() {
+  modifier canBuy() {
     require(block.timestamp >= presale.startPresaleTime, "Presale Not started Yet");
     require(block.timestamp < presale.endPresaleTime, "Presale Ended");
 
@@ -166,25 +166,29 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     return totalIntervalPercentage;
   }
 
-  function buy() external payable validContribution nonReentrant {
-    require(feeInfo.raisedTokenAddress == address(0), "Raised token is not native coin");
-    require(bought[msg.sender] + msg.value <= presale.hardCap, "Cannot buy more than HardCap amount");
-    require(msg.value >= presale.minBuy, "msg.value is less than minBuy");
-    require(msg.value + bought[msg.sender] <= presale.maxBuy, "msg.value is great than maxBuy");
-    presale.totalBought += msg.value;
-    bought[msg.sender] += msg.value;
-
+  function addContributor(address _address) private {
     if (contributors.length == 0 || !(contributors[contributorIndex[msg.sender]] == msg.sender)) {
       contributorIndex[msg.sender] = contributors.length;
       contributors.push(msg.sender);
     }
   }
 
-  function buyCustomCurrency(uint256 contributionAmount) external validContribution nonReentrant {
+  function buy() external payable canBuy nonReentrant {
+    require(feeInfo.raisedTokenAddress == address(0), "Raised token is not native coin");
+    require(bought[msg.sender] + msg.value <= presale.hardCap, "Cannot buy more than HardCap amount");
+    require(msg.value >= presale.minBuy, "Cannot buy less than minBuy");
+    require(msg.value + bought[msg.sender] <= presale.maxBuy, "Cannot buy more than maxBuy");
+    presale.totalBought += msg.value;
+    bought[msg.sender] += msg.value;
+
+    addContributor(msg.sender);
+  }
+
+  function buyCustomCurrency(uint256 contributionAmount) external canBuy nonReentrant {
     require(feeInfo.raisedTokenAddress != address(0), "Raised token is native coin");
     require(bought[msg.sender] + contributionAmount <= presale.hardCap, "Cannot buy more than HardCap amount");
     require(contributionAmount >= presale.minBuy, "contributionAmount is less than minBuy");
-    require(contributionAmount + bought[msg.sender] <= presale.maxBuy, "contributionAmount is great than maxBuy");
+    require(contributionAmount + bought[msg.sender] <= presale.maxBuy, "contributionAmount is more than maxBuy");
     require(
       IERC20(feeInfo.raisedTokenAddress).allowance(msg.sender, address(this)) >= contributionAmount,
       "Increase allowance to contribute"
@@ -193,10 +197,7 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     presale.totalBought += contributionAmount;
     bought[msg.sender] += contributionAmount;
 
-    if (contributors.length == 0 || !(contributors[contributorIndex[msg.sender]] == msg.sender)) {
-      contributorIndex[msg.sender] = contributors.length;
-      contributors.push(msg.sender);
-    }
+    addContributor(msg.sender);
   }
 
   function claim(uint256 requestedAmount) external nonReentrant {

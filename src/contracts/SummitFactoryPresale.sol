@@ -12,9 +12,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
-contract SummitFactoryPresale is Ownable, AccessControl {
-  bytes32 public constant ADMIN = keccak256("ADMIN");
-
+contract SummitFactoryPresale is Ownable {
+  mapping(address => bool) public isAdmin;
   mapping(address => address[]) public accountPresales;
   mapping(address => address[]) public tokenPresales; // token => presale
   mapping(address => uint256) private approvedIndex;
@@ -33,12 +32,11 @@ contract SummitFactoryPresale is Ownable, AccessControl {
   ) {
     preSaleFee = _preSaleFee;
     serviceFeeReceiver = _feeReceiver;
-    _setupRole(ADMIN, _admin);
-    _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+    isAdmin[_admin] = true;
   }
 
-  modifier onlyAdmin() {
-    require(hasRole(ADMIN, msg.sender), "msg.sender does not have ADMIN role");
+  modifier isAdminOrOwner() {
+    require(isAdmin[msg.sender] || msg.sender == owner(), "Only admin or owner can call this function");
     _;
   }
 
@@ -57,20 +55,24 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
     uint256[5] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour, liquidityLockTime
     uint8[2] memory _choices, // refund, listing
-    bool[2] memory _bools // bool _isWhiteListPhase, _isVestingEnabled
+    bool[2] memory _bools // isWhiteListPhase, isVestingEnabled
   ) external payable {
     require(libraryAddress != address(0), "Set library address first");
     require(msg.value >= preSaleFee, "Not Enough Fee");
     require(_presaleTimeDetails[0] > block.timestamp, "Presale startTime > block.timestamp");
     require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
     require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
-    require(_presaleTimeDetails[3] >= 0 && _presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
+    require(_presaleTimeDetails[3] <= 23, "claimIntervalHour should be between 0 & 23");
+    require(_presaleTimeDetails[4] >= 300, "liquidityLockTime >= 300 seconds");
     require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
-    require(_bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100, "Softcap should be greater than or equal to 50% of hardcap");
+    require(
+      _bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100 && _bnbAmounts[2] <= _bnbAmounts[3],
+      "Softcap should be greater than or equal to 50% of hardcap"
+    );
     require(_tokenDetails[3] >= 25 && _tokenDetails[3] <= 100, "Liquidity Percentage should be between 25% & 100%");
-    require(_tokenDetails[4] > 0 && _tokenDetails[4] <= 100, "maxClaimPercentage should be between 0 & 100");
-    require(_choices[0] == 0 || _choices[0] == 1, "refundType should be between 0 & 100");
-    require(_choices[1] >= 0 && _choices[1] <= 3, "listingChoice should be between 0 & 3");
+    require(_tokenDetails[4] <= 100, "maxClaimPercentage should be between 0 & 100");
+    require(_choices[0] <= 1, "refundType should be between 0 or 1");
+    require(_choices[1] <= 3, "listingChoice should be between 0 & 3");
 
     if (tokenPresales[_addresses[0]].length > 0) {
       ISummitCustomPresale _presale = ISummitCustomPresale(
@@ -121,7 +123,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     }
   }
 
-  function approvePresales(address[] memory addresses) external onlyAdmin {
+  function approvePresales(address[] memory addresses) external isAdminOrOwner {
     for (uint256 index = 0; index < addresses.length; index++) {
       address _address = addresses[index];
       if (pendingPresales.length > 0 && pendingPresales[pendingIndex[_address]] == _address)
@@ -150,7 +152,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     return accountPresales[_address];
   }
 
-  function setLibraryAddress(address _libraryAddress) external onlyOwner {
+  function setLibraryAddress(address _libraryAddress) external isAdminOrOwner {
     libraryAddress = _libraryAddress;
   }
 
@@ -160,7 +162,7 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     uint256 emergencyWithdrawFee,
     address raisedTokenAddress,
     address presaleAddress
-  ) external onlyAdmin presalePending(presaleAddress) {
+  ) external isAdminOrOwner presalePending(presaleAddress) {
     ISummitCustomPresale(presaleAddress).setFeeInfo(
       feeRaisedToken,
       feePresaleToken,
@@ -180,15 +182,15 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     uint8 _listingChoice,
     bool _isWhiteListPhase,
     bool _isVestingEnabled
-  ) external onlyAdmin presalePending(_presale) {
+  ) external isAdminOrOwner presalePending(_presale) {
     require(_presaleTimeDetails[0] > block.timestamp, "Presale startTime > block.timestamp");
     require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
     require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
-    require(_presaleTimeDetails[3] >= 0 && _presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
+    require(_presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
     require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
-    require(_maxClaimPercentage > 0 && _maxClaimPercentage <= 100, "maxClaimPercentage should be between 0 & 100");
-    require(_refundType == 0 || _refundType == 1, "refundType should be between 0 & 100");
-    require(_listingChoice >= 0 && _listingChoice <= 3, "listingChoice should be between 0 & 3");
+    require(_maxClaimPercentage <= 100, "maxClaimPercentage should be between 0 & 100");
+    require(_refundType <= 1, "refundType should be between 0 or 1");
+    require(_listingChoice <= 3, "listingChoice should be between 0 & 3");
 
     ISummitCustomPresale(_presale).setPresaleInfo(
       _pairToken,
@@ -207,8 +209,20 @@ contract SummitFactoryPresale is Ownable, AccessControl {
     bytes32 role,
     address presaleAddress,
     address newAdmin
-  ) external onlyAdmin presalePending(presaleAddress) {
+  ) external isAdminOrOwner presalePending(presaleAddress) {
     ISummitCustomPresale(presaleAddress).grantRole(role, newAdmin);
+  }
+
+  function assignAdmins(address[] calldata _admins) external onlyOwner {
+    for (uint256 i = 0; i < _admins.length; i++) {
+      isAdmin[_admins[i]] = true;
+    }
+  }
+
+  function revokeAdmins(address[] calldata _admins) external onlyOwner {
+    for (uint256 i = 0; i < _admins.length; i++) {
+      isAdmin[_admins[i]] = false;
+    }
   }
 
   function setServiceFeeReceiver(address _feeReceiver) external onlyOwner {

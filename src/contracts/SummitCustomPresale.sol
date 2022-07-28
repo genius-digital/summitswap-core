@@ -127,14 +127,13 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   function calculateBnbToPresaleToken(uint256 _amount, uint256 _price) public view returns (uint256) {
     require(presale.presaleToken != address(0), "Presale token not set");
 
-    uint256 raisedTokenDecimals = feeInfo.raisedTokenAddress == address(0)
+    uint256 raisedDecimals = feeInfo.raisedTokenAddress == address(0)
       ? 18
       : uint256(IERC20(feeInfo.raisedTokenAddress).decimals());
 
-    uint256 tokens = ((_amount * _price) / 10**18) /
-      (10**(raisedTokenDecimals - uint256(IERC20(presale.presaleToken).decimals())));
+    uint256 tokens = ((_amount * _price) / 10**raisedDecimals);
 
-    return tokens;
+    return tokens * 10**((IERC20(presale.presaleToken).decimals()) - 18);
   }
 
   function getAvailableTokenToClaim(address _address) public view returns (uint256) {

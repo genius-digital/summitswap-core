@@ -1,6 +1,7 @@
 import CustomPresaleArtifact from "@built-contracts/SummitCustomPresale.sol/SummitCustomPresale.json";
 import PresaleFactoryArtifact from "@built-contracts/SummitFactoryPresale.sol/SummitFactoryPresale.json";
 import SummitFactoryArtifact from "@built-contracts/SummitswapFactory.sol/SummitswapFactory.json";
+import SummitStandardTokenArtifact from "@built-contracts/tokens/SummitStandardToken.sol/StandardToken.json";
 import SummitRouterArtifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import WbnbArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
@@ -10,6 +11,7 @@ import {
   SummitFactoryPresale,
   SummitCustomPresale,
   SummitswapRouter02,
+  StandardToken,
   WBNB,
 } from "build/typechain";
 import { PresaleInfoStructOutput, FeeInfoStructOutput } from "build/typechain/SummitCustomPresale";
@@ -32,6 +34,7 @@ describe("SummitCustomPresale", () => {
   let wbnb: WBNB;
   let raisedToken: DummyToken;
   let presaleToken: DummyToken;
+  let standardToken: StandardToken;
   let summitFactory: SummitswapFactory;
   let presaleFactory: SummitFactoryPresale;
   let summitRouter: SummitswapRouter02;
@@ -304,12 +307,185 @@ describe("SummitCustomPresale", () => {
       const tokenAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigPresalePrice);
       assert.equal(tokenAmount.toString(), formatUnits(bigHardCap.mul(bigPresalePrice), 18).split(".")[0]);
     });
+
     it("should return Tokens with listing price", async () => {
       const bigHardCap = parseEther(hardCap);
       const bigListingPrice = parseEther(listingPrice);
 
       const tokenAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigListingPrice);
       assert.equal(tokenAmount.toString(), formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
+    });
+
+    it("should return Tokens when raisedToken decimals less than presaleToken decimals", async () => {
+      const tokenDecimal = 6;
+      standardToken = (await deployContract(owner, SummitStandardTokenArtifact, [
+        "standardToken",
+        "STD",
+        tokenDecimal,
+        parseUnits("1000000", tokenDecimal),
+        owner.address,
+      ])) as StandardToken;
+
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      await presaleToken
+        .connect(owner)
+        .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+      await presaleFactory.createPresale(
+        projectDetails,
+        [
+          presaleToken.address,
+          standardToken.address,
+          standardToken.address,
+          summitRouter.address,
+          summitRouter.address,
+          admin.address,
+        ],
+        [
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
+          maxClaimPercentage,
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+        }
+      );
+
+      const bigListingPrice = parseEther(listingPrice);
+      const bigHardCap = parseUnits(hardCap.toString(), await standardToken.decimals());
+
+      const tAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigListingPrice);
+      assert.equal(tAmount.toString(), formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
+    });
+
+    it("should return Tokens when raisedToken decimals more than presaleToken decimals", async () => {
+      const tokenDecimal = 21;
+      standardToken = (await deployContract(owner, SummitStandardTokenArtifact, [
+        "standardToken",
+        "STD",
+        tokenDecimal,
+        parseUnits("1000000", tokenDecimal),
+        owner.address,
+      ])) as StandardToken;
+
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      await presaleToken
+        .connect(owner)
+        .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+      await presaleFactory.createPresale(
+        projectDetails,
+        [
+          presaleToken.address,
+          standardToken.address,
+          standardToken.address,
+          summitRouter.address,
+          summitRouter.address,
+          admin.address,
+        ],
+        [
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
+          maxClaimPercentage,
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+        }
+      );
+
+      const bigListingPrice = parseEther(listingPrice);
+      const bigHardCap = parseUnits(hardCap.toString(), await standardToken.decimals());
+
+      const tAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigListingPrice);
+      assert.equal(tAmount.toString(), formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
+    });
+
+    it("should return Tokens when presaleToken decimals less than raisedToken decimals", async () => {
+      const tokenDecimal = 6;
+      standardToken = (await deployContract(owner, SummitStandardTokenArtifact, [
+        "standardToken",
+        "STD",
+        tokenDecimal,
+        parseUnits("1000000", tokenDecimal),
+        owner.address,
+      ])) as StandardToken;
+
+      await standardToken
+        .connect(owner)
+        .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await standardToken.decimals()));
+      await presaleFactory.createPresale(
+        projectDetails,
+        [standardToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+        [
+          parseUnits(tokenAmount.toString(), await standardToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
+          maxClaimPercentage,
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+        }
+      );
+
+      const bigListingPrice = parseEther(listingPrice);
+      const bigHardCap = parseEther(hardCap);
+
+      const tAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigListingPrice);
+      assert.equal(tAmount.toString(), formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
+    });
+
+    it("should return Tokens when presaleToken decimals more than raisedToken decimals", async () => {
+      const tokenDecimal = 21;
+      standardToken = (await deployContract(owner, SummitStandardTokenArtifact, [
+        "standardToken",
+        "STD",
+        tokenDecimal,
+        parseUnits("1000000", tokenDecimal),
+        owner.address,
+      ])) as StandardToken;
+
+      await standardToken
+        .connect(owner)
+        .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await standardToken.decimals()));
+      await presaleFactory.createPresale(
+        projectDetails,
+        [standardToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+        [
+          parseUnits(tokenAmount.toString(), await standardToken.decimals()),
+          parseEther(presalePrice),
+          parseEther(listingPrice),
+          liquidityPrecentage,
+          maxClaimPercentage,
+        ],
+        [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+        [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+        [refundType, listingChoice],
+        [isWhiteListPhase, isVestingEnabled],
+        {
+          value: createPresaleFee,
+        }
+      );
+
+      const bigListingPrice = parseEther(listingPrice);
+      const bigHardCap = parseEther(hardCap);
+
+      const tAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigListingPrice);
+      assert.equal(tAmount.toString(), formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
     });
   });
 
@@ -389,7 +565,7 @@ describe("SummitCustomPresale", () => {
         customPresale.connect(otherWallet2).buy({
           value: parseEther(minBuy).sub("1"),
         })
-      ).to.be.revertedWith("msg.value is less than minBuy");
+      ).to.be.revertedWith("Cannot buy less than minBuy");
     });
 
     it("should be reverted, if buyBnbAmount greater than maxBuy", async () => {
@@ -425,7 +601,7 @@ describe("SummitCustomPresale", () => {
         customPresale.connect(otherWallet2).buy({
           value: parseEther(maxBuy).add("1"),
         })
-      ).to.be.revertedWith("msg.value is great than maxBuy");
+      ).to.be.revertedWith("Cannot buy more than maxBuy");
     });
 
     it("should be equal buyAmount and boughtAmount", async () => {
@@ -672,7 +848,7 @@ describe("SummitCustomPresale", () => {
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
       await expect(
         customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy).add("1"))
-      ).to.be.revertedWith("contributionAmount is great than maxBuy");
+      ).to.be.revertedWith("contributionAmount is more than maxBuy");
     });
 
     it("should be reverted, if allowance less than contributionAmount", async () => {

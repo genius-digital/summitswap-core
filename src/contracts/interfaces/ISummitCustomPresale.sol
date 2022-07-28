@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 // Developed by: dxsoftware.net
 
-import "./IAccessControl.sol";
-
 pragma solidity 0.7.6;
 
 pragma experimental ABIEncoderV2;
 
-interface ISummitCustomPresale is IAccessControl {
+interface ISummitCustomPresale {
   function isPresaleCancelled() external view returns (bool);
 
   function approvePresale() external;
@@ -40,4 +38,8 @@ interface ISummitCustomPresale is IAccessControl {
     bool _isWhiteListPhase,
     bool _isVestingEnabled
   ) external;
+
+  function assignAdmins(address[] calldata _admins) external;
+
+  function revokeAdmins(address[] calldata _admins) external;
 }

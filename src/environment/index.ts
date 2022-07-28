@@ -41,7 +41,6 @@ export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 
 export const MAX_VALUE = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-export const ADMIN_ROLE = "0xdf8b4c520ffe197c5343c6f5aec59570151ef9a492f2c624fd45ddde6135ec42";
 
 export const environment = {
   WBNBS: WBNBs,

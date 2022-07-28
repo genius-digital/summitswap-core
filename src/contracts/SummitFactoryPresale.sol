@@ -203,12 +203,20 @@ contract SummitFactoryPresale is Ownable {
     );
   }
 
-  function setRolesForPresale(
-    bytes32 role,
-    address presaleAddress,
-    address newAdmin
-  ) external isAdminOrOwner presalePending(presaleAddress) {
-    ISummitCustomPresale(presaleAddress).grantRole(role, newAdmin);
+  function assignAdminsPresale(address[] calldata _admins, address _presale)
+    external
+    onlyOwner
+    presalePending(_presale)
+  {
+    ISummitCustomPresale(_presale).assignAdmins(_admins);
+  }
+
+  function revokeAdminsPresale(address[] calldata _admins, address _presale)
+    external
+    onlyOwner
+    presalePending(_presale)
+  {
+    ISummitCustomPresale(_presale).revokeAdmins(_admins);
   }
 
   function assignAdmins(address[] calldata _admins) external onlyOwner {

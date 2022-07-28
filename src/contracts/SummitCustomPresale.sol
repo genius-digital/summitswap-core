@@ -6,7 +6,6 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./libraries/BokkyPooBahsDateTimeLibrary.sol";
 import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
@@ -14,10 +13,9 @@ import "../helpers/PresaleInfo.sol";
 import "../helpers/PresaleFee.sol";
 import "./shared/Ownable.sol";
 
-contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
+contract SummitCustomPresale is Ownable, ReentrancyGuard {
   using BokkyPooBahsDateTimeLibrary for uint256;
 
-  bytes32 private constant ADMIN = keccak256("ADMIN");
   address private constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
   address public serviceFeeReceiver;
@@ -27,6 +25,8 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   mapping(address => uint256) private whitelistIndex;
   mapping(address => uint256) public totalClaimToken;
   mapping(address => uint256) public bought; // account => boughtAmount
+  mapping(address => bool) public isAdmin;
+  mapping(address => bool) public defaultAdmin;
 
   string[8] private projectDetails;
 
@@ -76,9 +76,9 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
     feeInfo.feePresaleToken = 20000000; // 2%
     feeInfo.emergencyWithdrawFee = 100000000; // 10%
 
-    _setupRole(ADMIN, msg.sender);
-    _setupRole(ADMIN, _addresses[7]);
-    _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    isAdmin[_addresses[7]] = true;
+    isAdmin[msg.sender] = true;
+    defaultAdmin[msg.sender] = true;
   }
 
   modifier canBuy() {
@@ -94,7 +94,12 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
   }
 
   modifier onlyAdmin() {
-    require(hasRole(ADMIN, msg.sender), "msg.sender does not have ADMIN role");
+    require(isAdmin[msg.sender] || defaultAdmin[msg.sender], "Only admin or defaultAdmin can call this function");
+    _;
+  }
+
+  modifier onlyDefaultAdmin() {
+    require(defaultAdmin[msg.sender], "Only defaultAdmin can call this function");
     _;
   }
 
@@ -577,5 +582,17 @@ contract SummitCustomPresale is Ownable, AccessControl, ReentrancyGuard {
 
   function setServiceFeeReceiver(address _feeReceiver) external onlyAdmin {
     serviceFeeReceiver = _feeReceiver;
+  }
+
+  function assignAdmins(address[] calldata _admins) external onlyDefaultAdmin {
+    for (uint256 i = 0; i < _admins.length; i++) {
+      isAdmin[_admins[i]] = true;
+    }
+  }
+
+  function revokeAdmins(address[] calldata _admins) external onlyDefaultAdmin {
+    for (uint256 i = 0; i < _admins.length; i++) {
+      isAdmin[_admins[i]] = false;
+    }
   }
 }

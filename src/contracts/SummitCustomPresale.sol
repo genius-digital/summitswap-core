@@ -38,45 +38,24 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
   function initialize(
     string[8] memory _projectDetails,
-    address[8] memory _addresses, // owner, token, raisedTokenAddress, pairToken, SummitSwap, PancakeSwap, serviceFeeReceiver, admin
-    uint256[4] memory _tokenDetails, // presalePrice, listingPrice, liquidityPercent, maxClaimPercentage
-    uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
-    uint256[5] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour, liquidityLockTime
-    uint8[2] memory _choices, // refund, listing
-    bool[2] memory _bools // isWhiteListPhase, isVestingEnabled
+    PresaleInfo memory _presale,
+    FeeInfo memory _feeInfo,
+    address _serviceFeeReceiver,
+    address _owner
   ) external {
     require(presale.startPresaleTime == 0, "Presale is Initialized.");
     projectDetails = _projectDetails;
-    _transferOwnership(_addresses[0]);
-    serviceFeeReceiver = _addresses[6];
-    presale.router0 = _addresses[4];
-    presale.router1 = _addresses[5];
-    presale.presaleToken = _addresses[1];
-    presale.pairToken = _addresses[3];
-    presale.presalePrice = _tokenDetails[0];
-    presale.listingPrice = _tokenDetails[1];
-    presale.liquidityPercentage = (_tokenDetails[2] * FEE_DENOMINATOR) / 100;
-    presale.liquidityLockTime = _presaleTimeDetails[4];
-    presale.minBuy = _bnbAmounts[0];
-    presale.maxBuy = _bnbAmounts[1];
-    presale.softCap = _bnbAmounts[2];
-    presale.hardCap = _bnbAmounts[3];
-    presale.startPresaleTime = _presaleTimeDetails[0];
-    presale.endPresaleTime = _presaleTimeDetails[1];
-    presale.claimIntervalDay = _presaleTimeDetails[2];
-    presale.claimIntervalHour = _presaleTimeDetails[3];
-    presale.maxClaimPercentage = (_tokenDetails[3] * FEE_DENOMINATOR) / 100;
-    presale.refundType = _choices[0]; // 0 refund, 1 burn
-    presale.listingChoice = _choices[1]; // 0 100% SS, 1 100% PS, 2 (75% SS & 25% PS), 3 (75% PK & 25% SS)
-    presale.isWhiteListPhase = _bools[0];
-    presale.isVestingEnabled = _bools[1];
+    presale = _presale;
+    feeInfo = _feeInfo;
+    serviceFeeReceiver = _serviceFeeReceiver;
+    _transferOwnership(_owner);
 
-    feeInfo.raisedTokenAddress = _addresses[2]; // address(0) native coin
-    feeInfo.feeRaisedToken = 50000000; // 5%
-    feeInfo.feePresaleToken = 20000000; // 2%
-    feeInfo.emergencyWithdrawFee = 100000000; // 10%
+    presale.totalBought = 0;
+    presale.isApproved = false;
+    presale.isPresaleCancelled = false;
+    presale.isClaimPhase = false;
+    presale.isWithdrawCancelledTokens = false;
 
-    isAdmin[_addresses[7]] = true;
     isAdmin[msg.sender] = true;
     defaultAdmin[msg.sender] = true;
   }

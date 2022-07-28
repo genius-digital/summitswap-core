@@ -4,7 +4,7 @@ struct PresaleInfo {
   address presaleToken;
   address router0; // router SummitSwap
   address router1; // router pancakeSwap
-  address pairToken;
+  address pairToken; // address(0) is native Token
   uint256 presalePrice; // in wei
   uint256 listingPrice; // in wei
   uint256 liquidityLockTime; // in seconds

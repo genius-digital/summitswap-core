@@ -72,11 +72,11 @@ contract SummitFactoryPresale is Ownable {
       "Softcap should be greater than or equal to 50% of hardcap"
     );
     require(
-      presale.liquidityPercentage >= 25 && presale.liquidityPercentage <= 100,
+      presale.liquidityPercentage >= 250000000 && presale.liquidityPercentage <= 1000000000,
       "Liquidity Percentage should be between 25% & 100%"
     );
     require(
-      presale.maxClaimPercentage > 0 && presale.maxClaimPercentage <= 100,
+      presale.maxClaimPercentage >= 10000000 && presale.maxClaimPercentage <= 1000000000,
       "maxClaimPercentage should be between 1 & 100"
     );
     require(presale.refundType <= 1, "refundType should be between 0 or 1");
@@ -91,7 +91,7 @@ contract SummitFactoryPresale is Ownable {
 
     address presaleClone = Clones.clone(libraryAddress);
 
-    ISummitCustomPresale(presaleClone).initialize(projectDetails, presale, feeInfo, [serviceFeeReceiver, msg.sender]);
+    ISummitCustomPresale(presaleClone).initialize(projectDetails, presale, feeInfo, serviceFeeReceiver, msg.sender);
 
     tokenPresales[presale.presaleToken].push(address(presaleClone));
     accountPresales[msg.sender].push(address(presaleClone));

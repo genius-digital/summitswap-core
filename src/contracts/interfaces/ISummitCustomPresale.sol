@@ -17,7 +17,8 @@ interface ISummitCustomPresale {
     string[8] memory,
     PresaleInfo memory,
     FeeInfo memory,
-    address[2] memory
+    address,
+    address
   ) external;
 
   function setFeeInfo(

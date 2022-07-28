@@ -11,6 +11,8 @@ import "./interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "../helpers/PresaleInfo.sol";
+import "../helpers/PresaleFee.sol";
 
 contract SummitFactoryPresale is Ownable {
   mapping(address => bool) public isAdmin;
@@ -49,60 +51,49 @@ contract SummitFactoryPresale is Ownable {
   }
 
   function createPresale(
-    string[8] memory _projectDetails,
-    address[6] memory _addresses, // tokenAdress, raisedTokenAddress, pairToken, SS router, PS router, admin
-    uint256[5] memory _tokenDetails, // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent, maxClaimPercentage
-    uint256[4] memory _bnbAmounts, // minBuy, maxBuy, softcap, hardcap
-    uint256[5] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour, liquidityLockTime
-    uint8[2] memory _choices, // refund, listing
-    bool[2] memory _bools // isWhiteListPhase, isVestingEnabled
+    string[8] memory projectDetails,
+    PresaleInfo memory presale,
+    FeeInfo memory feeInfo,
+    uint256 tokenAmount
   ) external payable {
     require(libraryAddress != address(0), "Set library address first");
     require(msg.value >= preSaleFee, "Not Enough Fee");
-    require(_presaleTimeDetails[0] > block.timestamp, "Presale startTime > block.timestamp");
-    require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
-    require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
-    require(_presaleTimeDetails[3] <= 23, "claimIntervalHour should be between 0 & 23");
-    require(_presaleTimeDetails[4] >= 300, "liquidityLockTime >= 300 seconds");
-    require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
+    require(presale.startPresaleTime > block.timestamp, "Presale startTime > block.timestamp");
+    require(presale.endPresaleTime > presale.startPresaleTime, "Presale End time > presale start time");
     require(
-      _bnbAmounts[2] >= (_bnbAmounts[3] * 50) / 100 && _bnbAmounts[2] <= _bnbAmounts[3],
+      presale.claimIntervalDay >= 1 && presale.claimIntervalDay <= 31,
+      "claimIntervalDay should be between 1 & 31"
+    );
+    require(presale.claimIntervalHour <= 23, "claimIntervalHour should be between 0 & 23");
+    require(presale.liquidityLockTime >= 300, "liquidityLockTime >= 300 seconds");
+    require(presale.minBuy < presale.maxBuy, "MinBuy should be less than maxBuy");
+    require(
+      presale.softCap >= (presale.hardCap * 50) / 100 && presale.softCap <= presale.hardCap,
       "Softcap should be greater than or equal to 50% of hardcap"
     );
-    require(_tokenDetails[3] >= 25 && _tokenDetails[3] <= 100, "Liquidity Percentage should be between 25% & 100%");
-    require(_tokenDetails[4] <= 100, "maxClaimPercentage should be between 0 & 100");
-    require(_choices[0] <= 1, "refundType should be between 0 or 1");
-    require(_choices[1] <= 3, "listingChoice should be between 0 & 3");
+    require(
+      presale.liquidityPercentage >= 25 && presale.liquidityPercentage <= 100,
+      "Liquidity Percentage should be between 25% & 100%"
+    );
+    require(
+      presale.maxClaimPercentage > 0 && presale.maxClaimPercentage <= 100,
+      "maxClaimPercentage should be between 1 & 100"
+    );
+    require(presale.refundType <= 1, "refundType should be between 0 or 1");
+    require(presale.listingChoice <= 3, "listingChoice should be between 0 & 3");
 
-    if (tokenPresales[_addresses[0]].length > 0) {
+    if (tokenPresales[presale.presaleToken].length > 0) {
       ISummitCustomPresale _presale = ISummitCustomPresale(
-        tokenPresales[_addresses[0]][tokenPresales[_addresses[0]].length - 1]
+        tokenPresales[presale.presaleToken][tokenPresales[presale.presaleToken].length - 1]
       );
       require(_presale.isPresaleCancelled(), "Presale Already Exists");
     }
 
     address presaleClone = Clones.clone(libraryAddress);
 
-    ISummitCustomPresale(presaleClone).initialize(
-      _projectDetails,
-      [
-        msg.sender,
-        _addresses[0],
-        _addresses[1],
-        _addresses[2],
-        _addresses[3],
-        _addresses[4],
-        serviceFeeReceiver,
-        _addresses[5]
-      ],
-      [_tokenDetails[1], _tokenDetails[2], _tokenDetails[3], _tokenDetails[4]],
-      _bnbAmounts,
-      _presaleTimeDetails,
-      _choices,
-      _bools
-    );
+    ISummitCustomPresale(presaleClone).initialize(projectDetails, presale, feeInfo, [serviceFeeReceiver, msg.sender]);
 
-    tokenPresales[_addresses[0]].push(address(presaleClone));
+    tokenPresales[presale.presaleToken].push(address(presaleClone));
     accountPresales[msg.sender].push(address(presaleClone));
     pendingPresales.push(address(presaleClone));
     if (serviceFeeReceiver != address(this)) {
@@ -110,7 +101,7 @@ contract SummitFactoryPresale is Ownable {
       feeReceiver.transfer(preSaleFee);
     }
 
-    IERC20(_addresses[0]).transferFrom(msg.sender, address(presaleClone), _tokenDetails[0]);
+    IERC20(presale.presaleToken).transferFrom(msg.sender, address(presaleClone), tokenAmount);
   }
 
   function removeFromPending(address _address) private {

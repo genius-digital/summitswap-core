@@ -5,6 +5,9 @@ pragma solidity 0.7.6;
 
 pragma experimental ABIEncoderV2;
 
+import "../../helpers/PresaleFee.sol";
+import "../../helpers/PresaleInfo.sol";
+
 interface ISummitCustomPresale {
   function isPresaleCancelled() external view returns (bool);
 
@@ -12,12 +15,9 @@ interface ISummitCustomPresale {
 
   function initialize(
     string[8] memory,
-    address[8] memory,
-    uint256[4] memory,
-    uint256[4] memory,
-    uint256[5] memory,
-    uint8[2] memory,
-    bool[2] memory
+    PresaleInfo memory,
+    FeeInfo memory,
+    address[2] memory
   ) external;
 
   function setFeeInfo(

@@ -48,7 +48,7 @@ describe("SummitFactoryPresale", () => {
   const maxBuy = "0.2";
   const softCap = "0.1";
   const hardCap = "0.2";
-  const liquidityPrecentage = 70;
+  const liquidityPercentage = 70;
   const maxClaimPercentage = 100; // vesting is diabled
   const startPresaleTime = dayjs().add(1, "day").unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
@@ -92,7 +92,7 @@ describe("SummitFactoryPresale", () => {
     maxBuy: parseEther(maxBuy),
     softCap: parseEther(softCap),
     hardCap: parseEther(hardCap),
-    liquidityPercentage: (liquidityPrecentage * FEE_DENOMINATOR) / 100,
+    liquidityPercentage: (liquidityPercentage * FEE_DENOMINATOR) / 100,
     startPresaleTime,
     endPresaleTime,
     claimIntervalDay: dayClaimInterval,
@@ -183,7 +183,7 @@ describe("SummitFactoryPresale", () => {
     it("should be accountPresales.length == 1", async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory
         .connect(owner)
@@ -210,7 +210,7 @@ describe("SummitFactoryPresale", () => {
 
     it("should be able to withdraw fee by owner", async () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory.connect(owner).setServiceFeeReceiver(presaleFactory.address);
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
@@ -235,7 +235,7 @@ describe("SummitFactoryPresale", () => {
 
   describe("createPresale()", () => {
     const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-    const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+    const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
     const tokenAmount = presaleTokenAmount + tokensForLiquidity;
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
@@ -485,7 +485,7 @@ describe("SummitFactoryPresale", () => {
     it("should be tokenPresales.length == 1", async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory
         .connect(owner)
@@ -507,7 +507,7 @@ describe("SummitFactoryPresale", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory
         .connect(owner)
@@ -649,7 +649,7 @@ describe("SummitFactoryPresale", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory
         .connect(owner)
@@ -702,6 +702,339 @@ describe("SummitFactoryPresale", () => {
             tokenPresales[0]
           )
       ).to.be.revertedWith("Presale not in pending presales.");
+    });
+
+    it("should be reverted, if presale token not same", async () => {
+      const presaleToken2 = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+
+      await expect(
+        presaleFactory
+          .connect(admin)
+          .updatePresaleAndApprove(
+            { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken2.address },
+            feeInfo,
+            tokenPresales[0]
+          )
+      ).to.be.revertedWith("Presale token should be same");
+    });
+
+    it("should be reverted, if presale price not same", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            presaleToken: presaleToken.address,
+            router0: summitRouter.address,
+            presalePrice: parseEther(presalePrice).add(1),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("Presale price should be same");
+    });
+
+    it("should be reverted, if listing price not same", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            presaleToken: presaleToken.address,
+            router0: summitRouter.address,
+            listingPrice: parseEther(listingPrice).add(1),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("listingPrice should be same");
+    });
+
+    it("should be reverted, if hardCap not same", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            presaleToken: presaleToken.address,
+            router0: summitRouter.address,
+            hardCap: parseEther(hardCap).add(1),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("hardCap should be same");
+    });
+
+    it("should be reverted, if liquidityPercentage not same", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            liquidityPercentage: ((liquidityPercentage + 1) * FEE_DENOMINATOR) / 100,
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("liquidityPercentage should be same");
+    });
+
+    it("should be reverted, if startPresaleTime less than set startPresaleTime", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            startPresaleTime: dayjs().unix(),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("startPresaleTime >= set startPresaleTime");
+    });
+
+    it("should be reverted, if endPresaleTime less than startPresaleTime", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            endPresaleTime: dayjs().unix(),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("endPresaleTime >= startPresaleTime");
+    });
+
+    it("should be reverted, if softCap not valid", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            softCap: parseEther(softCap).sub("1"),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("50% of hardcap <= softcap <= hardcap");
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            softCap: parseEther(hardCap).add("1"),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("50% of hardcap <= softcap <= hardcap");
+    });
+
+    it("should be reverted, if claimIntervalDay not valid", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            claimIntervalDay: 0,
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("claimIntervalDay should be between 1 & 31");
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            claimIntervalDay: 32,
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("claimIntervalDay should be between 1 & 31");
+    });
+
+    it("should be reverted, if claimIntervalHour greater than 24", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            claimIntervalHour: 24,
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("claimIntervalHour should be between 0 & 23");
+    });
+
+    it("should be reverted, if minBuy greater or equal than maxBuy", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            minBuy: parseEther(maxBuy),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("MinBuy should be less than maxBuy");
+    });
+
+    it("should be reverted, if maxBuy greater than hardCap", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            presaleToken: presaleToken.address,
+            router0: summitRouter.address,
+            maxBuy: parseEther(hardCap).add("1"),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("maxBuy should be less than hardCap");
+    });
+
+    it("should be reverted, if maxClaimPercentage not valid", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            maxClaimPercentage: (0.9 * FEE_DENOMINATOR) / 100,
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("maxClaimPercentage should be between 1% & 100%");
+
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            maxClaimPercentage: (101 * FEE_DENOMINATOR) / 100,
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("maxClaimPercentage should be between 1% & 100%");
+    });
+
+    it("should be reverted, if emergencyWithdrawFee not valid", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+          },
+          { ...feeInfo, emergencyWithdrawFee: (0.9 * FEE_DENOMINATOR) / 100 },
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("emergencyWithdrawFee should be between 1% & 100%");
+
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+          },
+          { ...feeInfo, emergencyWithdrawFee: (0.9 * FEE_DENOMINATOR) / 100 },
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("emergencyWithdrawFee should be between 1% & 100%");
+    });
+
+    it("should be reverted, if feeRaisedToken not valid", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+          },
+          { ...feeInfo, feeRaisedToken: ((liquidityPercentage + 1) * FEE_DENOMINATOR) / 100 },
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("fee raised Token should be less than liquidityPercentage");
+    });
+
+    it("should be reverted, if feePresaleToken not valid", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+          },
+          { ...feeInfo, feePresaleToken: ((liquidityPercentage + 1) * FEE_DENOMINATOR) / 100 },
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("fee presale Token should be less than liquidityPercentage");
+    });
+
+    it("should be reverted, if refundType not valid", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            refundType: 2,
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("refundType should be between 0 or 1");
+    });
+
+    it("should be reverted, if listingChoice not valid", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await expect(
+        presaleFactory.connect(admin).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            listingChoice: 4,
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
+      ).to.be.revertedWith("listingChoice should be between 0 & 3");
     });
 
     it("should admin be only able to set updatePresaleAndApprove", async () => {
@@ -785,7 +1118,7 @@ describe("SummitFactoryPresale", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory
         .connect(owner)
@@ -833,7 +1166,7 @@ describe("SummitFactoryPresale", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory
         .connect(owner)

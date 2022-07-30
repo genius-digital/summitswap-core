@@ -153,8 +153,8 @@ contract SummitFactoryPresale is Ownable {
     require(_presale.presaleToken == presale.presaleToken, "Presale token should be same");
     require(_presale.presalePrice == presale.presalePrice, "Presale price should be same");
     require(_presale.listingPrice == presale.listingPrice, "listingPrice should be same");
-    require(_presale.hardCap == presale.hardCap, "hardCap token should be same");
-    require(_presale.liquidityPercentage == presale.liquidityPercentage, "liquidityPercentage token should be same");
+    require(_presale.hardCap == presale.hardCap, "hardCap should be same");
+    require(_presale.liquidityPercentage == presale.liquidityPercentage, "liquidityPercentage should be same");
     require(_presale.startPresaleTime >= presale.startPresaleTime, "startPresaleTime >= set startPresaleTime");
     require(_presale.endPresaleTime > _presale.startPresaleTime, "endPresaleTime >= startPresaleTime");
     require(
@@ -168,7 +168,6 @@ contract SummitFactoryPresale is Ownable {
     require(_presale.minBuy < _presale.maxBuy, "MinBuy should be less than maxBuy");
     require(_presale.maxBuy <= _presale.hardCap, "maxBuy should be less than hardCap");
     require(_presale.claimIntervalHour <= 23, "claimIntervalHour should be between 0 & 23");
-    require(_presale.totalBought == 0);
     require(
       _presale.maxClaimPercentage >= 10000000 && _presale.maxClaimPercentage <= 1000000000,
       "maxClaimPercentage should be between 1% & 100%"
@@ -178,11 +177,11 @@ contract SummitFactoryPresale is Ownable {
       "emergencyWithdrawFee should be between 1% & 100%"
     );
     require(
-      _feeInfo.feePresaleToken > 9999999 && _feeInfo.feePresaleToken < _presale.liquidityPercentage,
+      _feeInfo.feePresaleToken < _presale.liquidityPercentage,
       "fee presale Token should be less than liquidityPercentage"
     );
     require(
-      _feeInfo.feeRaisedToken > 9999999 && _feeInfo.feePresaleToken < _presale.liquidityPercentage,
+      _feeInfo.feeRaisedToken < _presale.liquidityPercentage,
       "fee raised Token should be less than liquidityPercentage"
     );
     require(_presale.refundType <= 1, "refundType should be between 0 or 1");

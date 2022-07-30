@@ -43,4 +43,8 @@ interface ISummitCustomPresale {
   function assignAdmins(address[] calldata _admins) external;
 
   function revokeAdmins(address[] calldata _admins) external;
+
+  function getPresaleInfo() external view returns (PresaleInfo memory);
+
+  function updatePresaleAndApprove(PresaleInfo memory _presale, FeeInfo memory _feeInfo) external;
 }

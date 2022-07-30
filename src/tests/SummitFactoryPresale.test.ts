@@ -37,9 +37,9 @@ describe("SummitFactoryPresale", () => {
   const updatedServiceFee = parseEther("0.00012");
 
   const FEE_DENOMINATOR = 10 ** 9;
-  const FEE_RAISED_TOKEN = 30000000; // 5%
-  const FEE_PRESALE_TOKEN = 30000000; // 2%
-  const EMERGENCY_WITHDRAW_FEE = 100000000; // 10%
+  const FEE_RAISED_TOKEN = 300000000; // 3%
+  const FEE_PRESALE_TOKEN = 300000000; // 3%
+  const EMERGENCY_WITHDRAW_FEE = 1000000000; // 10%
 
   const presalePrice = "100";
   const listingPrice = "100";
@@ -543,11 +543,11 @@ describe("SummitFactoryPresale", () => {
       assert.equal(tokenPresales.length, 1);
       assert.equal((await summitCustomPresale.getPresaleInfo()).isApproved, false);
 
-      await expect(presaleFactory.connect(otherWallet1).approvePresales(tokenPresales)).to.be.revertedWith(
+      await expect(presaleFactory.connect(otherWallet1).approvePresale(tokenPresales[0])).to.be.revertedWith(
         "Only admin or owner can call this function"
       );
 
-      await presaleFactory.connect(admin).approvePresales(tokenPresales);
+      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
 
       pendingPresales = await presaleFactory.getPendingPresales();
       approvePresales = await presaleFactory.getApprovedPresales();
@@ -569,11 +569,11 @@ describe("SummitFactoryPresale", () => {
       assert.equal(tokenPresales.length, 1);
       assert.equal((await summitCustomPresale.getPresaleInfo()).isApproved, false);
 
-      await expect(presaleFactory.connect(otherWallet1).approvePresales(tokenPresales)).to.be.revertedWith(
+      await expect(presaleFactory.connect(otherWallet1).approvePresale(tokenPresales[0])).to.be.revertedWith(
         "Only admin or owner can call this function"
       );
 
-      await presaleFactory.connect(admin).approvePresales(tokenPresales);
+      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
 
       pendingPresales = await presaleFactory.getPendingPresales();
       approvePresales = await presaleFactory.getApprovedPresales();
@@ -591,7 +591,7 @@ describe("SummitFactoryPresale", () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       assert.equal(tokenPresales.length, 1);
 
-      await presaleFactory.connect(admin).approvePresales([tokenPresales[0], tokenPresales[0], tokenPresales[0]]);
+      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
 
       pendingPresales = await presaleFactory.getPendingPresales();
       approvePresales = await presaleFactory.getApprovedPresales();
@@ -600,7 +600,7 @@ describe("SummitFactoryPresale", () => {
       assert.equal(approvePresales.length, 1);
     });
 
-    it("should not add address if not is pendingPreseles", async () => {
+    it("should revert, if not is pendingPreseles", async () => {
       let pendingPresales = await presaleFactory.getPendingPresales();
       let approvePresales = await presaleFactory.getApprovedPresales();
       assert.equal(pendingPresales.length, 1);
@@ -608,7 +608,9 @@ describe("SummitFactoryPresale", () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       assert.equal(tokenPresales.length, 1);
 
-      await presaleFactory.connect(admin).approvePresales([otherWallet1.address]);
+      await expect(presaleFactory.connect(admin).approvePresale(otherWallet1.address)).to.be.revertedWith(
+        "Presale not in pending presales."
+      );
 
       pendingPresales = await presaleFactory.getPendingPresales();
       approvePresales = await presaleFactory.getApprovedPresales();
@@ -643,7 +645,7 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
-  describe("setFeeInfo()", () => {
+  describe("updatePresaleAndApprove()", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
@@ -660,31 +662,6 @@ describe("SummitFactoryPresale", () => {
             value: serviceFee,
           }
         );
-    });
-
-    it("should admin be only able to set feeInfo", async () => {
-      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
-      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
-      customPresale = SummitCustomPresale.attach(tokenPresales[0]);
-
-      await expect(
-        presaleFactory
-          .connect(otherWallet1)
-          .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS, tokenPresales[0])
-      ).to.be.revertedWith("Only admin or owner can call this function");
-      assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
-      assert.equal(await presaleFactory.isAdmin(admin.address), true);
-      assert.equal(await customPresale.isAdmin(presaleFactory.address), true);
-
-      await presaleFactory
-        .connect(admin)
-        .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS, tokenPresales[0]);
-
-      const updatedFeeInfo = await customPresale.getFeeInfo();
-      assert.equal(updatedFeeInfo.feeRaisedToken.toString(), FEE_RAISED_TOKEN.toString());
-      assert.equal(updatedFeeInfo.feePresaleToken.toString(), FEE_PRESALE_TOKEN.toString());
-      assert.equal(updatedFeeInfo.emergencyWithdrawFee.toString(), EMERGENCY_WITHDRAW_FEE.toString());
-      assert.equal(updatedFeeInfo.raisedTokenAddress.toString(), ZERO_ADDRESS);
     });
 
     it("should be reverted, if presale not in pending presales does", async () => {
@@ -692,115 +669,115 @@ describe("SummitFactoryPresale", () => {
       let pendingPresales = await presaleFactory.getPendingPresales();
       assert.equal(pendingPresales.length, 1);
 
-      await presaleFactory.connect(admin).approvePresales(tokenPresales);
+      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
       pendingPresales = await presaleFactory.getPendingPresales();
 
       assert.equal(pendingPresales.length, 0);
       await expect(
         presaleFactory
           .connect(admin)
-          .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS, tokenPresales[0])
+          .updatePresaleAndApprove(
+            { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
+            feeInfo,
+            tokenPresales[0]
+          )
       ).to.be.revertedWith("Presale not in pending presales.");
     });
-  });
 
-  describe("setPresaleInfo()", () => {
-    beforeEach(async () => {
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
-      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
-      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
-      await presaleFactory
-        .connect(owner)
-        .createPresale(
-          projectDetails,
-          { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
-          feeInfo,
-          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          {
-            value: serviceFee,
-          }
-        );
+    it("should be reverted, if presale not in pending presales does", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      let pendingPresales = await presaleFactory.getPendingPresales();
+      assert.equal(pendingPresales.length, 1);
+
+      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
+      pendingPresales = await presaleFactory.getPendingPresales();
+
+      assert.equal(pendingPresales.length, 0);
+      await expect(
+        presaleFactory
+          .connect(admin)
+          .updatePresaleAndApprove(
+            { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
+            feeInfo,
+            tokenPresales[0]
+          )
+      ).to.be.revertedWith("Presale not in pending presales.");
     });
 
-    it("should admin be only able to set presaleInfo", async () => {
+    it("should admin be only able to set updatePresaleAndApprove", async () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      let pendingPresales: string[];
       customPresale = SummitCustomPresale.attach(tokenPresales[0]);
 
       await expect(
-        presaleFactory
-          .connect(otherWallet1)
-          .setPresaleInfo(
-            tokenPresales[0],
-            ZERO_ADDRESS,
-            [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled
-          )
+        presaleFactory.connect(otherWallet1).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            minBuy: parseEther(minBuy).add("1"),
+            maxBuy: parseEther(maxBuy).add("1"),
+            softCap: parseEther(softCap).add("1"),
+          },
+          feeInfo,
+          tokenPresales[0]
+        )
       ).to.be.revertedWith("Only admin or owner can call this function");
       assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
+      assert.equal(await presaleFactory.isAdmin(otherWallet1.address), false);
       assert.equal(await presaleFactory.isAdmin(admin.address), true);
       assert.equal(await customPresale.isAdmin(presaleFactory.address), true);
 
-      await presaleFactory
-        .connect(admin)
-        .setPresaleInfo(
-          tokenPresales[0],
-          ZERO_ADDRESS,
-          [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime + 1,
-          maxClaimPercentage - 1,
-          refundType + 1,
-          listingChoice + 1,
-          true,
-          true
-        );
+      pendingPresales = await presaleFactory.getPendingPresales();
+      assert.equal(pendingPresales.length, 1);
+      assert.equal((await customPresale.getPresaleInfo()).isApproved, false);
+
+      await presaleFactory.connect(admin).updatePresaleAndApprove(
+        {
+          ...presaleInfo,
+          router0: summitRouter.address,
+          presaleToken: presaleToken.address,
+          minBuy: parseEther(minBuy).add("1"),
+          maxBuy: parseEther(maxBuy).sub("1"),
+          softCap: parseEther(softCap).add("1"),
+          liquidityLockTime: liquidityLockTime + 1,
+          maxClaimPercentage: ((maxClaimPercentage - 1) * FEE_DENOMINATOR) / 100,
+          refundType: 1,
+          listingChoice: 2,
+          isWhiteListPhase: true,
+          isVestingEnabled: true,
+        },
+        {
+          ...feeInfo,
+          feePresaleToken: (2 * FEE_DENOMINATOR) / 100,
+          feeRaisedToken: (4 * FEE_DENOMINATOR) / 100,
+          emergencyWithdrawFee: (1 * FEE_DENOMINATOR) / 100,
+        },
+        tokenPresales[0],
+        {
+          gasLimit: 30000000,
+        }
+      );
+      pendingPresales = await presaleFactory.getPendingPresales();
+      assert.equal(pendingPresales.length, 0);
 
       const updatedPresaleInfo = await customPresale.getPresaleInfo();
+      const updatedfeeInfo = await customPresale.getFeeInfo();
+      assert.equal(updatedPresaleInfo.isApproved, true);
 
       assert.equal(updatedPresaleInfo.minBuy.toString(), parseEther(minBuy).add("1").toString());
-      assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).add("1").toString());
+      assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).sub("1").toString());
       assert.equal(updatedPresaleInfo.softCap.toString(), parseEther(softCap).add("1").toString());
       assert.equal(updatedPresaleInfo.liquidityLockTime.toString(), (liquidityLockTime + 1).toString());
       assert.equal(updatedPresaleInfo.maxClaimPercentage.toString(), (1000000000 - 10000000).toString());
       assert.equal(updatedPresaleInfo.refundType.toString(), "1");
-      assert.equal(updatedPresaleInfo.listingChoice.toString(), "1");
+      assert.equal(updatedPresaleInfo.listingChoice.toString(), "2");
       assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
       assert.equal(updatedPresaleInfo.isVestingEnabled, true);
-    });
-
-    it("should be reverted, if presale not in pending presales does", async () => {
-      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
-      let pendingPresales = await presaleFactory.getPendingPresales();
-      assert.equal(pendingPresales.length, 1);
-
-      await presaleFactory.connect(admin).approvePresales(tokenPresales);
-      pendingPresales = await presaleFactory.getPendingPresales();
-
-      assert.equal(pendingPresales.length, 0);
-      await expect(
-        presaleFactory
-          .connect(admin)
-          .setPresaleInfo(
-            tokenPresales[0],
-            ZERO_ADDRESS,
-            [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime + 1,
-            maxClaimPercentage - 1,
-            refundType + 1,
-            listingChoice + 1,
-            true,
-            true
-          )
-      ).to.be.revertedWith("Presale not in pending presales.");
+      assert.equal(updatedfeeInfo.emergencyWithdrawFee.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
+      assert.equal(updatedfeeInfo.feePresaleToken.toString(), ((2 * FEE_DENOMINATOR) / 100).toString());
+      assert.equal(updatedfeeInfo.feeRaisedToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
     });
   });
 
@@ -842,7 +819,7 @@ describe("SummitFactoryPresale", () => {
       let pendingPresales = await presaleFactory.getPendingPresales();
       assert.equal(pendingPresales.length, 1);
 
-      await presaleFactory.connect(admin).approvePresales(tokenPresales);
+      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
       pendingPresales = await presaleFactory.getPendingPresales();
 
       assert.equal(pendingPresales.length, 0);

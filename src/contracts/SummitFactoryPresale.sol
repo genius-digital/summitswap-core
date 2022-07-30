@@ -105,6 +105,8 @@ contract SummitFactoryPresale is Ownable {
   }
 
   function removeFromPending(address _address) private {
+    approvedIndex[_address] = approvedPresales.length;
+    approvedPresales.push(_address);
     uint256 index = pendingIndex[_address];
     if (pendingPresales[index] == _address) {
       pendingIndex[pendingPresales[index]] = 0;
@@ -114,16 +116,10 @@ contract SummitFactoryPresale is Ownable {
     }
   }
 
-  function approvePresales(address[] memory addresses) external isAdminOrOwner {
-    for (uint256 index = 0; index < addresses.length; index++) {
-      address _address = addresses[index];
-      if (pendingPresales.length > 0 && pendingPresales[pendingIndex[_address]] == _address)
-        if (approvedPresales.length == 0 || (approvedIndex[_address] == 0 && _address != approvedPresales[0])) {
-          approvedIndex[_address] = approvedPresales.length;
-          approvedPresales.push(_address);
-          removeFromPending(_address);
-          ISummitCustomPresale(_address).approvePresale();
-        }
+  function approvePresale(address _address) external isAdminOrOwner presalePending(_address) {
+    if (approvedPresales.length == 0 || (approvedIndex[_address] == 0 && _address != approvedPresales[0])) {
+      removeFromPending(_address);
+      ISummitCustomPresale(_address).approvePresale();
     }
   }
 
@@ -147,51 +143,53 @@ contract SummitFactoryPresale is Ownable {
     libraryAddress = _libraryAddress;
   }
 
-  function setFeeInfo(
-    uint256 feeRaisedToken,
-    uint256 feePresaleToken,
-    uint256 emergencyWithdrawFee,
-    address raisedTokenAddress,
-    address presaleAddress
-  ) external isAdminOrOwner presalePending(presaleAddress) {
-    ISummitCustomPresale(presaleAddress).setFeeInfo(
-      feeRaisedToken,
-      feePresaleToken,
-      emergencyWithdrawFee,
-      raisedTokenAddress
+  function updatePresaleAndApprove(
+    PresaleInfo memory _presale,
+    FeeInfo memory _feeInfo,
+    address _presaleAddress
+  ) external isAdminOrOwner presalePending(_presaleAddress) {
+    PresaleInfo memory presale = ISummitCustomPresale(_presaleAddress).getPresaleInfo();
+    require(!presale.isApproved, "Presale is approved");
+    require(_presale.presaleToken == presale.presaleToken, "Presale token should be same");
+    require(_presale.presalePrice == presale.presalePrice, "Presale price should be same");
+    require(_presale.listingPrice == presale.listingPrice, "listingPrice should be same");
+    require(_presale.hardCap == presale.hardCap, "hardCap token should be same");
+    require(_presale.liquidityPercentage == presale.liquidityPercentage, "liquidityPercentage token should be same");
+    require(_presale.startPresaleTime >= presale.startPresaleTime, "startPresaleTime >= set startPresaleTime");
+    require(_presale.endPresaleTime > _presale.startPresaleTime, "endPresaleTime >= startPresaleTime");
+    require(
+      _presale.softCap >= (presale.hardCap * 50) / 100 && _presale.softCap <= presale.hardCap,
+      "50% of hardcap <= softcap <= hardcap"
     );
-  }
-
-  function setPresaleInfo(
-    address _presale,
-    address _pairToken,
-    uint256[3] memory _bnbAmounts, // minBuy, maxBuy, softcap
-    uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
-    uint256 _liquidityLockTime,
-    uint256 _maxClaimPercentage,
-    uint8 _refundType,
-    uint8 _listingChoice,
-    bool _isWhiteListPhase,
-    bool _isVestingEnabled
-  ) external isAdminOrOwner presalePending(_presale) {
-    require(_presaleTimeDetails[2] >= 1 && _presaleTimeDetails[2] <= 31, "claimIntervalDay should be between 1 & 31");
-    require(_presaleTimeDetails[2] <= 23, "claimIntervalHour should be between 0 & 23");
-    require(_bnbAmounts[0] < _bnbAmounts[1], "MinBuy should be less than maxBuy");
-    require(_maxClaimPercentage <= 100, "maxClaimPercentage should be between 0 & 100");
-    require(_refundType <= 1, "refundType should be between 0 or 1");
-    require(_listingChoice <= 3, "listingChoice should be between 0 & 3");
-
-    ISummitCustomPresale(_presale).setPresaleInfo(
-      _pairToken,
-      _bnbAmounts,
-      _presaleTimeDetails,
-      _liquidityLockTime,
-      _maxClaimPercentage,
-      _refundType,
-      _listingChoice,
-      _isWhiteListPhase,
-      _isVestingEnabled
+    require(
+      _presale.claimIntervalDay >= 1 && _presale.claimIntervalDay <= 31,
+      "claimIntervalDay should be between 1 & 31"
     );
+    require(_presale.minBuy < _presale.maxBuy, "MinBuy should be less than maxBuy");
+    require(_presale.maxBuy <= _presale.hardCap, "maxBuy should be less than hardCap");
+    require(_presale.claimIntervalHour <= 23, "claimIntervalHour should be between 0 & 23");
+    require(_presale.totalBought == 0);
+    require(
+      _presale.maxClaimPercentage >= 10000000 && _presale.maxClaimPercentage <= 1000000000,
+      "maxClaimPercentage should be between 1% & 100%"
+    );
+    require(
+      _feeInfo.emergencyWithdrawFee >= 10000000 && _feeInfo.emergencyWithdrawFee <= 1000000000,
+      "emergencyWithdrawFee should be between 1% & 100%"
+    );
+    require(
+      _feeInfo.feePresaleToken > 9999999 && _feeInfo.feePresaleToken < _presale.liquidityPercentage,
+      "fee presale Token should be less than liquidityPercentage"
+    );
+    require(
+      _feeInfo.feeRaisedToken > 9999999 && _feeInfo.feePresaleToken < _presale.liquidityPercentage,
+      "fee raised Token should be less than liquidityPercentage"
+    );
+    require(_presale.refundType <= 1, "refundType should be between 0 or 1");
+    require(_presale.listingChoice <= 3, "listingChoice should be between 0 & 3");
+
+    ISummitCustomPresale(_presaleAddress).updatePresaleAndApprove(_presale, _feeInfo);
+    removeFromPending(_presaleAddress);
   }
 
   function assignAdminsPresale(address[] calldata _admins, address _presale)

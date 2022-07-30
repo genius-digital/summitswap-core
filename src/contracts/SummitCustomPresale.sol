@@ -61,6 +61,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   }
 
   modifier canBuy() {
+    require(presale.isApproved, "Presale not Approved");
     require(block.timestamp >= presale.startPresaleTime, "Presale Not started Yet");
     require(block.timestamp < presale.endPresaleTime, "Presale Ended");
 
@@ -507,52 +508,13 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     IERC20(feeInfo.raisedTokenAddress).transfer(_receiver, _amount);
   }
 
-  function setPresaleInfo(
-    address _pairToken,
-    uint256[3] memory _bnbAmounts, // minBuy, maxBuy, softcap
-    uint256[4] memory _presaleTimeDetails, // startPresaleTime, endPresaleTime, claimIntervalDay, claimIntervalHour
-    uint256 _liquidityLockTime,
-    uint256 _maxClaimPercentage,
-    uint8 _refundType,
-    uint8 _listingChoice,
-    bool _isWhiteListPhase,
-    bool _isVestingEnabled
-  ) external onlyAdmin {
-    require(!presale.isApproved, "Presale is Approved");
-    require(_presaleTimeDetails[0] >= presale.startPresaleTime, "Presale startTime >= start time set by owner");
-    require(_presaleTimeDetails[1] > _presaleTimeDetails[0], "Presale End time > presale start time");
-    require(
-      _bnbAmounts[2] >= (presale.hardCap * 50) / 100 && _bnbAmounts[2] <= presale.hardCap,
-      "50% of hardcap <= softcap <= hardcap"
-    );
-
-    presale.pairToken = _pairToken;
-    presale.liquidityLockTime = _liquidityLockTime;
-    presale.minBuy = _bnbAmounts[0];
-    presale.maxBuy = _bnbAmounts[1];
-    presale.softCap = _bnbAmounts[2];
-    presale.startPresaleTime = _presaleTimeDetails[0];
-    presale.endPresaleTime = _presaleTimeDetails[1];
-    presale.claimIntervalDay = _presaleTimeDetails[2];
-    presale.claimIntervalHour = _presaleTimeDetails[3];
-    presale.maxClaimPercentage = (_maxClaimPercentage * FEE_DENOMINATOR) / 100;
-    presale.refundType = _refundType;
-    presale.listingChoice = _listingChoice;
-    presale.isWhiteListPhase = _isWhiteListPhase;
-    presale.isVestingEnabled = _isVestingEnabled;
-  }
-
-  function setFeeInfo(
-    uint256 feeRaisedToken,
-    uint256 feePresaleToken,
-    uint256 emergencyWithdrawFee,
-    address raisedTokenAddress
-  ) external onlyAdmin {
-    require(!presale.isApproved, "Presale is Approved");
-    feeInfo.feeRaisedToken = feeRaisedToken;
-    feeInfo.feePresaleToken = feePresaleToken;
-    feeInfo.emergencyWithdrawFee = emergencyWithdrawFee;
-    feeInfo.raisedTokenAddress = raisedTokenAddress; // address(0) native coin
+  function updatePresaleAndApprove(PresaleInfo memory _presale, FeeInfo memory _feeInfo) external onlyAdmin {
+    presale = _presale;
+    feeInfo = _feeInfo;
+    presale.isApproved = true;
+    presale.isPresaleCancelled = false;
+    presale.isClaimPhase = false;
+    presale.isWithdrawCancelledTokens = false;
   }
 
   function approvePresale() external onlyAdmin {

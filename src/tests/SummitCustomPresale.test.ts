@@ -152,6 +152,7 @@ describe("SummitCustomPresale", () => {
     const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
     const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
     customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+    await presaleFactory.connect(admin).approvePresale(customPresale.address);
   });
 
   describe("owner", () => {
@@ -589,6 +590,7 @@ describe("SummitCustomPresale", () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresales[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -698,6 +700,7 @@ describe("SummitCustomPresale", () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresales[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
       await raisedToken.connect(otherWallet2).approve(customPresale.address, MAX_VALUE);
       const snapshot = await timeMachine.takeSnapshot();
@@ -767,6 +770,7 @@ describe("SummitCustomPresale", () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresales[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -814,6 +818,8 @@ describe("SummitCustomPresale", () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresales[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
+
       await raisedToken.connect(otherWallet2).approve(customPresale.address, MAX_VALUE);
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -993,6 +999,7 @@ describe("SummitCustomPresale", () => {
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+        await presaleFactory.connect(admin).approvePresale(customPresale.address);
       });
 
       it("should have 0 availableTokenToClaim, if claim phase not started", async () => {
@@ -1284,6 +1291,7 @@ describe("SummitCustomPresale", () => {
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
       const snapshot = await timeMachine.takeSnapshot();
       const snapshotId = snapshot.result;
@@ -1459,6 +1467,8 @@ describe("SummitCustomPresale", () => {
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
+
       await raisedToken.connect(otherWallet1).approve(customPresale.address, MAX_VALUE);
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -1508,6 +1518,8 @@ describe("SummitCustomPresale", () => {
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
+
       await raisedToken.connect(otherWallet1).approve(customPresale.address, MAX_VALUE);
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -1709,6 +1721,8 @@ describe("SummitCustomPresale", () => {
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
+
       const bigMaxBuy = parseEther(maxBuy);
       await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMaxBuy);
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
@@ -1794,6 +1808,7 @@ describe("SummitCustomPresale", () => {
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -1882,6 +1897,7 @@ describe("SummitCustomPresale", () => {
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+        await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
         const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
         await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -1940,6 +1956,7 @@ describe("SummitCustomPresale", () => {
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+        await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
         const bigMaxBuy = parseEther(maxBuy);
         await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMaxBuy);
@@ -2009,6 +2026,7 @@ describe("SummitCustomPresale", () => {
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+        await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
         const bigMaxBuy = parseEther(maxBuy);
         await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMaxBuy);
@@ -2095,34 +2113,11 @@ describe("SummitCustomPresale", () => {
           {
             value: createPresaleFee,
           }
-
-          // projectDetails,
-          // [
-          //   presaleToken.address,
-          //   raisedToken.address,
-          //   pairToken.address,
-          //   summitRouter.address,
-          //   summitRouter.address,
-          //   admin.address,
-          // ],
-          // [
-          //   parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          //   parseEther(presalePrice),
-          //   parseEther(listingPrice),
-          //   liquidityPrecentage,
-          //   maxClaimPercentage,
-          // ],
-          // [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
-          // [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
-          // [refundType, listingChoice],
-          // [isWhiteListPhase, isVestingEnabled],
-          // {
-          //   value: createPresaleFee,
-          // }
         );
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+        await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
         const bigMaxBuy = parseEther(maxBuy);
         await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMaxBuy);
@@ -2196,6 +2191,7 @@ describe("SummitCustomPresale", () => {
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+          await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
           const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
           await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -2250,6 +2246,7 @@ describe("SummitCustomPresale", () => {
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+          await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
           const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
           await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -2304,6 +2301,7 @@ describe("SummitCustomPresale", () => {
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+          await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
           const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
           await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -2378,6 +2376,7 @@ describe("SummitCustomPresale", () => {
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+          await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
           const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
           await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -2454,6 +2453,7 @@ describe("SummitCustomPresale", () => {
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+          await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
           const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
           await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -2547,116 +2547,137 @@ describe("SummitCustomPresale", () => {
     });
   });
 
-  describe("setPresaleInfo()", () => {
-    it("should be reverted, if msg.sender does not have ADMIN role", async () => {
-      assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
-      await expect(
-        customPresale
-          .connect(otherWallet1)
-          .setPresaleInfo(
-            ZERO_ADDRESS,
-            [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled
-          )
-      ).to.be.revertedWith("Only admin or defaultAdmin can call this function");
-    });
+  // describe("setPresaleInfo()", () => {
+  //   it("should be reverted, if msg.sender does not have ADMIN role", async () => {
+  //     assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
+  //     await expect(
+  //       customPresale
+  //         .connect(otherWallet1)
+  //         .setPresaleInfo(
+  //           ZERO_ADDRESS,
+  //           [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
+  //           [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+  //           liquidityLockTime,
+  //           maxClaimPercentage,
+  //           refundType,
+  //           listingChoice,
+  //           isWhiteListPhase,
+  //           isVestingEnabled
+  //         )
+  //     ).to.be.revertedWith("Only admin or defaultAdmin can call this function");
+  //   });
 
-    it("should be reverted, if presale is Approved", async () => {
-      await customPresale.connect(admin).approvePresale();
-      assert.equal((await customPresale.getPresaleInfo()).isApproved, true);
-      await expect(
-        customPresale
-          .connect(admin)
-          .setPresaleInfo(
-            ZERO_ADDRESS,
-            [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-            liquidityLockTime,
-            maxClaimPercentage,
-            refundType,
-            listingChoice,
-            isWhiteListPhase,
-            isVestingEnabled
-          )
-      ).to.be.revertedWith("Presale is Approved");
-    });
+  //   it("should be reverted, if presale is Approved", async () => {
+  //     await customPresale.connect(admin).approvePresale();
+  //     assert.equal((await customPresale.getPresaleInfo()).isApproved, true);
+  //     await expect(
+  //       customPresale
+  //         .connect(admin)
+  //         .setPresaleInfo(
+  //           ZERO_ADDRESS,
+  //           [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
+  //           [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+  //           liquidityLockTime,
+  //           maxClaimPercentage,
+  //           refundType,
+  //           listingChoice,
+  //           isWhiteListPhase,
+  //           isVestingEnabled
+  //         )
+  //     ).to.be.revertedWith("Presale is Approved");
+  //   });
 
-    it("should ADMIN be able to set fees to new fess", async () => {
-      await customPresale
-        .connect(admin)
-        .setPresaleInfo(
-          ZERO_ADDRESS,
-          [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-          liquidityLockTime + 1,
-          maxClaimPercentage - 1,
-          refundType + 1,
-          listingChoice + 1,
-          true,
-          true
-        );
+  //   it("should ADMIN be able to set fees to new fess", async () => {
+  //     await customPresale
+  //       .connect(admin)
+  //       .setPresaleInfo(
+  //         ZERO_ADDRESS,
+  //         [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
+  //         [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
+  //         liquidityLockTime + 1,
+  //         maxClaimPercentage - 1,
+  //         refundType + 1,
+  //         listingChoice + 1,
+  //         true,
+  //         true
+  //       );
 
-      const updatedPresaleInfo = await customPresale.getPresaleInfo();
+  //     const updatedPresaleInfo = await customPresale.getPresaleInfo();
 
-      assert.equal(updatedPresaleInfo.minBuy.toString(), parseEther(minBuy).add("1").toString());
-      assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).add("1").toString());
-      assert.equal(updatedPresaleInfo.softCap.toString(), parseEther(softCap).add("1").toString());
-      assert.equal(updatedPresaleInfo.liquidityLockTime.toString(), (liquidityLockTime + 1).toString());
-      assert.equal(updatedPresaleInfo.maxClaimPercentage.toString(), (1000000000 - 10000000).toString());
-      assert.equal(updatedPresaleInfo.refundType.toString(), "1");
-      assert.equal(updatedPresaleInfo.listingChoice.toString(), "1");
-      assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
-      assert.equal(updatedPresaleInfo.isVestingEnabled, true);
-    });
-  });
+  //     assert.equal(updatedPresaleInfo.minBuy.toString(), parseEther(minBuy).add("1").toString());
+  //     assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).add("1").toString());
+  //     assert.equal(updatedPresaleInfo.softCap.toString(), parseEther(softCap).add("1").toString());
+  //     assert.equal(updatedPresaleInfo.liquidityLockTime.toString(), (liquidityLockTime + 1).toString());
+  //     assert.equal(updatedPresaleInfo.maxClaimPercentage.toString(), (1000000000 - 10000000).toString());
+  //     assert.equal(updatedPresaleInfo.refundType.toString(), "1");
+  //     assert.equal(updatedPresaleInfo.listingChoice.toString(), "1");
+  //     assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
+  //     assert.equal(updatedPresaleInfo.isVestingEnabled, true);
+  //   });
+  // });
 
-  describe("setFeeInfo()", () => {
-    it("should be reverted, if msg.sender does not have ADMIN role", async () => {
-      assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
-      await expect(
-        customPresale
-          .connect(otherWallet1)
-          .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS)
-      ).to.be.revertedWith("Only admin or defaultAdmin can call this function");
-    });
+  // describe("setFeeInfo()", () => {
+  //   it("should be reverted, if msg.sender does not have ADMIN role", async () => {
+  //     assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
+  //     await expect(
+  //       customPresale
+  //         .connect(otherWallet1)
+  //         .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS)
+  //     ).to.be.revertedWith("Only admin or defaultAdmin can call this function");
+  //   });
 
-    it("should be reverted, if presale is Approved", async () => {
-      await customPresale.connect(admin).approvePresale();
-      assert.equal((await customPresale.getPresaleInfo()).isApproved, true);
-      await expect(
-        customPresale
-          .connect(admin)
-          .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS)
-      ).to.be.revertedWith("Presale is Approved");
-    });
+  //   it("should be reverted, if presale is Approved", async () => {
+  //     await customPresale.connect(admin).approvePresale();
+  //     assert.equal((await customPresale.getPresaleInfo()).isApproved, true);
+  //     await expect(
+  //       customPresale
+  //         .connect(admin)
+  //         .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS)
+  //     ).to.be.revertedWith("Presale is Approved");
+  //   });
 
-    it("should ADMIN be able to set fees to new fess", async () => {
-      const newFeeRaisedToken = BigNumber.from(FEE_RAISED_TOKEN).add("1");
-      const newFeePresaleToken = BigNumber.from(FEE_PRESALE_TOKEN).add("1");
-      const newEmergencyWithdrawFee = BigNumber.from(EMERGENCY_WITHDRAW_FEE).add("1");
-      const newRaisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
+  //   it("should ADMIN be able to set fees to new fess", async () => {
+  //     const newFeeRaisedToken = BigNumber.from(FEE_RAISED_TOKEN).add("1");
+  //     const newFeePresaleToken = BigNumber.from(FEE_PRESALE_TOKEN).add("1");
+  //     const newEmergencyWithdrawFee = BigNumber.from(EMERGENCY_WITHDRAW_FEE).add("1");
+  //     const newRaisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
 
-      await customPresale
-        .connect(admin)
-        .setFeeInfo(newFeeRaisedToken, newFeePresaleToken, newEmergencyWithdrawFee, newRaisedToken.address);
+  //     await customPresale
+  //       .connect(admin)
+  //       .setFeeInfo(newFeeRaisedToken, newFeePresaleToken, newEmergencyWithdrawFee, newRaisedToken.address);
 
-      const feeInfo = await customPresale.getFeeInfo();
+  //     const feeInfo = await customPresale.getFeeInfo();
 
-      assert.equal(newFeeRaisedToken.toString(), feeInfo.feeRaisedToken.toString());
-      assert.equal(newFeePresaleToken.toString(), feeInfo.feePresaleToken.toString());
-      assert.equal(newEmergencyWithdrawFee.toString(), feeInfo.emergencyWithdrawFee.toString());
-      assert.equal(newRaisedToken.address, feeInfo.raisedTokenAddress);
-    });
-  });
+  //     assert.equal(newFeeRaisedToken.toString(), feeInfo.feeRaisedToken.toString());
+  //     assert.equal(newFeePresaleToken.toString(), feeInfo.feePresaleToken.toString());
+  //     assert.equal(newEmergencyWithdrawFee.toString(), feeInfo.emergencyWithdrawFee.toString());
+  //     assert.equal(newRaisedToken.address, feeInfo.raisedTokenAddress);
+  //   });
+  // });
 
   describe("approvePresale()", () => {
     it("should ADMIN be able to approve presale", async () => {
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      await presaleToken.approve(presaleFactory.address, MAX_VALUE);
+      await presaleFactory.connect(owner).createPresale(
+        projectDetails,
+        {
+          ...presaleInfo,
+          presaleToken: presaleToken.address,
+          router0: summitRouter.address,
+          router1: summitRouter.address,
+        },
+        feeInfo,
+        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+        {
+          value: createPresaleFee,
+          gasLimit: 30000000,
+        }
+      );
+      const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
+      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+
       assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
       await expect(customPresale.connect(otherWallet1).approvePresale()).to.be.revertedWith(
         "Only admin or defaultAdmin can call this function"
@@ -2736,8 +2757,10 @@ describe("SummitCustomPresale", () => {
 
     it("should be reverted, if withdrawal with otherWallet", async () => {
       await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
+
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuy),
+        gasLimit: 3000000,
       });
       await expect(
         customPresale.connect(otherOwner).withdrawBNBOwner(parseEther(maxBuy), otherWallet2.address)
@@ -2801,6 +2824,7 @@ describe("SummitCustomPresale", () => {
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
       await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMaxBuy);
       const snapshot = await timeMachine.takeSnapshot();
@@ -2881,6 +2905,7 @@ describe("SummitCustomPresale", () => {
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
+      await presaleFactory.connect(admin).approvePresale(customPresale.address);
 
       const snapshot = await timeMachine.takeSnapshot();
       snapshotId = snapshot.result;

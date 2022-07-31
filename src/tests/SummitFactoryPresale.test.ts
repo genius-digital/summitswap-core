@@ -1147,18 +1147,10 @@ describe("SummitFactoryPresale", () => {
       assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), true);
     });
 
-    it("should be reverted, if presale not in pending presales does", async () => {
-      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
-      let pendingPresales = await presaleFactory.getPendingPresales();
-      assert.equal(pendingPresales.length, 1);
-
-      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
-      pendingPresales = await presaleFactory.getPendingPresales();
-
-      assert.equal(pendingPresales.length, 0);
+    it("should be reverted, if presale does not exist", async () => {
       await expect(
-        presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], tokenPresales[0])
-      ).to.be.revertedWith("Presale not in pending presales.");
+        presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], otherWallet1.address)
+      ).to.be.revertedWith("Presale does not exist");
     });
   });
 
@@ -1194,6 +1186,12 @@ describe("SummitFactoryPresale", () => {
       assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), true);
       await presaleFactory.connect(owner).revokeAdminsPresale([otherWallet1.address], tokenPresale);
       assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), false);
+    });
+
+    it("should be reverted, if presale does not exist", async () => {
+      await expect(
+        presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], otherWallet1.address)
+      ).to.be.revertedWith("Presale does not exist");
     });
   });
 });

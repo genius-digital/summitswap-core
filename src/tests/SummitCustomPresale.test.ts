@@ -2547,113 +2547,111 @@ describe("SummitCustomPresale", () => {
     });
   });
 
-  // describe("setPresaleInfo()", () => {
-  //   it("should be reverted, if msg.sender does not have ADMIN role", async () => {
-  //     assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
-  //     await expect(
-  //       customPresale
-  //         .connect(otherWallet1)
-  //         .setPresaleInfo(
-  //           ZERO_ADDRESS,
-  //           [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-  //           [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-  //           liquidityLockTime,
-  //           maxClaimPercentage,
-  //           refundType,
-  //           listingChoice,
-  //           isWhiteListPhase,
-  //           isVestingEnabled
-  //         )
-  //     ).to.be.revertedWith("Only admin or defaultAdmin can call this function");
-  //   });
+  describe("updatePresaleAndApprove()", () => {
+    beforeEach(async () => {
+      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+      await presaleToken.approve(presaleFactory.address, MAX_VALUE);
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
+          feeInfo,
+          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+          {
+            value: createPresaleFee,
+          }
+        );
+    });
 
-  //   it("should be reverted, if presale is Approved", async () => {
-  //     await customPresale.connect(admin).approvePresale();
-  //     assert.equal((await customPresale.getPresaleInfo()).isApproved, true);
-  //     await expect(
-  //       customPresale
-  //         .connect(admin)
-  //         .setPresaleInfo(
-  //           ZERO_ADDRESS,
-  //           [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-  //           [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-  //           liquidityLockTime,
-  //           maxClaimPercentage,
-  //           refundType,
-  //           listingChoice,
-  //           isWhiteListPhase,
-  //           isVestingEnabled
-  //         )
-  //     ).to.be.revertedWith("Presale is Approved");
-  //   });
+    it("should be reverted, if presale already approved", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
 
-  //   it("should ADMIN be able to set fees to new fess", async () => {
-  //     await customPresale
-  //       .connect(admin)
-  //       .setPresaleInfo(
-  //         ZERO_ADDRESS,
-  //         [parseEther(minBuy).add("1"), parseEther(maxBuy).add("1"), parseEther(softCap).add("1")],
-  //         [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval],
-  //         liquidityLockTime + 1,
-  //         maxClaimPercentage - 1,
-  //         refundType + 1,
-  //         listingChoice + 1,
-  //         true,
-  //         true
-  //       );
+      assert.equal(await customPresale.isAdmin(admin.address), false);
+      await presaleFactory.connect(owner).assignAdminsPresale([admin.address], customPresale.address);
+      assert.equal(await customPresale.isAdmin(admin.address), true);
 
-  //     const updatedPresaleInfo = await customPresale.getPresaleInfo();
+      await expect(
+        customPresale
+          .connect(admin)
+          .updatePresaleAndApprove(
+            { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
+            feeInfo
+          )
+      ).to.be.revertedWith("Presale is approved");
+    });
 
-  //     assert.equal(updatedPresaleInfo.minBuy.toString(), parseEther(minBuy).add("1").toString());
-  //     assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).add("1").toString());
-  //     assert.equal(updatedPresaleInfo.softCap.toString(), parseEther(softCap).add("1").toString());
-  //     assert.equal(updatedPresaleInfo.liquidityLockTime.toString(), (liquidityLockTime + 1).toString());
-  //     assert.equal(updatedPresaleInfo.maxClaimPercentage.toString(), (1000000000 - 10000000).toString());
-  //     assert.equal(updatedPresaleInfo.refundType.toString(), "1");
-  //     assert.equal(updatedPresaleInfo.listingChoice.toString(), "1");
-  //     assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
-  //     assert.equal(updatedPresaleInfo.isVestingEnabled, true);
-  //   });
-  // });
+    it("should admin be only able to set updatePresaleAndApprove", async () => {
+      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
+      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
+      customPresale = SummitCustomPresale.attach(tokenPresales[0]);
 
-  // describe("setFeeInfo()", () => {
-  //   it("should be reverted, if msg.sender does not have ADMIN role", async () => {
-  //     assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
-  //     await expect(
-  //       customPresale
-  //         .connect(otherWallet1)
-  //         .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS)
-  //     ).to.be.revertedWith("Only admin or defaultAdmin can call this function");
-  //   });
+      await expect(
+        customPresale.connect(otherWallet1).updatePresaleAndApprove(
+          {
+            ...presaleInfo,
+            router0: summitRouter.address,
+            presaleToken: presaleToken.address,
+            minBuy: parseEther(minBuy).add("1"),
+            maxBuy: parseEther(maxBuy).add("1"),
+            softCap: parseEther(softCap).add("1"),
+          },
+          feeInfo
+        )
+      ).to.be.revertedWith("Only admin or defaultAdmin can call this function");
 
-  //   it("should be reverted, if presale is Approved", async () => {
-  //     await customPresale.connect(admin).approvePresale();
-  //     assert.equal((await customPresale.getPresaleInfo()).isApproved, true);
-  //     await expect(
-  //       customPresale
-  //         .connect(admin)
-  //         .setFeeInfo(FEE_RAISED_TOKEN, FEE_PRESALE_TOKEN, EMERGENCY_WITHDRAW_FEE, ZERO_ADDRESS)
-  //     ).to.be.revertedWith("Presale is Approved");
-  //   });
+      assert.equal(await customPresale.isAdmin(admin.address), false);
+      assert.equal(await presaleFactory.isAdmin(admin.address), true);
+      await presaleFactory.connect(owner).assignAdminsPresale([admin.address], customPresale.address);
+      assert.equal(await customPresale.isAdmin(admin.address), true);
 
-  //   it("should ADMIN be able to set fees to new fess", async () => {
-  //     const newFeeRaisedToken = BigNumber.from(FEE_RAISED_TOKEN).add("1");
-  //     const newFeePresaleToken = BigNumber.from(FEE_PRESALE_TOKEN).add("1");
-  //     const newEmergencyWithdrawFee = BigNumber.from(EMERGENCY_WITHDRAW_FEE).add("1");
-  //     const newRaisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
+      assert.equal((await customPresale.getPresaleInfo()).isApproved, false);
 
-  //     await customPresale
-  //       .connect(admin)
-  //       .setFeeInfo(newFeeRaisedToken, newFeePresaleToken, newEmergencyWithdrawFee, newRaisedToken.address);
+      await customPresale.connect(admin).updatePresaleAndApprove(
+        {
+          ...presaleInfo,
+          router0: summitRouter.address,
+          presaleToken: presaleToken.address,
+          minBuy: parseEther(minBuy).add("1"),
+          maxBuy: parseEther(maxBuy).sub("1"),
+          softCap: parseEther(softCap).add("1"),
+          liquidityLockTime: liquidityLockTime + 1,
+          maxClaimPercentage: ((maxClaimPercentage - 1) * FEE_DENOMINATOR) / 100,
+          refundType: 1,
+          listingChoice: 2,
+          isWhiteListPhase: true,
+          isVestingEnabled: true,
+        },
+        {
+          ...feeInfo,
+          feePresaleToken: (2 * FEE_DENOMINATOR) / 100,
+          feeRaisedToken: (4 * FEE_DENOMINATOR) / 100,
+          emergencyWithdrawFee: (1 * FEE_DENOMINATOR) / 100,
+        },
+        {
+          gasLimit: 30000000,
+        }
+      );
 
-  //     const feeInfo = await customPresale.getFeeInfo();
+      const updatedPresaleInfo = await customPresale.getPresaleInfo();
+      const updatedfeeInfo = await customPresale.getFeeInfo();
+      assert.equal(updatedPresaleInfo.isApproved, true);
 
-  //     assert.equal(newFeeRaisedToken.toString(), feeInfo.feeRaisedToken.toString());
-  //     assert.equal(newFeePresaleToken.toString(), feeInfo.feePresaleToken.toString());
-  //     assert.equal(newEmergencyWithdrawFee.toString(), feeInfo.emergencyWithdrawFee.toString());
-  //     assert.equal(newRaisedToken.address, feeInfo.raisedTokenAddress);
-  //   });
-  // });
+      assert.equal(updatedPresaleInfo.minBuy.toString(), parseEther(minBuy).add("1").toString());
+      assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).sub("1").toString());
+      assert.equal(updatedPresaleInfo.softCap.toString(), parseEther(softCap).add("1").toString());
+      assert.equal(updatedPresaleInfo.liquidityLockTime.toString(), (liquidityLockTime + 1).toString());
+      assert.equal(updatedPresaleInfo.maxClaimPercentage.toString(), (1000000000 - 10000000).toString());
+      assert.equal(updatedPresaleInfo.refundType.toString(), "1");
+      assert.equal(updatedPresaleInfo.listingChoice.toString(), "2");
+      assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
+      assert.equal(updatedPresaleInfo.isVestingEnabled, true);
+      assert.equal(updatedfeeInfo.emergencyWithdrawFee.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
+      assert.equal(updatedfeeInfo.feePresaleToken.toString(), ((2 * FEE_DENOMINATOR) / 100).toString());
+      assert.equal(updatedfeeInfo.feeRaisedToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
+    });
+  });
 
   describe("approvePresale()", () => {
     it("should ADMIN be able to approve presale", async () => {

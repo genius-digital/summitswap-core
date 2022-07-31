@@ -684,26 +684,6 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("Presale not in pending presales.");
     });
 
-    it("should be reverted, if presale not in pending presales does", async () => {
-      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
-      let pendingPresales = await presaleFactory.getPendingPresales();
-      assert.equal(pendingPresales.length, 1);
-
-      await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
-      pendingPresales = await presaleFactory.getPendingPresales();
-
-      assert.equal(pendingPresales.length, 0);
-      await expect(
-        presaleFactory
-          .connect(admin)
-          .updatePresaleAndApprove(
-            { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
-            feeInfo,
-            tokenPresales[0]
-          )
-      ).to.be.revertedWith("Presale not in pending presales.");
-    });
-
     it("should be reverted, if presale token not same", async () => {
       const presaleToken2 = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);

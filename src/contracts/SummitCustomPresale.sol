@@ -509,6 +509,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   }
 
   function updatePresaleAndApprove(PresaleInfo memory _presale, FeeInfo memory _feeInfo) external onlyAdmin {
+    require(!presale.isApproved, "Presale is approved");
     presale = _presale;
     feeInfo = _feeInfo;
     presale.isApproved = true;

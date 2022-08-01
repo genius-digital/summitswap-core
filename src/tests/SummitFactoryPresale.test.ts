@@ -113,7 +113,7 @@ describe("SummitFactoryPresale", () => {
     raisedTokenAddress: ZERO_ADDRESS,
     feeRaisedToken: FEE_RAISED_TOKEN,
     feePresaleToken: FEE_PRESALE_TOKEN,
-    emergencyWithdrawFee: EMERGENCY_WITHDRAW_FEE,
+    feeEmergencyWithdraw: EMERGENCY_WITHDRAW_FEE,
   };
 
   describe("owner", () => {
@@ -928,7 +928,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("maxClaimPercentage should be between 1% & 100%");
     });
 
-    it("should be reverted, if emergencyWithdrawFee not valid", async () => {
+    it("should be reverted, if feeEmergencyWithdraw not valid", async () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       await expect(
         presaleFactory.connect(admin).updatePresaleAndApprove(
@@ -937,10 +937,10 @@ describe("SummitFactoryPresale", () => {
             router0: summitRouter.address,
             presaleToken: presaleToken.address,
           },
-          { ...feeInfo, emergencyWithdrawFee: (0.9 * FEE_DENOMINATOR) / 100 },
+          { ...feeInfo, feeEmergencyWithdraw: (0.9 * FEE_DENOMINATOR) / 100 },
           tokenPresales[0]
         )
-      ).to.be.revertedWith("emergencyWithdrawFee should be between 1% & 100%");
+      ).to.be.revertedWith("feeEmergencyWithdraw should be between 1% & 100%");
 
       await expect(
         presaleFactory.connect(admin).updatePresaleAndApprove(
@@ -949,10 +949,10 @@ describe("SummitFactoryPresale", () => {
             router0: summitRouter.address,
             presaleToken: presaleToken.address,
           },
-          { ...feeInfo, emergencyWithdrawFee: (0.9 * FEE_DENOMINATOR) / 100 },
+          { ...feeInfo, feeEmergencyWithdraw: (0.9 * FEE_DENOMINATOR) / 100 },
           tokenPresales[0]
         )
-      ).to.be.revertedWith("emergencyWithdrawFee should be between 1% & 100%");
+      ).to.be.revertedWith("feeEmergencyWithdraw should be between 1% & 100%");
     });
 
     it("should be reverted, if feeRaisedToken not valid", async () => {
@@ -1065,7 +1065,7 @@ describe("SummitFactoryPresale", () => {
           ...feeInfo,
           feePresaleToken: (2 * FEE_DENOMINATOR) / 100,
           feeRaisedToken: (4 * FEE_DENOMINATOR) / 100,
-          emergencyWithdrawFee: (1 * FEE_DENOMINATOR) / 100,
+          feeEmergencyWithdraw: (1 * FEE_DENOMINATOR) / 100,
         },
         tokenPresales[0],
         {
@@ -1091,7 +1091,7 @@ describe("SummitFactoryPresale", () => {
       assert.equal(updatedPresaleInfo.listingChoice.toString(), "2");
       assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
       assert.equal(updatedPresaleInfo.isVestingEnabled, true);
-      assert.equal(updatedfeeInfo.emergencyWithdrawFee.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
+      assert.equal(updatedfeeInfo.feeEmergencyWithdraw.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePresaleToken.toString(), ((2 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feeRaisedToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
     });

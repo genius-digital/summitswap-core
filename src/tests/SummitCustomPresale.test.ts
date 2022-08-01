@@ -110,7 +110,7 @@ describe("SummitCustomPresale", () => {
     raisedTokenAddress: ZERO_ADDRESS,
     feeRaisedToken: FEE_RAISED_TOKEN,
     feePresaleToken: FEE_PRESALE_TOKEN,
-    emergencyWithdrawFee: EMERGENCY_WITHDRAW_FEE,
+    feeEmergencyWithdraw: EMERGENCY_WITHDRAW_FEE,
   };
 
   beforeEach(async () => {
@@ -191,9 +191,9 @@ describe("SummitCustomPresale", () => {
       feeInfo = await customPresale.getFeeInfo();
     });
 
-    it("should be emergencyWithdrawFee", () => {
-      const emergencyWithdrawFee = feeInfo.emergencyWithdrawFee;
-      assert.equal(EMERGENCY_WITHDRAW_FEE.toString(), emergencyWithdrawFee.toString());
+    it("should be feeEmergencyWithdraw", () => {
+      const feeEmergencyWithdraw = feeInfo.feeEmergencyWithdraw;
+      assert.equal(EMERGENCY_WITHDRAW_FEE.toString(), feeEmergencyWithdraw.toString());
     });
 
     it("should be FEE_RAISED_TOKEN", () => {
@@ -2627,7 +2627,7 @@ describe("SummitCustomPresale", () => {
           ...feeInfo,
           feePresaleToken: (2 * FEE_DENOMINATOR) / 100,
           feeRaisedToken: (4 * FEE_DENOMINATOR) / 100,
-          emergencyWithdrawFee: (1 * FEE_DENOMINATOR) / 100,
+          feeEmergencyWithdraw: (1 * FEE_DENOMINATOR) / 100,
         },
         {
           gasLimit: 30000000,
@@ -2650,7 +2650,7 @@ describe("SummitCustomPresale", () => {
       assert.equal(updatedPresaleInfo.listingChoice.toString(), "2");
       assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
       assert.equal(updatedPresaleInfo.isVestingEnabled, true);
-      assert.equal(updatedfeeInfo.emergencyWithdrawFee.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
+      assert.equal(updatedfeeInfo.feeEmergencyWithdraw.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePresaleToken.toString(), ((2 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feeRaisedToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
     });

@@ -173,8 +173,8 @@ contract SummitFactoryPresale is Ownable {
       "maxClaimPercentage should be between 1% & 100%"
     );
     require(
-      _feeInfo.emergencyWithdrawFee >= 10000000 && _feeInfo.emergencyWithdrawFee <= 1000000000,
-      "emergencyWithdrawFee should be between 1% & 100%"
+      _feeInfo.feeEmergencyWithdraw >= 10000000 && _feeInfo.feeEmergencyWithdraw <= 1000000000,
+      "feeEmergencyWithdraw should be between 1% & 100%"
     );
     require(
       _feeInfo.feePresaleToken < _presale.liquidityPercentage,

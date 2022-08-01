@@ -377,7 +377,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     require(!presale.isPresaleCancelled, "Presale has been cancelled");
     require(!presale.isClaimPhase, "Presale claim phase");
 
-    uint256 feeAmount = (bought[msg.sender] * feeInfo.emergencyWithdrawFee) / FEE_DENOMINATOR;
+    uint256 feeAmount = (bought[msg.sender] * feeInfo.feeEmergencyWithdraw) / FEE_DENOMINATOR;
 
     if (feeInfo.raisedTokenAddress == address(0)) {
       payable(msg.sender).transfer(bought[msg.sender] - feeAmount);

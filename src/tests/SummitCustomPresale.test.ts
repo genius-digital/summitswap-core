@@ -1031,9 +1031,6 @@ describe("SummitCustomPresale", () => {
     });
 
     it("should be reverted if claim more than maxClaim in this interval", async () => {
-      const snapshot = await timeMachine.takeSnapshot();
-      snapshotId = snapshot.result;
-
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
 
@@ -1074,9 +1071,6 @@ describe("SummitCustomPresale", () => {
     });
 
     it("should be able to claim {maxClaim} Token in the second interval", async () => {
-      const snapshot = await timeMachine.takeSnapshot();
-      snapshotId = snapshot.result;
-
       await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuy),
@@ -1133,9 +1127,6 @@ describe("SummitCustomPresale", () => {
     });
 
     it("should be able to claim 1 x {maxClaim} for the first interval and 2 * {maxCLaim} after 2 interval", async () => {
-      const snapshot = await timeMachine.takeSnapshot();
-      snapshotId = snapshot.result;
-
       await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(maxBuy),
@@ -1193,55 +1184,50 @@ describe("SummitCustomPresale", () => {
       await timeMachine.revertToSnapshot(snapshotId);
     });
 
-    describe("claim all token", () => {
-      it("should be able to claim all token after 10 interval", async () => {
-        const snapshot = await timeMachine.takeSnapshot();
-        snapshotId = snapshot.result;
-
-        await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
-        await customPresale.connect(otherWallet1).buy({
-          value: parseEther(maxBuy),
-        });
-
-        await customPresale.connect(owner).finalize();
-        const bigMaxClaimPercentage = (maxClaimPercentage * FEE_DENOMINATOR) / 100;
-        const totalPurchaseInToken = parseEther(maxBuy).mul(presalePrice);
-        const maxClaimInInterval = totalPurchaseInToken.mul(bigMaxClaimPercentage).div(FEE_DENOMINATOR.toString());
-
-        const nextIntervalTimestamp = dayjs
-          .utc()
-          .date(dayClaimInterval)
-          .hour(hourClaimInterval)
-          .second(0)
-          .add(9, "month")
-          .unix();
-        await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-        const currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
-        await customPresale.connect(otherWallet1).claim(maxClaimInInterval.mul(10).toString());
-        assert.equal(
-          currentAccountToken.add(maxClaimInInterval.mul(10).toString()).toString(),
-          (await presaleToken.balanceOf(otherWallet1.address)).toString()
-        );
-
-        await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
-          "User don't have enough token to claim"
-        );
-
-        const nextTwoIntervalTimestamp = dayjs
-          .utc()
-          .date(dayClaimInterval)
-          .hour(hourClaimInterval)
-          .second(0)
-          .add(2, "month")
-          .unix();
-        await timeMachine.advanceTimeAndBlock(nextTwoIntervalTimestamp - dayjs().unix());
-
-        await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
-          "User don't have enough token to claim"
-        );
-        await timeMachine.revertToSnapshot(snapshotId);
+    it("should be able to claim all token after 10 interval", async () => {
+      await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
+      await customPresale.connect(otherWallet1).buy({
+        value: parseEther(maxBuy),
       });
+
+      await customPresale.connect(owner).finalize();
+      const bigMaxClaimPercentage = (maxClaimPercentage * FEE_DENOMINATOR) / 100;
+      const totalPurchaseInToken = parseEther(maxBuy).mul(presalePrice);
+      const maxClaimInInterval = totalPurchaseInToken.mul(bigMaxClaimPercentage).div(FEE_DENOMINATOR.toString());
+
+      const nextIntervalTimestamp = dayjs
+        .utc()
+        .date(dayClaimInterval)
+        .hour(hourClaimInterval)
+        .second(0)
+        .add(9, "month")
+        .unix();
+      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
+
+      const currentAccountToken = await presaleToken.balanceOf(otherWallet1.address);
+      await customPresale.connect(otherWallet1).claim(maxClaimInInterval.mul(10).toString());
+      assert.equal(
+        currentAccountToken.add(maxClaimInInterval.mul(10).toString()).toString(),
+        (await presaleToken.balanceOf(otherWallet1.address)).toString()
+      );
+
+      await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+        "User don't have enough token to claim"
+      );
+
+      const nextTwoIntervalTimestamp = dayjs
+        .utc()
+        .date(dayClaimInterval)
+        .hour(hourClaimInterval)
+        .second(0)
+        .add(2, "month")
+        .unix();
+      await timeMachine.advanceTimeAndBlock(nextTwoIntervalTimestamp - dayjs().unix());
+
+      await expect(customPresale.connect(otherWallet1).claim("1")).to.be.revertedWith(
+        "User don't have enough token to claim"
+      );
+      await timeMachine.revertToSnapshot(snapshotId);
     });
   });
 

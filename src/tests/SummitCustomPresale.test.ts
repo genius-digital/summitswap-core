@@ -838,7 +838,7 @@ describe("SummitCustomPresale", () => {
       );
     });
 
-    it("should be equal contributionAmount and change in account balance", async () => {
+    it("should be equal contributedAmount and boughtAmount", async () => {
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
 
@@ -848,16 +848,7 @@ describe("SummitCustomPresale", () => {
 
       const boughtAmount = await customPresale.bought(otherWallet2.address);
       assert.equal(balance0.sub(balance1).toString(), boughtAmount.toString());
-    });
-
-    it("should be equal contributionAmount and boughtAmount", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      const bigMaxBuy = parseEther(maxBuy);
-      await customPresale.connect(otherWallet2).buyCustomCurrency(bigMaxBuy);
-      const boughtAmount = await customPresale.bought(otherWallet2.address);
-      assert.equal(bigMaxBuy.toString(), boughtAmount.toString());
+      assert.equal(parseEther(maxBuy).toString(), boughtAmount.toString());
     });
 
     it("should be equal totalBoughtAmount and accounts bought amount", async () => {

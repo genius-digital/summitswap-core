@@ -1626,10 +1626,11 @@ describe("SummitCustomPresale", () => {
       await expect(customPresale.connect(owner).finalize()).to.be.revertedWith("Presale Not Ended");
     });
 
-    it("should be reverted, if is not end presale time && hardcap !== totalBought", async () => {
+    it("should be reverted, if presale ended and totalBought less than softCap", async () => {
       const nextIntervalTimestamp = dayjs().add(5, "days").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
 
+      assert.equal(parseEther(softCap).gt((await customPresale.getPresaleInfo()).totalBought), true);
       await expect(customPresale.connect(owner).finalize()).to.be.revertedWith(
         "Total bought is less than softCap. Presale failed"
       );

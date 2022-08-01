@@ -1462,7 +1462,7 @@ describe("SummitCustomPresale", () => {
       assert.equal(initialBoughtAmount.sub(finalBoughtAmount).toString(), parseEther(minBuy).toString());
     });
 
-    it("should be equal bougth paymentToken amount and withdrawal amount if payment token not native coin", async () => {
+    it("should be equal bought paymentToken amount and withdrawal amount if payment token not native coin", async () => {
       paymentToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);

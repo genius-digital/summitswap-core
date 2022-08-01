@@ -2642,7 +2642,10 @@ describe("SummitCustomPresale", () => {
       assert.equal(updatedPresaleInfo.maxBuy.toString(), parseEther(maxBuy).sub("1").toString());
       assert.equal(updatedPresaleInfo.softCap.toString(), parseEther(softCap).add("1").toString());
       assert.equal(updatedPresaleInfo.liquidityLockTime.toString(), (liquidityLockTime + 1).toString());
-      assert.equal(updatedPresaleInfo.maxClaimPercentage.toString(), (1000000000 - 10000000).toString());
+      assert.equal(
+        updatedPresaleInfo.maxClaimPercentage.toString(),
+        (((maxClaimPercentage - 1) * FEE_DENOMINATOR) / 100).toString()
+      );
       assert.equal(updatedPresaleInfo.refundType.toString(), "1");
       assert.equal(updatedPresaleInfo.listingChoice.toString(), "2");
       assert.equal(updatedPresaleInfo.isWhiteListPhase, true);

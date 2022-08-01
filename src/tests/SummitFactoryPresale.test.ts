@@ -77,22 +77,11 @@ describe("SummitFactoryPresale", () => {
     await presaleFactory.connect(owner).setLibraryAddress(customPresale.address);
   });
 
-  const calculateTokenAmount = (
-    presalePrice: number,
-    hardCap: number,
-    liquidityPrecentage: number,
-    listingPrice: number
-  ) => {
-    const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-    const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
-    const tokenAmount = presaleTokenAmount + tokensForLiquidity;
-    return tokenAmount;
-  };
-
   const createPresale = async ({
     _caller,
     _raisedTokenAddress,
     _pairToken,
+    _tokenAmount,
     _presalePrice,
     _listingPrice,
     _liquidityPrecentage,
@@ -115,6 +104,7 @@ describe("SummitFactoryPresale", () => {
     _caller?: Wallet;
     _raisedTokenAddress?: string;
     _pairToken?: string;
+    _tokenAmount: string;
     _presalePrice?: string;
     _listingPrice?: string;
     _liquidityPrecentage?: number;
@@ -134,13 +124,6 @@ describe("SummitFactoryPresale", () => {
     _isVestingEnabled?: boolean;
     _serviceFee?: string;
   }) => {
-    const _tokenAmount = calculateTokenAmount(
-      Number(_presalePrice || presalePrice),
-      Number(_hardCap || hardCap),
-      Number(_liquidityPrecentage || liquidityPrecentage),
-      Number(_listingPrice || listingPrice)
-    );
-
     return presaleFactory.connect(_caller || owner).createPresale(
       projectDetails,
       // tokenAdress, raisedTokenAddress, pairToken, SS router, PS router, admin
@@ -154,7 +137,7 @@ describe("SummitFactoryPresale", () => {
       ],
       // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent, maxClaimPercentage
       [
-        parseUnits(_tokenAmount.toString(), await presaleToken.decimals()),
+        parseUnits(_tokenAmount, await presaleToken.decimals()),
         parseEther(_presalePrice || presalePrice),
         parseEther(_listingPrice || listingPrice),
         _liquidityPrecentage || liquidityPrecentage,
@@ -247,8 +230,11 @@ describe("SummitFactoryPresale", () => {
   describe("getAccountPresales()", () => {
     it("should be accountPresales.length == 1", async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
 
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
 
       const accountPresales = await presaleFactory.getAccountPresales(owner.address);
       assert.equal(accountPresales.length, 1);
@@ -263,10 +249,13 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be able to withdraw fee by owner", async () => {
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory.connect(owner).setServiceFeeReceiver(presaleFactory.address);
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
 
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
 
       const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
       await presaleFactory.connect(owner).withdraw(serviceFeeReceiver.address);
@@ -276,26 +265,33 @@ describe("SummitFactoryPresale", () => {
   });
 
   describe("createPresale()", () => {
+    const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+    const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+    const tokenAmount = presaleTokenAmount + tokensForLiquidity;
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
     });
     it("should be reverted, if not enough fee", async () => {
       await expect(
         createPresale({
+          _tokenAmount: tokenAmount.toString(),
           _serviceFee: BigNumber.from(serviceFee).sub("1").toString(),
         })
       ).to.be.revertedWith("Not Enough Fee");
     });
 
     it("should be reverted, if presale already exists", async () => {
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
 
-      await expect(createPresale({})).to.be.revertedWith("Presale Already Exists");
+      await expect(createPresale({ _tokenAmount: tokenAmount.toString() })).to.be.revertedWith(
+        "Presale Already Exists"
+      );
     });
 
     it("should be reverted, if presale start less than current time", async () => {
       await expect(
         createPresale({
+          _tokenAmount: tokenAmount.toString(),
           _startPresaleTime: dayjs(startPresaleTime).subtract(2, "day").unix(),
         })
       ).to.be.revertedWith("Presale startTime > block.timestamp");
@@ -304,31 +300,32 @@ describe("SummitFactoryPresale", () => {
     it("should be reverted, if presale end time less than start time", async () => {
       await expect(
         createPresale({
+          _tokenAmount: tokenAmount.toString(),
           _endPresaleTime: dayjs(endPresaleTime).subtract(2, "day").unix(),
         })
       ).to.be.revertedWith("Presale End time > presale start time");
     });
 
     it("should be reverted, if minBuy greater than maxBuy", async () => {
-      await expect(createPresale({ _minBuy: (Number(minBuy) + Number(maxBuy)).toString() })).to.be.revertedWith(
-        "MinBuy should be less than maxBuy"
-      );
+      await expect(
+        createPresale({ _tokenAmount: tokenAmount.toString(), _minBuy: (Number(minBuy) + Number(maxBuy)).toString() })
+      ).to.be.revertedWith("MinBuy should be less than maxBuy");
     });
 
     it("should be reverted, if softCap less than 50% of hardCap", async () => {
-      await expect(createPresale({ _softCap: (Number(hardCap) * 0.4).toString() })).to.be.revertedWith(
-        "Softcap should be greater than or equal to 50% of hardcap"
-      );
+      await expect(
+        createPresale({ _tokenAmount: tokenAmount.toString(), _softCap: (Number(hardCap) * 0.4).toString() })
+      ).to.be.revertedWith("Softcap should be greater than or equal to 50% of hardcap");
     });
 
     it("should be reverted, if liquidity% less than 25%", async () => {
-      await expect(createPresale({ _liquidityPrecentage: 24 })).to.be.revertedWith(
-        "Liquidity Percentage should be between 25% & 100%"
-      );
+      await expect(
+        createPresale({ _tokenAmount: tokenAmount.toString(), _liquidityPrecentage: 24 })
+      ).to.be.revertedWith("Liquidity Percentage should be between 25% & 100%");
     });
 
     it("should be able to set insert newly created presale address into presaleAddresses and tokenPresales", async () => {
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
 
       const presaleAddress = await presaleFactory.pendingPresales(0);
       const presaleAddressFromTokenPresales = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
@@ -338,7 +335,7 @@ describe("SummitFactoryPresale", () => {
     it("should be able to send service fee to serviceFeeReceiver address", async () => {
       const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
 
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
 
       const finalBalance = await provider.getBalance(serviceFeeReceiver.address);
       const feeToServiceFeeAddress = finalBalance.sub(initialBalance).toString();
@@ -348,7 +345,7 @@ describe("SummitFactoryPresale", () => {
     it("should be able to send token amount to presale contract from factory", async () => {
       const initialTokenAmount = await presaleToken.balanceOf(owner.address);
 
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
 
       const finalTokenAmount = await presaleToken.balanceOf(owner.address);
       const changeTokenAmountOwner = initialTokenAmount.sub(finalTokenAmount).toString();
@@ -359,13 +356,13 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be able to create presale again if last token presale cancelled", async () => {
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
       const presaleAddress = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       const summitCustomPresale = SummitCustomPresale.attach(presaleAddress);
       await summitCustomPresale.connect(owner).cancelPresale();
 
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
 
       assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 2);
     });
@@ -373,7 +370,7 @@ describe("SummitFactoryPresale", () => {
     it("should be able to create presale with feeToken", async () => {
       const feeToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
 
-      await createPresale({ _raisedTokenAddress: feeToken.address });
+      await createPresale({ _tokenAmount: tokenAmount.toString(), _raisedTokenAddress: feeToken.address });
 
       assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 1);
     });
@@ -382,8 +379,11 @@ describe("SummitFactoryPresale", () => {
   describe("getTokenPresales()", () => {
     it("should be tokenPresales.length == 1", async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
 
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
 
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       assert.equal(tokenPresales.length, 1);
@@ -393,7 +393,11 @@ describe("SummitFactoryPresale", () => {
   describe("approvePresales()", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
-      await createPresale({});
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
     });
     it("should be pendingPresales.length == 1", async () => {
       const pendingPresales = await presaleFactory.getPendingPresales();
@@ -484,8 +488,11 @@ describe("SummitFactoryPresale", () => {
   describe("setFeeInfo()", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
 
-      await createPresale({});
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
     });
 
     it("should admin be only able to set feeInfo", async () => {
@@ -532,7 +539,11 @@ describe("SummitFactoryPresale", () => {
   describe("setPresaleInfo()", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
-      await createPresale({});
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
     });
 
     it("should admin be only able to set presaleInfo", async () => {
@@ -618,7 +629,11 @@ describe("SummitFactoryPresale", () => {
   describe("setRolesForPresale()", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
-      await createPresale({});
+      const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+      const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
+      const tokenAmount = presaleTokenAmount + tokensForLiquidity;
+
+      await createPresale({ _tokenAmount: tokenAmount.toString() });
     });
 
     it("should admin be only able to grant ADMIN role to presale", async () => {

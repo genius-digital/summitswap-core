@@ -24,7 +24,7 @@ import {
 import { assert, expect } from "chai";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { BigNumber } from "ethers";
+import { BigNumber, Wallet } from "ethers";
 import { parseEther, formatUnits, parseUnits } from "ethers/lib/utils";
 import timeMachine from "ganache-time-traveler";
 import { ethers, waffle } from "hardhat";
@@ -38,9 +38,8 @@ describe("SummitCustomPresale", () => {
     provider.getWallets();
 
   let wbnb: WBNB;
-  let raisedToken: DummyToken;
-  let presaleToken: DummyToken;
-  let standardToken: StandardToken;
+  let raisedToken: DummyToken | StandardToken;
+  let presaleToken: DummyToken | StandardToken;
   let summitFactory: SummitswapFactory;
   let presaleFactory: SummitFactoryPresale;
   let summitRouter: SummitswapRouter02;
@@ -61,7 +60,7 @@ describe("SummitCustomPresale", () => {
   const maxBuy = "0.2";
   const softCap = "0.1";
   const hardCap = "0.2";
-  const liquidityPrecentage = 70;
+  const liquidityPercentage = 70;
   const maxClaimPercentage = 100;
   const startPresaleTime = dayjs().add(30, "minutes").unix();
   const endPresaleTime = dayjs().add(2, "day").unix();
@@ -89,7 +88,7 @@ describe("SummitCustomPresale", () => {
     maxBuy: parseEther(maxBuy),
     softCap: parseEther(softCap),
     hardCap: parseEther(hardCap),
-    liquidityPercentage: (liquidityPrecentage * FEE_DENOMINATOR) / 100,
+    liquidityPercentage: (liquidityPercentage * FEE_DENOMINATOR) / 100,
     startPresaleTime,
     endPresaleTime,
     claimIntervalDay: dayClaimInterval,
@@ -113,6 +112,119 @@ describe("SummitCustomPresale", () => {
     feeEmergencyWithdraw: EMERGENCY_WITHDRAW_FEE,
   };
 
+  const calculateTokenAmount = (
+    presalePrice: number,
+    hardCap: number,
+    liquidityPercentage: number,
+    listingPrice: number,
+    excessTokens: number
+  ) => {
+    const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
+    const tokensForLiquidity = Number(liquidityPercentage / 100) * Number(hardCap) * Number(listingPrice);
+    const tokenAmount = presaleTokenAmount + tokensForLiquidity + excessTokens;
+    return tokenAmount;
+  };
+
+  const createPresale = async ({
+    _caller,
+    _raisedTokenAddress,
+    _pancakeRouterAddress,
+    _pairToken,
+    _presalePrice,
+    _listingPrice,
+    _liquidityPercentage,
+    _maxClaimPercentage,
+    _minBuy,
+    _maxBuy,
+    _softCap,
+    _hardCap,
+    _startPresaleTime,
+    _endPresaleTime,
+    _dayClaimInterval,
+    _hourClaimInterval,
+    _liquidityLockTime,
+    _refundType,
+    _listingChoice,
+    _isWhiteListPhase,
+    _isVestingEnabled,
+    _createPresaleFee,
+    _excessTokens,
+  }: {
+    _caller?: Wallet;
+    _raisedTokenAddress?: string;
+    _pancakeRouterAddress?: string;
+    _pairToken?: string;
+    _presalePrice?: string;
+    _listingPrice?: string;
+    _liquidityPercentage?: number;
+    _maxClaimPercentage?: number;
+    _minBuy?: string;
+    _maxBuy?: string;
+    _softCap?: string;
+    _hardCap?: string;
+    _startPresaleTime?: number;
+    _endPresaleTime?: number;
+    _dayClaimInterval?: number;
+    _hourClaimInterval?: number;
+    _liquidityLockTime?: number;
+    _refundType?: number;
+    _listingChoice?: number;
+    _excessTokens?: number;
+    _isWhiteListPhase?: boolean;
+    _isVestingEnabled?: boolean;
+    _createPresaleFee?: string;
+  }) => {
+    const _tokenAmount = calculateTokenAmount(
+      Number(_presalePrice || presalePrice),
+      Number(_hardCap || hardCap),
+      Number(_liquidityPercentage || liquidityPercentage),
+      Number(_listingPrice || listingPrice),
+      Number(_excessTokens || 0)
+    );
+    return presaleFactory.connect(_caller || owner).createPresale(
+      projectDetails,
+      {
+        presaleToken: presaleToken.address,
+        router0: summitRouter.address,
+        router1: _pancakeRouterAddress || summitRouter.address,
+        pairToken: _pairToken || ZERO_ADDRESS,
+        presalePrice: parseEther(_presalePrice || presalePrice),
+        listingPrice: parseEther(_listingPrice || listingPrice),
+        liquidityLockTime: _liquidityLockTime || liquidityLockTime,
+        minBuy: parseEther(_minBuy || minBuy),
+        maxBuy: parseEther(_maxBuy || maxBuy),
+        softCap: parseEther(_softCap || softCap),
+        hardCap: parseEther(_hardCap || hardCap),
+        liquidityPercentage: ((_liquidityPercentage || liquidityPercentage) * FEE_DENOMINATOR) / 100,
+        startPresaleTime: _startPresaleTime || startPresaleTime,
+        endPresaleTime: _endPresaleTime || endPresaleTime,
+        claimIntervalDay: _dayClaimInterval || dayClaimInterval,
+        claimIntervalHour: _hourClaimInterval || hourClaimInterval,
+        totalBought: "0",
+        maxClaimPercentage: ((_maxClaimPercentage || maxClaimPercentage) * FEE_DENOMINATOR) / 100,
+        refundType: _refundType || refundType,
+        listingChoice: _listingChoice || listingChoice,
+        isWhiteListPhase: _isWhiteListPhase || isWhiteListPhase,
+        isClaimPhase: false,
+        isPresaleCancelled: false,
+        isWithdrawCancelledTokens: false,
+        isVestingEnabled: _isVestingEnabled || isVestingEnabled,
+        isApproved: false,
+      } as PresaleInfoStruct,
+      {
+        raisedTokenAddress: _raisedTokenAddress || ZERO_ADDRESS,
+        feeRaisedToken: FEE_RAISED_TOKEN,
+        feePresaleToken: FEE_PRESALE_TOKEN,
+        feeEmergencyWithdraw: EMERGENCY_WITHDRAW_FEE,
+      } as PresaleFeeInfoStruct,
+      parseUnits(_tokenAmount.toString(), await presaleToken.decimals()),
+      {
+        value: _createPresaleFee || createPresaleFee,
+        gasLimit: 30000000,
+      }
+    );
+  };
+
   beforeEach(async () => {
     presaleFactory = (await deployContract(owner, PresaleFactoryArtifact, [
       createPresaleFee,
@@ -129,26 +241,10 @@ describe("SummitCustomPresale", () => {
       summitFactory.address,
       wbnb.address,
     ])) as SummitswapRouter02;
-    const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-    const tokensForLiquidity = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
-    tokenAmount = presaleTokenAmount + tokensForLiquidity;
+
     presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
     await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-    await presaleFactory.connect(owner).createPresale(
-      projectDetails,
-      {
-        ...presaleInfo,
-        presaleToken: presaleToken.address,
-        router0: summitRouter.address,
-        router1: summitRouter.address,
-      },
-      feeInfo,
-      parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-      {
-        value: createPresaleFee,
-        gasLimit: 30000000,
-      }
-    );
+    await createPresale({});
     const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
     const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
     customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -217,20 +313,8 @@ describe("SummitCustomPresale", () => {
       await presaleToken
         .connect(owner)
         .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
-      await presaleFactory.createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-        },
-        { ...feeInfo, raisedTokenAddress: raisedToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+
+      await createPresale({ _raisedTokenAddress: raisedToken.address });
 
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -279,7 +363,7 @@ describe("SummitCustomPresale", () => {
       assert.equal(bigHardCap.toString(), presaleInfo.hardCap.toString());
     });
     it("should be liquidityPercentage", () => {
-      const liquidity = BigNumber.from(liquidityPrecentage).mul(FEE_DENOMINATOR).div(100);
+      const liquidity = BigNumber.from(liquidityPercentage).mul(FEE_DENOMINATOR).div(100);
       assert.equal(liquidity.toString(), presaleInfo.liquidityPercentage.toString());
     });
     it("should be startPresaleTime", () => {
@@ -345,7 +429,7 @@ describe("SummitCustomPresale", () => {
 
     it("should return Tokens when raisedToken decimals less than presaleToken decimals", async () => {
       const tokenDecimal = 6;
-      standardToken = (await deployContract(owner, SummitStandardTokenArtifact, [
+      raisedToken = (await deployContract(owner, SummitStandardTokenArtifact, [
         "standardToken",
         "STD",
         tokenDecimal,
@@ -357,24 +441,11 @@ describe("SummitCustomPresale", () => {
       await presaleToken
         .connect(owner)
         .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
-      await presaleFactory.createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          presaleToken: presaleToken.address,
-          pairToken: standardToken.address,
-        },
-        { ...feeInfo, raisedTokenAddress: standardToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+
+      await createPresale({ _raisedTokenAddress: raisedToken.address, _pairToken: raisedToken.address });
 
       const bigListingPrice = parseEther(listingPrice);
-      const bigHardCap = parseUnits(hardCap.toString(), await standardToken.decimals());
+      const bigHardCap = parseUnits(hardCap.toString(), await raisedToken.decimals());
 
       const tAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigListingPrice);
       assert.equal(tAmount.toString(), formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
@@ -382,7 +453,7 @@ describe("SummitCustomPresale", () => {
 
     it("should return Tokens when raisedToken decimals more than presaleToken decimals", async () => {
       const tokenDecimal = 21;
-      standardToken = (await deployContract(owner, SummitStandardTokenArtifact, [
+      raisedToken = (await deployContract(owner, SummitStandardTokenArtifact, [
         "standardToken",
         "STD",
         tokenDecimal,
@@ -394,24 +465,11 @@ describe("SummitCustomPresale", () => {
       await presaleToken
         .connect(owner)
         .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
-      await presaleFactory.createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          presaleToken: presaleToken.address,
-          pairToken: standardToken.address,
-        },
-        { ...feeInfo, raisedTokenAddress: standardToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+
+      await createPresale({ _raisedTokenAddress: raisedToken.address, _pairToken: raisedToken.address });
 
       const bigListingPrice = parseEther(listingPrice);
-      const bigHardCap = parseUnits(hardCap.toString(), await standardToken.decimals());
+      const bigHardCap = parseUnits(hardCap.toString(), await raisedToken.decimals());
 
       const tAmount = await customPresale.calculateBnbToPresaleToken(bigHardCap, bigListingPrice);
       assert.equal(tAmount.toString(), formatUnits(bigHardCap.mul(bigListingPrice), 18).split(".")[0]);
@@ -419,7 +477,7 @@ describe("SummitCustomPresale", () => {
 
     it("should return Tokens when presaleToken decimals less than raisedToken decimals", async () => {
       const tokenDecimal = 6;
-      standardToken = (await deployContract(owner, SummitStandardTokenArtifact, [
+      presaleToken = (await deployContract(owner, SummitStandardTokenArtifact, [
         "standardToken",
         "STD",
         tokenDecimal,
@@ -427,23 +485,11 @@ describe("SummitCustomPresale", () => {
         owner.address,
       ])) as StandardToken;
 
-      await standardToken
+      await presaleToken
         .connect(owner)
-        .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await standardToken.decimals()));
-      await presaleFactory.createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          presaleToken: standardToken.address,
-        },
-        feeInfo,
-        parseUnits(tokenAmount.toString(), await standardToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+        .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+
+      await createPresale({});
 
       const bigListingPrice = parseEther(listingPrice);
       const bigHardCap = parseEther(hardCap);
@@ -454,7 +500,7 @@ describe("SummitCustomPresale", () => {
 
     it("should return Tokens when presaleToken decimals more than raisedToken decimals", async () => {
       const tokenDecimal = 21;
-      standardToken = (await deployContract(owner, SummitStandardTokenArtifact, [
+      presaleToken = (await deployContract(owner, SummitStandardTokenArtifact, [
         "standardToken",
         "STD",
         tokenDecimal,
@@ -462,23 +508,11 @@ describe("SummitCustomPresale", () => {
         owner.address,
       ])) as StandardToken;
 
-      await standardToken
+      await presaleToken
         .connect(owner)
-        .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await standardToken.decimals()));
-      await presaleFactory.createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          presaleToken: standardToken.address,
-        },
-        feeInfo,
-        parseUnits(tokenAmount.toString(), await standardToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+        .approve(presaleFactory.address, parseUnits(tokenAmount.toString(), await presaleToken.decimals()));
+
+      await createPresale({});
 
       const bigListingPrice = parseEther(listingPrice);
       const bigHardCap = parseEther(hardCap);
@@ -558,22 +592,8 @@ describe("SummitCustomPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
 
-      await presaleFactory.createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          softCap: parseEther("0.2"),
-          hardCap: parseEther("0.4"),
-        },
-        feeInfo,
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+      await createPresale({ _softCap: "0.2", _hardCap: "0.4" });
+
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresales[0]);
@@ -711,21 +731,8 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet2, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
 
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          pairToken: raisedToken.address, // pairToken (liquidity will be added with raised token)
-        },
-        { ...feeInfo, raisedTokenAddress: raisedToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+      // pairToken (liquidity will be added with raised token)
+      await createPresale({ _pairToken: raisedToken.address, _raisedTokenAddress: raisedToken.address });
 
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -771,20 +778,8 @@ describe("SummitCustomPresale", () => {
     it("should be reverted, if raised token is native coin", async () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-        },
-        feeInfo,
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+
+      await createPresale({});
 
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -817,22 +812,8 @@ describe("SummitCustomPresale", () => {
     it("should be reverted, if contributionAmount greater than maxBuy", async () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          softCap: parseEther("0.2"),
-          hardCap: parseEther("0.4"),
-        },
-        { ...feeInfo, raisedTokenAddress: raisedToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+
+      await createPresale({ _softCap: "0.2", _hardCap: "0.4", _raisedTokenAddress: raisedToken.address });
 
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -1040,22 +1021,8 @@ describe("SummitCustomPresale", () => {
 
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        await presaleFactory.connect(owner).createPresale(
-          projectDetails,
-          {
-            ...presaleInfo,
-            presaleToken: presaleToken.address,
-            router0: summitRouter.address,
-            router1: summitRouter.address,
-            isVestingEnabled: enableVesting,
-            maxClaimPercentage: (maxClaimPercentage * FEE_DENOMINATOR) / 100,
-          },
-          feeInfo,
-          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          {
-            value: createPresaleFee,
-          }
-        );
+        await createPresale({ _isVestingEnabled: enableVesting, _maxClaimPercentage: maxClaimPercentage });
+
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1334,20 +1301,9 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-        },
-        { ...feeInfo, raisedTokenAddress: raisedToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+
+      await createPresale({ _raisedTokenAddress: raisedToken.address });
+
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1510,20 +1466,8 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-        },
-        { ...feeInfo, raisedTokenAddress: raisedToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+      await createPresale({ _raisedTokenAddress: raisedToken.address });
+
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1561,20 +1505,8 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-        },
-        { ...feeInfo, raisedTokenAddress: raisedToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+      await createPresale({ _raisedTokenAddress: raisedToken.address });
+
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1763,21 +1695,9 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          pairToken: raisedToken.address,
-        },
-        { ...feeInfo, raisedTokenAddress: raisedToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+
+      await createPresale({ _pairToken: raisedToken.address, _raisedTokenAddress: raisedToken.address });
+
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1850,21 +1770,8 @@ describe("SummitCustomPresale", () => {
       const excessTokens = 1;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          refundType: 1,
-        },
-        feeInfo,
-        parseUnits((tokenAmount + excessTokens).toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+      await createPresale({ _refundType: 1, _excessTokens: excessTokens });
+
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1900,11 +1807,11 @@ describe("SummitCustomPresale", () => {
           .mul(FEE_PRESALE_TOKEN)
           .div(FEE_DENOMINATOR);
         const tokensForLiquidity = parseEther(
-          ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+          ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
         ).sub(feePresaleToken);
 
         const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-        const amountBNBAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+        const amountBNBAdded = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
         await customPresale.connect(owner).finalize();
 
@@ -1939,21 +1846,8 @@ describe("SummitCustomPresale", () => {
 
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        await presaleFactory.connect(owner).createPresale(
-          projectDetails,
-          {
-            ...presaleInfo,
-            presaleToken: presaleToken.address,
-            router0: summitRouter.address,
-            router1: summitRouter.address,
-            pairToken: pairToken.address,
-          },
-          feeInfo,
-          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          {
-            value: createPresaleFee,
-          }
-        );
+        await createPresale({ _pairToken: pairToken.address });
+
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -1971,11 +1865,11 @@ describe("SummitCustomPresale", () => {
           .mul(FEE_PRESALE_TOKEN)
           .div(FEE_DENOMINATOR);
         const presaleTokenForLiquidity = parseEther(
-          ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+          ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
         ).sub(feePresaleToken);
 
         const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-        const amountBNBRaised = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+        const amountBNBRaised = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
         const amountOut = await summitRouter.getAmountsOut(amountBNBRaised, [
           await summitRouter.WETH(),
@@ -1998,21 +1892,9 @@ describe("SummitCustomPresale", () => {
         raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        await presaleFactory.connect(owner).createPresale(
-          projectDetails,
-          {
-            ...presaleInfo,
-            presaleToken: presaleToken.address,
-            router0: summitRouter.address,
-            router1: summitRouter.address,
-            pairToken: raisedToken.address, // pairToken == raisedToken
-          },
-          { ...feeInfo, raisedTokenAddress: raisedToken.address },
-          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          {
-            value: createPresaleFee,
-          }
-        );
+        // pairToken == raisedToken
+        await createPresale({ _pairToken: raisedToken.address, _raisedTokenAddress: raisedToken.address });
+
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2030,11 +1912,11 @@ describe("SummitCustomPresale", () => {
           .mul(FEE_PRESALE_TOKEN)
           .div(FEE_DENOMINATOR);
         const liquidityTokensAdded = parseEther(
-          ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+          ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
         ).sub(feePresaleToken);
 
         const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-        const raisedTokenAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+        const raisedTokenAdded = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
         await customPresale.connect(owner).finalize();
 
@@ -2068,21 +1950,9 @@ describe("SummitCustomPresale", () => {
 
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        await presaleFactory.connect(owner).createPresale(
-          projectDetails,
-          {
-            ...presaleInfo,
-            presaleToken: presaleToken.address,
-            router0: summitRouter.address,
-            router1: summitRouter.address,
-            pairToken: ZERO_ADDRESS, // pairToken == BNB
-          },
-          { ...feeInfo, raisedTokenAddress: raisedToken.address },
-          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          {
-            value: createPresaleFee,
-          }
-        );
+        // pairToken == BNB
+        await createPresale({ _pairToken: ZERO_ADDRESS, _raisedTokenAddress: raisedToken.address });
+
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2100,11 +1970,11 @@ describe("SummitCustomPresale", () => {
           .mul(FEE_PRESALE_TOKEN)
           .div(FEE_DENOMINATOR);
         const presaleTokenForLiquidity = parseEther(
-          ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+          ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
         ).sub(feePresaleToken);
 
         const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-        const amountBNBRaised = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+        const amountBNBRaised = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
         const amountOut = await summitRouter.getAmountsOut(amountBNBRaised, [
           raisedToken.address,
@@ -2159,21 +2029,8 @@ describe("SummitCustomPresale", () => {
 
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        await presaleFactory.connect(owner).createPresale(
-          projectDetails,
-          {
-            ...presaleInfo,
-            presaleToken: presaleToken.address,
-            router0: summitRouter.address,
-            router1: summitRouter.address,
-            pairToken: pairToken.address,
-          },
-          { ...feeInfo, raisedTokenAddress: raisedToken.address },
-          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          {
-            value: createPresaleFee,
-          }
-        );
+        await createPresale({ _pairToken: pairToken.address, _raisedTokenAddress: raisedToken.address });
+
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
         customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2191,11 +2048,11 @@ describe("SummitCustomPresale", () => {
           .mul(FEE_PRESALE_TOKEN)
           .div(FEE_DENOMINATOR);
         const presaleTokenForLiquidity = parseEther(
-          ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+          ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
         ).sub(feePresaleToken);
 
         const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-        const amountBNBRaised = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+        const amountBNBRaised = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
         const amountOut = await summitRouter.getAmountsOut(amountBNBRaised, [
           raisedToken.address,
@@ -2217,9 +2074,6 @@ describe("SummitCustomPresale", () => {
       describe("listingChoice", () => {
         let pancakeFactory: SummitswapFactory;
         let pancakeRouter: SummitswapRouter02;
-        const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
-        const LiquidityAmount = (Number(liquidityPrecentage) * Number(hardCap) * Number(listingPrice)) / 100;
-        const tokenAmount = presaleTokenAmount + LiquidityAmount;
         beforeEach(async () => {
           pancakeFactory = (await deployContract(owner, SummitFactoryArtifact, [
             summitFactoryFeeToSetter.address,
@@ -2233,21 +2087,9 @@ describe("SummitCustomPresale", () => {
         it("should reserves be equal in both routers if listingChoice 0", async () => {
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-          await presaleFactory.connect(owner).createPresale(
-            projectDetails,
-            {
-              ...presaleInfo,
-              presaleToken: presaleToken.address,
-              router0: summitRouter.address,
-              router1: summitRouter.address,
-              listingChoice: 0, // 100% Summitswap router,
-            },
-            feeInfo,
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            {
-              value: createPresaleFee,
-            }
-          );
+          // 100% Summitswap router,
+          await createPresale({ _pancakeRouterAddress: pancakeRouter.address, _listingChoice: 0 });
+
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2265,11 +2107,11 @@ describe("SummitCustomPresale", () => {
             .mul(FEE_PRESALE_TOKEN)
             .div(FEE_DENOMINATOR);
           const tokensForLiquidity = parseEther(
-            ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+            ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
           ).sub(feePresaleToken);
 
           const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-          const amountBNBAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+          const amountBNBAdded = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
           await customPresale.connect(owner).finalize();
 
@@ -2288,21 +2130,9 @@ describe("SummitCustomPresale", () => {
         it("should reserves be equal in both routers if listingChoice 1", async () => {
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-          await presaleFactory.connect(owner).createPresale(
-            projectDetails,
-            {
-              ...presaleInfo,
-              presaleToken: presaleToken.address,
-              router0: summitRouter.address,
-              router1: pancakeRouter.address,
-              listingChoice: 1, // 100% Pankcakeswap router,
-            },
-            feeInfo,
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            {
-              value: createPresaleFee,
-            }
-          );
+          // 100% Pankcakeswap router,
+          await createPresale({ _pancakeRouterAddress: pancakeRouter.address, _listingChoice: 1 });
+
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2320,11 +2150,11 @@ describe("SummitCustomPresale", () => {
             .mul(FEE_PRESALE_TOKEN)
             .div(FEE_DENOMINATOR);
           const tokensForLiquidity = parseEther(
-            ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+            ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
           ).sub(feePresaleToken);
 
           const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-          const amountBNBAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+          const amountBNBAdded = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
           await customPresale.connect(owner).finalize();
 
@@ -2343,21 +2173,9 @@ describe("SummitCustomPresale", () => {
         it("should reserves be equal in both routers if listingChoice 2", async () => {
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-          await presaleFactory.connect(owner).createPresale(
-            projectDetails,
-            {
-              ...presaleInfo,
-              presaleToken: presaleToken.address,
-              router0: summitRouter.address,
-              router1: pancakeRouter.address,
-              listingChoice: 2, //  75% Summitswap router & 25% Summitswap router
-            },
-            feeInfo,
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            {
-              value: createPresaleFee,
-            }
-          );
+          //  75% Summitswap router & 25% Summitswap router
+          await createPresale({ _pancakeRouterAddress: pancakeRouter.address, _listingChoice: 2 });
+
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2375,11 +2193,11 @@ describe("SummitCustomPresale", () => {
             .mul(FEE_PRESALE_TOKEN)
             .div(FEE_DENOMINATOR);
           const tokensForLiquidity = parseEther(
-            ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+            ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
           ).sub(feePresaleToken);
 
           const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-          const amountBNBAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+          const amountBNBAdded = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
           await customPresale.connect(owner).finalize();
           const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
@@ -2418,21 +2236,9 @@ describe("SummitCustomPresale", () => {
         it("should reserves be equal in both routers if listingChoice 3", async () => {
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-          await presaleFactory.connect(owner).createPresale(
-            projectDetails,
-            {
-              ...presaleInfo,
-              presaleToken: presaleToken.address,
-              router0: summitRouter.address,
-              router1: pancakeRouter.address,
-              listingChoice: 3, //  25% Summitswap router & 75% Summitswap router
-            },
-            feeInfo,
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            {
-              value: createPresaleFee,
-            }
-          );
+          //  25% Summitswap router & 75% Summitswap router
+          await createPresale({ _pancakeRouterAddress: pancakeRouter.address, _listingChoice: 3 });
+
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2450,11 +2256,11 @@ describe("SummitCustomPresale", () => {
             .mul(FEE_PRESALE_TOKEN)
             .div(FEE_DENOMINATOR);
           const tokensForLiquidity = parseEther(
-            ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+            ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
           ).sub(feePresaleToken);
 
           const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-          const amountBNBAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+          const amountBNBAdded = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
           await customPresale.connect(owner).finalize();
           const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
@@ -2494,22 +2300,14 @@ describe("SummitCustomPresale", () => {
           const raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
           presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-          await presaleFactory.connect(owner).createPresale(
-            projectDetails,
-            {
-              ...presaleInfo,
-              presaleToken: presaleToken.address,
-              router0: summitRouter.address,
-              router1: pancakeRouter.address,
-              pairToken: raisedToken.address,
-              listingChoice: 3, //  25% Summitswap router & 75% Summitswap router
-            },
-            { ...feeInfo, raisedTokenAddress: raisedToken.address },
-            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-            {
-              value: createPresaleFee,
-            }
-          );
+          //  25% Summitswap router & 75% Summitswap router
+          await createPresale({
+            _pairToken: raisedToken.address,
+            _raisedTokenAddress: raisedToken.address,
+            _pancakeRouterAddress: pancakeRouter.address,
+            _listingChoice: 3,
+          });
+
           const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
           const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
           customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2527,11 +2325,11 @@ describe("SummitCustomPresale", () => {
             .mul(FEE_PRESALE_TOKEN)
             .div(FEE_DENOMINATOR);
           const tokensForLiquidity = parseEther(
-            ((Number(liquidityPrecentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
+            ((Number(liquidityPercentage) * Number(maxBuy) * Number(listingPrice)) / 100).toString()
           ).sub(feePresaleToken);
 
           const feeRaisedToken = parseEther(maxBuy).mul(FEE_RAISED_TOKEN).div(FEE_DENOMINATOR);
-          const amountBNBAdded = bigMaxBuy.mul(liquidityPrecentage).div(100).sub(feeRaisedToken);
+          const amountBNBAdded = bigMaxBuy.mul(liquidityPercentage).div(100).sub(feeRaisedToken);
 
           await customPresale.connect(owner).finalize();
           const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
@@ -2611,17 +2409,7 @@ describe("SummitCustomPresale", () => {
     beforeEach(async () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory
-        .connect(owner)
-        .createPresale(
-          projectDetails,
-          { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
-          feeInfo,
-          parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-          {
-            value: createPresaleFee,
-          }
-        );
+      await createPresale({});
     });
 
     it("should be reverted, if presale already approved", async () => {
@@ -2720,21 +2508,8 @@ describe("SummitCustomPresale", () => {
     it("should ADMIN be able to approve presale", async () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-        },
-        feeInfo,
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-          gasLimit: 30000000,
-        }
-      );
+      await createPresale({});
+
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2867,21 +2642,8 @@ describe("SummitCustomPresale", () => {
       raisedToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: summitRouter.address,
-          pairToken: raisedToken.address,
-        },
-        { ...feeInfo, raisedTokenAddress: raisedToken.address },
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+      await createPresale({ _pairToken: raisedToken.address, _raisedTokenAddress: raisedToken.address });
+
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);
@@ -2948,21 +2710,12 @@ describe("SummitCustomPresale", () => {
 
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await presaleFactory.connect(owner).createPresale(
-        projectDetails,
-        {
-          ...presaleInfo,
-          presaleToken: presaleToken.address,
-          router0: summitRouter.address,
-          router1: pancakeRouter.address,
-          listingChoice: 2, // 75% Summitswap router & 25% Summitswap router
-        },
-        feeInfo,
-        parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
-        {
-          value: createPresaleFee,
-        }
-      );
+      // 75% Summitswap router & 25% Summitswap router
+      await createPresale({
+        _pancakeRouterAddress: pancakeRouter.address,
+        _listingChoice: 2,
+      });
+
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       customPresale = SummitCustomPresale.attach(tokenPresale[0]);

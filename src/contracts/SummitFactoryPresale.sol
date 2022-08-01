@@ -181,8 +181,8 @@ contract SummitFactoryPresale is Ownable {
       "fee presale Token should be less than liquidityPercentage"
     );
     require(
-      _feeInfo.feeRaisedToken < _presale.liquidityPercentage,
-      "fee raised Token should be less than liquidityPercentage"
+      _feeInfo.feePaymentToken < _presale.liquidityPercentage,
+      "fee payment Token should be less than liquidityPercentage"
     );
     require(_presale.refundType <= 1, "refundType should be between 0 or 1");
     require(_presale.listingChoice <= 3, "listingChoice should be between 0 & 3");

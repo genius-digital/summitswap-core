@@ -112,11 +112,9 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   function calculateBnbToPresaleToken(uint256 _amount, uint256 _price) public view returns (uint256) {
     require(presale.presaleToken != address(0), "Presale token not set");
 
-    uint256 raisedDecimals = feeInfo.raisedTokenAddress == address(0)
-      ? 18
-      : uint256(IERC20(feeInfo.raisedTokenAddress).decimals());
+    uint256 pTDecimals = feeInfo.paymentToken == address(0) ? 18 : uint256(IERC20(feeInfo.paymentToken).decimals());
 
-    uint256 tokens = ((_amount * _price) / 10**raisedDecimals);
+    uint256 tokens = ((_amount * _price) / 10**pTDecimals);
 
     return tokens * 10**((IERC20(presale.presaleToken).decimals()) - 18);
   }
@@ -158,7 +156,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   }
 
   function buy() external payable canBuy nonReentrant {
-    require(feeInfo.raisedTokenAddress == address(0), "Raised token is not native coin");
+    require(feeInfo.paymentToken == address(0), "Payment token is not native coin");
     require(bought[msg.sender] + msg.value <= presale.hardCap, "Cannot buy more than HardCap amount");
     require(msg.value >= presale.minBuy, "Cannot buy less than minBuy");
     require(msg.value + bought[msg.sender] <= presale.maxBuy, "Cannot buy more than maxBuy");
@@ -169,15 +167,15 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   }
 
   function buyCustomCurrency(uint256 contributionAmount) external canBuy nonReentrant {
-    require(feeInfo.raisedTokenAddress != address(0), "Raised token is native coin");
+    require(feeInfo.paymentToken != address(0), "Payment token is native coin");
     require(bought[msg.sender] + contributionAmount <= presale.hardCap, "Cannot buy more than HardCap amount");
     require(contributionAmount >= presale.minBuy, "contributionAmount is less than minBuy");
     require(contributionAmount + bought[msg.sender] <= presale.maxBuy, "contributionAmount is more than maxBuy");
     require(
-      IERC20(feeInfo.raisedTokenAddress).allowance(msg.sender, address(this)) >= contributionAmount,
+      IERC20(feeInfo.paymentToken).allowance(msg.sender, address(this)) >= contributionAmount,
       "Increase allowance to contribute"
     );
-    IERC20(feeInfo.raisedTokenAddress).transferFrom(msg.sender, address(this), contributionAmount);
+    IERC20(feeInfo.paymentToken).transferFrom(msg.sender, address(this), contributionAmount);
     presale.totalBought += contributionAmount;
     bought[msg.sender] += contributionAmount;
 
@@ -239,7 +237,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     }
     if (listingSS > 0) addLiquiditySS((_amountToken * listingSS) / 100, (_amountRaised * listingSS) / 100);
     if (listingPS > 0) {
-      if (feeInfo.raisedTokenAddress == address(0)) {
+      if (feeInfo.paymentToken == address(0)) {
         _addLiquidityETH((_amountToken * listingPS) / 100, (_amountRaised * listingPS) / 100, presale.router1);
       } else {
         _addLiquidityTokens(
@@ -253,7 +251,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   }
 
   function addLiquiditySS(uint256 amountToken, uint256 amountRaised) private {
-    if (feeInfo.raisedTokenAddress == address(0)) {
+    if (feeInfo.paymentToken == address(0)) {
       if (presale.pairToken == address(0)) {
         _addLiquidityETH(amountToken, amountRaised, presale.router0);
       } else {
@@ -263,7 +261,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
       if (presale.pairToken == address(0)) {
         swapTokenForETHAndLiquify(amountToken, amountRaised);
       } else {
-        if (feeInfo.raisedTokenAddress == presale.pairToken) {
+        if (feeInfo.paymentToken == presale.pairToken) {
           _addLiquidityTokens(amountToken, amountRaised, presale.pairToken, presale.router0);
         } else {
           swapTokenForTokenAndLiquify(amountToken, amountRaised);
@@ -288,10 +286,10 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
   function swapTokenForETHAndLiquify(uint256 amountToken, uint256 amountRaised) private {
     address[] memory path = new address[](2);
-    path[0] = feeInfo.raisedTokenAddress;
+    path[0] = feeInfo.paymentToken;
     path[1] = ISummitswapRouter02(presale.router0).WETH();
 
-    IERC20(feeInfo.raisedTokenAddress).approve(presale.router0, amountRaised);
+    IERC20(feeInfo.paymentToken).approve(presale.router0, amountRaised);
     uint256[] memory amounts = ISummitswapRouter02(presale.router0).swapExactTokensForETH(
       amountRaised,
       0,
@@ -304,11 +302,11 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
   function swapTokenForTokenAndLiquify(uint256 amountToken, uint256 amountRaised) private {
     address[] memory path = new address[](3);
-    path[0] = feeInfo.raisedTokenAddress;
+    path[0] = feeInfo.paymentToken;
     path[1] = ISummitswapRouter02(presale.router0).WETH();
     path[2] = presale.pairToken;
 
-    IERC20(feeInfo.raisedTokenAddress).approve(presale.router0, amountRaised);
+    IERC20(feeInfo.paymentToken).approve(presale.router0, amountRaised);
     uint256[] memory amounts = ISummitswapRouter02(presale.router0).swapExactTokensForTokens(
       amountRaised,
       0,
@@ -355,14 +353,14 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     );
   }
 
-  function withdrawRaisedToken() external nonReentrant {
+  function withdrawPaymentToken() external nonReentrant {
     require(presale.isPresaleCancelled, "Presale Not Cancelled");
     require(bought[msg.sender] > 0, "You do not have any contributions");
 
-    if (feeInfo.raisedTokenAddress == address(0)) {
+    if (feeInfo.paymentToken == address(0)) {
       payable(msg.sender).transfer(bought[msg.sender]);
     } else {
-      IERC20(feeInfo.raisedTokenAddress).transfer(msg.sender, bought[msg.sender]);
+      IERC20(feeInfo.paymentToken).transfer(msg.sender, bought[msg.sender]);
     }
 
     presale.totalBought = presale.totalBought - bought[msg.sender];
@@ -370,7 +368,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     removeContributor(msg.sender);
   }
 
-  function emergencyWithdrawRaisedToken() external nonReentrant {
+  function emergencyWithdrawPaymentToken() external nonReentrant {
     require(block.timestamp >= presale.startPresaleTime, "Presale Not started Yet");
     require(block.timestamp < presale.endPresaleTime, "Presale Ended");
     require(bought[msg.sender] > 0, "You do not have any contributions");
@@ -379,12 +377,12 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
     uint256 feeAmount = (bought[msg.sender] * feeInfo.feeEmergencyWithdraw) / FEE_DENOMINATOR;
 
-    if (feeInfo.raisedTokenAddress == address(0)) {
+    if (feeInfo.paymentToken == address(0)) {
       payable(msg.sender).transfer(bought[msg.sender] - feeAmount);
       payable(serviceFeeReceiver).transfer(feeAmount);
     } else {
-      IERC20(feeInfo.raisedTokenAddress).transfer(msg.sender, bought[msg.sender] - feeAmount);
-      IERC20(feeInfo.raisedTokenAddress).transfer(serviceFeeReceiver, feeAmount);
+      IERC20(feeInfo.paymentToken).transfer(msg.sender, bought[msg.sender] - feeAmount);
+      IERC20(feeInfo.paymentToken).transfer(serviceFeeReceiver, feeAmount);
     }
     presale.totalBought = presale.totalBought - bought[msg.sender];
     bought[msg.sender] = 0;
@@ -419,7 +417,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     require(block.timestamp > presale.endPresaleTime || presale.hardCap == presale.totalBought, "Presale Not Ended");
     require(presale.totalBought >= presale.softCap, "Total bought is less than softCap. Presale failed");
 
-    uint256 feeRaisedToken = (presale.totalBought * feeInfo.feeRaisedToken) / FEE_DENOMINATOR;
+    uint256 feePaymentToken = (presale.totalBought * feeInfo.feePaymentToken) / FEE_DENOMINATOR;
     uint256 feePresaleToken = calculateBnbToPresaleToken(
       (presale.totalBought * feeInfo.feePresaleToken) / FEE_DENOMINATOR,
       presale.presalePrice
@@ -444,13 +442,13 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
 
     addLiquidity(
       liquidityTokens,
-      ((presale.totalBought * presale.liquidityPercentage) / FEE_DENOMINATOR) - feeRaisedToken
+      ((presale.totalBought * presale.liquidityPercentage) / FEE_DENOMINATOR) - feePaymentToken
     );
 
-    if (feeInfo.raisedTokenAddress == address(0)) {
-      payable(serviceFeeReceiver).transfer(feeRaisedToken);
+    if (feeInfo.paymentToken == address(0)) {
+      payable(serviceFeeReceiver).transfer(feePaymentToken);
     } else {
-      IERC20(feeInfo.raisedTokenAddress).transfer(serviceFeeReceiver, feeRaisedToken);
+      IERC20(feeInfo.paymentToken).transfer(serviceFeeReceiver, feePaymentToken);
     }
 
     if (feePresaleToken > 0) {
@@ -479,10 +477,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     require(startDateClaim != 0, "Claim phase has not started");
     require(startDateClaim + presale.liquidityLockTime < block.timestamp, "Lp Tokens are locked");
     require(addresses[0] != presale.presaleToken && addresses[1] != presale.presaleToken, "address is presale token");
-    require(
-      addresses[0] != feeInfo.raisedTokenAddress && addresses[1] != feeInfo.raisedTokenAddress,
-      "address is raisedTokenAddress"
-    );
+    require(addresses[0] != feeInfo.paymentToken && addresses[1] != feeInfo.paymentToken, "address is paymentToken");
     uint256 lpBal0 = IERC20(addresses[0]).balanceOf(address(this));
     uint256 lpBal1 = IERC20(addresses[1]).balanceOf(address(this));
     if (lpBal0 > 0) IERC20(addresses[0]).transfer(_receiver, lpBal0);
@@ -503,9 +498,9 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     payable(_receiver).transfer(_amount);
   }
 
-  function withdrawRaisedTokenOwner(uint256 _amount, address _receiver) external onlyOwner {
+  function withdrawPaymentTokenOwner(uint256 _amount, address _receiver) external onlyOwner {
     require(presale.isClaimPhase, "Claim phase has not started");
-    IERC20(feeInfo.raisedTokenAddress).transfer(_receiver, _amount);
+    IERC20(feeInfo.paymentToken).transfer(_receiver, _amount);
   }
 
   function updatePresaleAndApprove(PresaleInfo memory _presale, PresaleFeeInfo memory _feeInfo) external onlyAdmin {

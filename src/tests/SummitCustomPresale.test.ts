@@ -1252,7 +1252,7 @@ describe("SummitCustomPresale", () => {
       );
     });
 
-    it("should be equal withdrawal BNB amount and Buy BNB amount ", async () => {
+    it("should be equal withdrawal BNB amount and Buy BNB amount", async () => {
       const snapshot = await timeMachine.takeSnapshot();
       const snapshotId = snapshot.result;
       await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
@@ -1260,12 +1260,17 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet1).buy({
         value: parseEther(minBuy),
       });
+
+      const initialBalance = await provider.getBalance(otherWallet1.address);
       const initialBoughtAmount = await customPresale.bought(otherWallet1.address);
       await customPresale.connect(owner).cancelPresale();
       await customPresale.connect(otherWallet1).withdrawPaymentToken();
       const finalBoughtAmount = await customPresale.bought(otherWallet1.address);
+      const finalBalance = await provider.getBalance(otherWallet1.address);
+
       assert.equal(initialBoughtAmount.sub(finalBoughtAmount).toString(), parseEther(minBuy).toString());
       assert.equal(finalBoughtAmount.toString(), "0");
+      assert.equal(finalBalance.gt(initialBalance), true);
       await timeMachine.revertToSnapshot(snapshotId);
     });
 
@@ -1319,22 +1324,6 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet1).withdrawPaymentToken();
       const finalTotalBought = (await customPresale.getPresaleInfo()).totalBought;
       assert.equal(initialTotalBought.sub(finalTotalBought).toString(), parseEther(minBuy).toString());
-      await timeMachine.revertToSnapshot(snapshotId);
-    });
-
-    it("should be greater balance after withdrawal of BNB", async () => {
-      const snapshot = await timeMachine.takeSnapshot();
-      const snapshotId = snapshot.result;
-      await timeMachine.advanceTimeAndBlock(dayjs().add(50, "minutes").unix() - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(maxBuy),
-      });
-      const initialBalance = await provider.getBalance(otherWallet1.address);
-      await customPresale.connect(owner).cancelPresale();
-      await customPresale.connect(otherWallet1).withdrawPaymentToken();
-      const finalBalance = await provider.getBalance(otherWallet1.address);
-      assert.equal(finalBalance.gt(initialBalance), true);
       await timeMachine.revertToSnapshot(snapshotId);
     });
 

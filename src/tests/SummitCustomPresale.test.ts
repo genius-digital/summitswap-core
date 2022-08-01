@@ -17,8 +17,8 @@ import {
 } from "build/typechain";
 import {
   PresaleInfoStructOutput,
-  FeeInfoStructOutput,
-  FeeInfoStruct,
+  PresaleFeeInfoStructOutput,
+  PresaleFeeInfoStruct,
   PresaleInfoStruct,
 } from "build/typechain/SummitCustomPresale";
 import { assert, expect } from "chai";
@@ -106,7 +106,7 @@ describe("SummitCustomPresale", () => {
     isApproved: false,
   };
 
-  const feeInfo: FeeInfoStruct = {
+  const feeInfo: PresaleFeeInfoStruct = {
     raisedTokenAddress: ZERO_ADDRESS,
     feeRaisedToken: FEE_RAISED_TOKEN,
     feePresaleToken: FEE_PRESALE_TOKEN,
@@ -185,7 +185,7 @@ describe("SummitCustomPresale", () => {
   });
 
   describe("getFeeInfo()", () => {
-    let feeInfo: FeeInfoStructOutput;
+    let feeInfo: PresaleFeeInfoStructOutput;
 
     beforeEach(async () => {
       feeInfo = await customPresale.getFeeInfo();

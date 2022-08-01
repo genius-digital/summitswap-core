@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../structs/PresaleInfo.sol";
-import "../structs/PresaleFee.sol";
+import "../structs/PresaleFeeInfo.sol";
 
 contract SummitFactoryPresale is Ownable {
   mapping(address => bool) public isAdmin;
@@ -53,7 +53,7 @@ contract SummitFactoryPresale is Ownable {
   function createPresale(
     string[8] memory projectDetails,
     PresaleInfo memory presale,
-    FeeInfo memory feeInfo,
+    PresaleFeeInfo memory feeInfo,
     uint256 tokenAmount
   ) external payable {
     require(libraryAddress != address(0), "Set library address first");
@@ -145,7 +145,7 @@ contract SummitFactoryPresale is Ownable {
 
   function updatePresaleAndApprove(
     PresaleInfo memory _presale,
-    FeeInfo memory _feeInfo,
+    PresaleFeeInfo memory _feeInfo,
     address _presaleAddress
   ) external isAdminOrOwner presalePending(_presaleAddress) {
     PresaleInfo memory presale = ISummitCustomPresale(_presaleAddress).getPresaleInfo();

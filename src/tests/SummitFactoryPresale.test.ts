@@ -5,7 +5,7 @@ import SummitFactoryArtifact from "@built-contracts/SummitswapFactory.sol/Summit
 import SummitRouterArtifact from "@built-contracts/SummitswapRouter02.sol/SummitswapRouter02.json";
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import WbnbArtifact from "@built-contracts/utils/WBNB.sol/WBNB.json";
-import { FeeInfoStruct, PresaleInfoStruct } from "build/typechain/SummitCustomPresale";
+import { PresaleFeeInfoStruct, PresaleInfoStruct } from "build/typechain/SummitCustomPresale";
 import {
   DummyToken,
   SummitFactoryPresale,
@@ -109,7 +109,7 @@ describe("SummitFactoryPresale", () => {
     isApproved: false,
   };
 
-  const feeInfo: FeeInfoStruct = {
+  const feeInfo: PresaleFeeInfoStruct = {
     raisedTokenAddress: ZERO_ADDRESS,
     feeRaisedToken: FEE_RAISED_TOKEN,
     feePresaleToken: FEE_PRESALE_TOKEN,

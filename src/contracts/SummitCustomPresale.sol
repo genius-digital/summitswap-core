@@ -10,7 +10,7 @@ import "./libraries/BokkyPooBahsDateTimeLibrary.sol";
 import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
 import "../structs/PresaleInfo.sol";
-import "../structs/PresaleFee.sol";
+import "../structs/PresaleFeeInfo.sol";
 import "./shared/Ownable.sol";
 
 contract SummitCustomPresale is Ownable, ReentrancyGuard {
@@ -34,12 +34,12 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   uint256 public startDateClaim; // Timestamp
 
   PresaleInfo private presale;
-  FeeInfo private feeInfo;
+  PresaleFeeInfo private feeInfo;
 
   function initialize(
     string[8] memory _projectDetails,
     PresaleInfo memory _presale,
-    FeeInfo memory _feeInfo,
+    PresaleFeeInfo memory _feeInfo,
     address _serviceFeeReceiver,
     address _owner
   ) external {
@@ -89,7 +89,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     return projectDetails;
   }
 
-  function getFeeInfo() external view returns (FeeInfo memory) {
+  function getFeeInfo() external view returns (PresaleFeeInfo memory) {
     return feeInfo;
   }
 
@@ -508,7 +508,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     IERC20(feeInfo.raisedTokenAddress).transfer(_receiver, _amount);
   }
 
-  function updatePresaleAndApprove(PresaleInfo memory _presale, FeeInfo memory _feeInfo) external onlyAdmin {
+  function updatePresaleAndApprove(PresaleInfo memory _presale, PresaleFeeInfo memory _feeInfo) external onlyAdmin {
     require(!presale.isApproved, "Presale is approved");
     presale = _presale;
     feeInfo = _feeInfo;

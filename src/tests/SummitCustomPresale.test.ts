@@ -610,8 +610,8 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet1).buy({
         value: bigMaxBuy,
       });
-      const otherWallet1BoughtAmount = (await customPresale.bought(otherWallet1.address)).toString();
-      assert.equal(bigMaxBuy.toString(), otherWallet1BoughtAmount);
+      const boughtAmount = (await customPresale.bought(otherWallet1.address)).toString();
+      assert.equal(bigMaxBuy.toString(), boughtAmount);
     });
 
     it("should be equal totalBoughtAmount and accounts bought amount", async () => {
@@ -625,8 +625,8 @@ describe("SummitCustomPresale", () => {
       await customPresale.connect(otherWallet2).buy({
         value: bigMinBuy,
       });
-      const otherWallet1BoughtAmount = (await customPresale.getPresaleInfo()).totalBought.toString();
-      assert.equal(otherWallet1BoughtAmount, bigMinBuy.add(bigMinBuy).toString());
+      const boughtAmount = (await customPresale.getPresaleInfo()).totalBought.toString();
+      assert.equal(boughtAmount, bigMinBuy.add(bigMinBuy).toString());
     });
 
     it("should be same, the contributor and otherWallet1", async () => {

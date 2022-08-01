@@ -4,7 +4,7 @@ import { parseEther, parseUnits } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { environment, MAX_VALUE, ZERO_ADDRESS } from "src/environment";
 import { deployDummyToken } from "./deployDummyToken";
-import { deploySummitPresaleFactory } from "./deploySummitPresaleFactory";
+import { deploySummitFactoryPresale } from "./deploySummitFactoryPresale";
 
 interface TokenDetails {
   presalePrice: string;
@@ -37,7 +37,7 @@ export async function deployCustomPresale(
   isVestingEnabled: boolean,
   projectDetails: string[]
 ) {
-  const summitFactoryPresale = await deploySummitPresaleFactory(createPresaleFee, serviceFeeReciever, admin);
+  const summitFactoryPresale = await deploySummitFactoryPresale(createPresaleFee, serviceFeeReciever, admin);
   const dummyToken = await deployDummyToken();
 
   console.log("Approving Factory");

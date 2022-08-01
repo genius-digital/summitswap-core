@@ -2804,7 +2804,7 @@ describe("SummitCustomPresale", () => {
         presaleFactory.connect(otherWallet1).assignAdminsPresale([otherWallet1.address], customPresale.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
-      assert.equal(await customPresale.defaultAdmin(presaleFactory.address), true);
+      assert.equal(await customPresale.defaultAdmin(), presaleFactory.address);
       await presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], customPresale.address);
       assert.equal(await customPresale.isAdmin(otherWallet1.address), true);
     });
@@ -2819,7 +2819,7 @@ describe("SummitCustomPresale", () => {
       await presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], customPresale.address);
 
       assert.equal(await customPresale.isAdmin(otherWallet1.address), true);
-      assert.equal(await customPresale.defaultAdmin(presaleFactory.address), true);
+      assert.equal(await customPresale.defaultAdmin(), presaleFactory.address);
       await presaleFactory.connect(owner).revokeAdminsPresale([otherWallet1.address], customPresale.address);
       assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
     });

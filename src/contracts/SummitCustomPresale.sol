@@ -19,6 +19,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   address private constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
   address public serviceFeeReceiver;
+  address public defaultAdmin;
   address[] public contributors;
   address[] public whitelist;
   mapping(address => uint256) private contributorIndex;
@@ -26,7 +27,6 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   mapping(address => uint256) public totalClaimToken;
   mapping(address => uint256) public bought; // account => boughtAmount
   mapping(address => bool) public isAdmin;
-  mapping(address => bool) public defaultAdmin;
 
   string[8] private projectDetails;
 
@@ -57,7 +57,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     presale.isWithdrawCancelledTokens = false;
 
     isAdmin[msg.sender] = true;
-    defaultAdmin[msg.sender] = true;
+    defaultAdmin = msg.sender;
   }
 
   modifier canBuy() {
@@ -74,12 +74,12 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
   }
 
   modifier onlyAdmin() {
-    require(isAdmin[msg.sender] || defaultAdmin[msg.sender], "Only admin or defaultAdmin can call this function");
+    require(isAdmin[msg.sender] || defaultAdmin == msg.sender, "Only admin or defaultAdmin can call this function");
     _;
   }
 
   modifier onlyDefaultAdmin() {
-    require(defaultAdmin[msg.sender], "Only defaultAdmin can call this function");
+    require(defaultAdmin == msg.sender, "Only defaultAdmin can call this function");
     _;
   }
 

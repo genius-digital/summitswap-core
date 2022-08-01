@@ -85,7 +85,7 @@ describe("SummitFactoryPresale", () => {
   });
 
   describe("serviceFeeReceiver", () => {
-    it("should be serviceFeeReceiver", async () => {
+    it("should be otherOwner", async () => {
       const feeReceiverAddress = await presaleFactory.serviceFeeReceiver();
       assert.equal(feeReceiverAddress, serviceFeeReceiver.address);
     });

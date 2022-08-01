@@ -37,9 +37,9 @@ describe("SummitFactoryPresale", () => {
   const updatedServiceFee = parseEther("0.00012");
 
   const FEE_DENOMINATOR = 10 ** 9;
-  const FEE_RAISED_TOKEN = 300000000; // 3%
+  const FEE_PAYMENT_TOKEN = 300000000; // 3%
   const FEE_PRESALE_TOKEN = 300000000; // 3%
-  const EMERGENCY_WITHDRAW_FEE = 1000000000; // 10%
+  const FEE_EMERGENCY_WITHDRAW = 1000000000; // 10%
 
   const presalePrice = "100";
   const listingPrice = "100";
@@ -110,10 +110,10 @@ describe("SummitFactoryPresale", () => {
   };
 
   const feeInfo: PresaleFeeInfoStruct = {
-    raisedTokenAddress: ZERO_ADDRESS,
-    feeRaisedToken: FEE_RAISED_TOKEN,
+    paymentToken: ZERO_ADDRESS,
+    feePaymentToken: FEE_PAYMENT_TOKEN,
     feePresaleToken: FEE_PRESALE_TOKEN,
-    feeEmergencyWithdraw: EMERGENCY_WITHDRAW_FEE,
+    feeEmergencyWithdraw: FEE_EMERGENCY_WITHDRAW,
   };
 
   const calculateTokenAmount = (
@@ -130,7 +130,7 @@ describe("SummitFactoryPresale", () => {
 
   const createPresale = async ({
     _caller,
-    _raisedTokenAddress,
+    _paymentTokenAddress,
     _pancakeRouterAddress,
     _pairToken,
     _presalePrice,
@@ -153,7 +153,7 @@ describe("SummitFactoryPresale", () => {
     _serviceFee,
   }: {
     _caller?: Wallet;
-    _raisedTokenAddress?: string;
+    _paymentTokenAddress?: string;
     _pancakeRouterAddress?: string;
     _pairToken?: string;
     _presalePrice?: string;
@@ -212,10 +212,10 @@ describe("SummitFactoryPresale", () => {
         isApproved: false,
       } as PresaleInfoStruct,
       {
-        raisedTokenAddress: _raisedTokenAddress || ZERO_ADDRESS,
-        feeRaisedToken: FEE_RAISED_TOKEN,
+        paymentToken: _paymentTokenAddress || ZERO_ADDRESS,
+        feePaymentToken: FEE_PAYMENT_TOKEN,
         feePresaleToken: FEE_PRESALE_TOKEN,
-        feeEmergencyWithdraw: EMERGENCY_WITHDRAW_FEE,
+        feeEmergencyWithdraw: FEE_EMERGENCY_WITHDRAW,
       } as PresaleFeeInfoStruct,
       parseUnits(_tokenAmount.toString(), await presaleToken.decimals()),
       {
@@ -334,7 +334,7 @@ describe("SummitFactoryPresale", () => {
       await expect(createPresale({})).to.be.revertedWith("Presale Already Exists");
     });
 
-    it("should be reverted, if presale start less than current time", async () => {
+    it("should be reverted, if presale start time less than current time", async () => {
       await expect(
         createPresale({
           _startPresaleTime: dayjs(startPresaleTime).subtract(2, "day").unix(),
@@ -374,7 +374,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("Liquidity Percentage should be between 25% & 100%");
     });
 
-    it("should be able to set insert newly created presale address into pendingPresales and tokenPresales", async () => {
+    it("should be able to add newly created presale address into pendingPresales and tokenPresales", async () => {
       await createPresale({});
 
       const presaleAddress = await presaleFactory.pendingPresales(0);
@@ -416,10 +416,10 @@ describe("SummitFactoryPresale", () => {
       assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 2);
     });
 
-    it("should be able to create presale with feeToken", async () => {
+    it("should be able to create presale with paymentToken as feeToken", async () => {
       const feeToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await createPresale({
-        _raisedTokenAddress: feeToken.address,
+        _paymentTokenAddress: feeToken.address,
       });
 
       assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 1);
@@ -436,19 +436,17 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
-  describe("approvePresales()", () => {
+  describe("approvePresale()", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       await createPresale({});
     });
-    it("should be pendingPresales.length == 1", async () => {
-      const pendingPresales = await presaleFactory.getPendingPresales();
-      assert.equal(pendingPresales.length, 1);
-    });
-    it("should pendingPresale be custom presale", async () => {
+
+    it("should pendingPresales only have be custom presale", async () => {
       const pendingPresales = await presaleFactory.getPendingPresales();
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       assert.equal(pendingPresales[0], tokenPresale[0]);
+      assert.equal(pendingPresales.length, 1);
     });
 
     it("should ADMIN be only able to approve presale", async () => {
@@ -862,7 +860,7 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("feeEmergencyWithdraw should be between 1% & 100%");
     });
 
-    it("should be reverted, if feeRaisedToken not valid", async () => {
+    it("should be reverted, if feePaymentToken not valid", async () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       await expect(
         presaleFactory.connect(admin).updatePresaleAndApprove(
@@ -871,10 +869,10 @@ describe("SummitFactoryPresale", () => {
             router0: summitRouter.address,
             presaleToken: presaleToken.address,
           },
-          { ...feeInfo, feeRaisedToken: ((liquidityPercentage + 1) * FEE_DENOMINATOR) / 100 },
+          { ...feeInfo, feePaymentToken: ((liquidityPercentage + 1) * FEE_DENOMINATOR) / 100 },
           tokenPresales[0]
         )
-      ).to.be.revertedWith("fee raised Token should be less than liquidityPercentage");
+      ).to.be.revertedWith("fee payment Token should be less than liquidityPercentage");
     });
 
     it("should be reverted, if feePresaleToken not valid", async () => {
@@ -971,7 +969,7 @@ describe("SummitFactoryPresale", () => {
         {
           ...feeInfo,
           feePresaleToken: (2 * FEE_DENOMINATOR) / 100,
-          feeRaisedToken: (4 * FEE_DENOMINATOR) / 100,
+          feePaymentToken: (4 * FEE_DENOMINATOR) / 100,
           feeEmergencyWithdraw: (1 * FEE_DENOMINATOR) / 100,
         },
         tokenPresales[0],
@@ -1000,7 +998,7 @@ describe("SummitFactoryPresale", () => {
       assert.equal(updatedPresaleInfo.isVestingEnabled, true);
       assert.equal(updatedfeeInfo.feeEmergencyWithdraw.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePresaleToken.toString(), ((2 * FEE_DENOMINATOR) / 100).toString());
-      assert.equal(updatedfeeInfo.feeRaisedToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
+      assert.equal(updatedfeeInfo.feePaymentToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
     });
   });
 

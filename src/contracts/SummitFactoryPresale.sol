@@ -11,8 +11,8 @@ import "./interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import "../helpers/PresaleInfo.sol";
-import "../helpers/PresaleFee.sol";
+import "../structs/PresaleInfo.sol";
+import "../structs/PresaleFee.sol";
 
 contract SummitFactoryPresale is Ownable {
   mapping(address => bool) public isAdmin;

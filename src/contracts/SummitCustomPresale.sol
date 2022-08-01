@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./libraries/BokkyPooBahsDateTimeLibrary.sol";
 import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
-import "../helpers/PresaleInfo.sol";
-import "../helpers/PresaleFee.sol";
+import "../structs/PresaleInfo.sol";
+import "../structs/PresaleFee.sol";
 import "./shared/Ownable.sol";
 
 contract SummitCustomPresale is Ownable, ReentrancyGuard {

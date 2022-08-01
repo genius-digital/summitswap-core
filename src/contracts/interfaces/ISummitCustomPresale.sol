@@ -5,8 +5,8 @@ pragma solidity 0.7.6;
 
 pragma experimental ABIEncoderV2;
 
-import "../../helpers/PresaleFee.sol";
-import "../../helpers/PresaleInfo.sol";
+import "../../structs/PresaleFee.sol";
+import "../../structs/PresaleInfo.sol";
 
 interface ISummitCustomPresale {
   function isPresaleCancelled() external view returns (bool);

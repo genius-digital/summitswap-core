@@ -532,13 +532,13 @@ describe("SummitCustomPresale", () => {
       ).to.be.revertedWith("Claim Phase has started");
     });
 
-    it("should be reverted, if buyBnbAmount greater than maxBuy", async () => {
+    it("should be reverted, if buyBnbAmount greater than hardCap", async () => {
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
 
       await expect(
         customPresale.connect(otherWallet2).buy({
-          value: parseEther(maxBuy).add("1"),
+          value: parseEther(hardCap).add("1"),
         })
       ).to.be.revertedWith("Cannot buy more than HardCap amount");
     });
@@ -801,7 +801,7 @@ describe("SummitCustomPresale", () => {
     it("should be reverted, if buy bought more than hardcap amount", async () => {
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-      await expect(customPresale.connect(owner).buyCustomCurrency(parseEther(maxBuy).add("1"))).to.be.revertedWith(
+      await expect(customPresale.connect(owner).buyCustomCurrency(parseEther(hardCap).add("1"))).to.be.revertedWith(
         "Cannot buy more than HardCap amount"
       );
     });

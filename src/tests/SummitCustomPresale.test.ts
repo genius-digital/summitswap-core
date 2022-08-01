@@ -532,19 +532,6 @@ describe("SummitCustomPresale", () => {
       ).to.be.revertedWith("Claim Phase has started");
     });
 
-    it("should be reverted, if whitelistphase and address not whitelisted", async () => {
-      await customPresale.connect(owner).toggleWhitelistPhase();
-
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await expect(
-        customPresale.connect(otherWallet2).buy({
-          value: parseEther(minBuy),
-        })
-      ).to.be.revertedWith("Address not Whitelisted");
-    });
-
     it("should be reverted, if buyBnbAmount greater than maxBuy", async () => {
       const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
       await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
@@ -670,6 +657,49 @@ describe("SummitCustomPresale", () => {
       const contributors = await customPresale.getContributors();
       assert.equal(contributors.length, 1);
     });
+
+    describe("whitelist", () => {
+      it("should be reverted, if whitelistphase and address not whitelisted", async () => {
+        await customPresale.connect(owner).toggleWhitelistPhase();
+
+        const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
+        await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
+
+        await expect(
+          customPresale.connect(otherWallet2).buy({
+            value: parseEther(minBuy),
+          })
+        ).to.be.revertedWith("Address not Whitelisted");
+      });
+
+      it("should be able to buy if address whitelisted", async () => {
+        await customPresale.connect(owner).toggleWhitelistPhase();
+        await customPresale.connect(owner).addWhiteList([otherWallet1.address, otherWallet2.address]);
+
+        const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
+        await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
+
+        const bigMinBuy = parseEther(minBuy);
+        await customPresale.connect(otherWallet1).buy({
+          value: bigMinBuy,
+        });
+        await customPresale.connect(otherWallet2).buy({
+          value: bigMinBuy,
+        });
+        const contributors = await customPresale.getContributors();
+
+        const boughtAmount1 = (await customPresale.bought(otherWallet1.address)).toString();
+        const boughtAmount2 = (await customPresale.bought(otherWallet2.address)).toString();
+        const totalBought = (await customPresale.getPresaleInfo()).totalBought.toString();
+
+        assert.equal(bigMinBuy.add(bigMinBuy).toString(), totalBought);
+        assert.equal(bigMinBuy.toString(), boughtAmount1);
+        assert.equal(bigMinBuy.toString(), boughtAmount2);
+        assert.equal(contributors[0], otherWallet1.address);
+        assert.equal(contributors[1], otherWallet2.address);
+        assert.equal(contributors.length, 2);
+      });
+    });
   });
 
   describe("buyCustomCurrency()", () => {
@@ -735,17 +765,6 @@ describe("SummitCustomPresale", () => {
 
       await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(maxBuy))).to.be.revertedWith(
         "Claim Phase has started"
-      );
-    });
-
-    it("should be reverted, if whitelistphase and address not whitelisted", async () => {
-      await customPresale.connect(owner).toggleWhitelistPhase();
-
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(minBuy))).to.be.revertedWith(
-        "Address not Whitelisted"
       );
     });
 
@@ -904,6 +923,47 @@ describe("SummitCustomPresale", () => {
 
       const contributors = await customPresale.getContributors();
       assert.equal(contributors.length, 1);
+    });
+
+    describe("whitelist", () => {
+      it("should be reverted, if whitelistphase and address not whitelisted", async () => {
+        await customPresale.connect(owner).toggleWhitelistPhase();
+
+        const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
+        await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
+
+        await expect(customPresale.connect(otherWallet2).buyCustomCurrency(parseEther(minBuy))).to.be.revertedWith(
+          "Address not Whitelisted"
+        );
+      });
+
+      it("should be able to contribute if address whitelisted", async () => {
+        await customPresale.connect(owner).toggleWhitelistPhase();
+        await customPresale.connect(owner).addWhiteList([otherWallet1.address, otherWallet2.address]);
+
+        const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
+        await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
+
+        const bigMinBuy = parseEther(minBuy);
+
+        await raisedToken.connect(otherWallet2).transfer(otherWallet1.address, bigMinBuy);
+        await raisedToken.connect(otherWallet1).approve(customPresale.address, bigMinBuy);
+
+        await customPresale.connect(otherWallet1).buyCustomCurrency(bigMinBuy);
+        await customPresale.connect(otherWallet2).buyCustomCurrency(bigMinBuy);
+        const contributors = await customPresale.getContributors();
+
+        const boughtAmount1 = (await customPresale.bought(otherWallet1.address)).toString();
+        const boughtAmount2 = (await customPresale.bought(otherWallet2.address)).toString();
+        const totalBought = (await customPresale.getPresaleInfo()).totalBought.toString();
+
+        assert.equal(bigMinBuy.add(bigMinBuy).toString(), totalBought);
+        assert.equal(bigMinBuy.toString(), boughtAmount1);
+        assert.equal(bigMinBuy.toString(), boughtAmount2);
+        assert.equal(contributors.length, 2);
+        assert.equal(contributors[0], otherWallet1.address);
+        assert.equal(contributors[1], otherWallet2.address);
+      });
     });
   });
 

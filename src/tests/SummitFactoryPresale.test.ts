@@ -14,7 +14,7 @@ import {
 } from "build/typechain";
 import { assert, expect } from "chai";
 import dayjs from "dayjs";
-import { BigNumber, Wallet } from "ethers";
+import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
 import { MAX_VALUE, ZERO_ADDRESS, ADMIN_ROLE } from "src/environment";
@@ -76,93 +76,6 @@ describe("SummitFactoryPresale", () => {
     customPresale = (await deployContract(owner, CustomPresaleArtifact)) as SummitCustomPresale;
     await presaleFactory.connect(owner).setLibraryAddress(customPresale.address);
   });
-
-  const createPresale = async ({
-    _caller,
-    _raisedTokenAddress,
-    _pairToken,
-    _tokenAmount,
-    _presalePrice,
-    _listingPrice,
-    _liquidityPrecentage,
-    _maxClaimPercentage,
-    _minBuy,
-    _maxBuy,
-    _softCap,
-    _hardCap,
-    _startPresaleTime,
-    _endPresaleTime,
-    _dayClaimInterval,
-    _hourClaimInterval,
-    _liquidityLockTime,
-    _refundType,
-    _listingChoice,
-    _isWhiteListPhase,
-    _isVestingEnabled,
-    _serviceFee,
-  }: {
-    _caller?: Wallet;
-    _raisedTokenAddress?: string;
-    _pairToken?: string;
-    _tokenAmount: string;
-    _presalePrice?: string;
-    _listingPrice?: string;
-    _liquidityPrecentage?: number;
-    _maxClaimPercentage?: number;
-    _minBuy?: string;
-    _maxBuy?: string;
-    _softCap?: string;
-    _hardCap?: string;
-    _startPresaleTime?: number;
-    _endPresaleTime?: number;
-    _dayClaimInterval?: number;
-    _hourClaimInterval?: number;
-    _liquidityLockTime?: number;
-    _refundType?: number;
-    _listingChoice?: number;
-    _isWhiteListPhase?: boolean;
-    _isVestingEnabled?: boolean;
-    _serviceFee?: string;
-  }) => {
-    return presaleFactory.connect(_caller || owner).createPresale(
-      projectDetails,
-      // tokenAdress, raisedTokenAddress, pairToken, SS router, PS router, admin
-      [
-        presaleToken.address,
-        _raisedTokenAddress || ZERO_ADDRESS,
-        _pairToken || ZERO_ADDRESS,
-        summitRouter.address,
-        summitRouter.address,
-        admin.address,
-      ],
-      // _tokenAmount, _presalePrice, _listingPrice, liquidityPercent, maxClaimPercentage
-      [
-        parseUnits(_tokenAmount, await presaleToken.decimals()),
-        parseEther(_presalePrice || presalePrice),
-        parseEther(_listingPrice || listingPrice),
-        _liquidityPrecentage || liquidityPrecentage,
-        _maxClaimPercentage || maxClaimPercentage,
-      ],
-      [
-        parseEther(_minBuy || minBuy),
-        parseEther(_maxBuy || maxBuy),
-        parseEther(_softCap || softCap),
-        parseEther(_hardCap || hardCap),
-      ],
-      [
-        _startPresaleTime || startPresaleTime,
-        _endPresaleTime || endPresaleTime,
-        _dayClaimInterval || dayClaimInterval,
-        _hourClaimInterval || hourClaimInterval,
-        _liquidityLockTime || liquidityLockTime,
-      ],
-      [_refundType || refundType, _listingChoice || listingChoice],
-      [_isWhiteListPhase || isWhiteListPhase, _isVestingEnabled || isVestingEnabled],
-      {
-        value: _serviceFee || serviceFee,
-      }
-    );
-  };
 
   describe("owner", () => {
     it("should be owner", async () => {
@@ -233,9 +146,26 @@ describe("SummitFactoryPresale", () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
-
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
       const accountPresales = await presaleFactory.getAccountPresales(owner.address);
       assert.equal(accountPresales.length, 1);
     });
@@ -254,8 +184,26 @@ describe("SummitFactoryPresale", () => {
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
       await presaleFactory.connect(owner).setServiceFeeReceiver(presaleFactory.address);
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
 
       const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
       await presaleFactory.connect(owner).withdraw(serviceFeeReceiver.address);
@@ -273,60 +221,291 @@ describe("SummitFactoryPresale", () => {
     });
     it("should be reverted, if not enough fee", async () => {
       await expect(
-        createPresale({
-          _tokenAmount: tokenAmount.toString(),
-          _serviceFee: BigNumber.from(serviceFee).sub("1").toString(),
-        })
+        presaleFactory
+          .connect(owner)
+          .createPresale(
+            projectDetails,
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
+            [
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
+              liquidityPrecentage,
+              maxClaimPercentage,
+            ],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
+            {
+              value: BigNumber.from(serviceFee).sub("1"),
+            }
+          )
       ).to.be.revertedWith("Not Enough Fee");
     });
 
     it("should be reverted, if presale already exists", async () => {
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
-
-      await expect(createPresale({ _tokenAmount: tokenAmount.toString() })).to.be.revertedWith(
-        "Presale Already Exists"
-      );
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
+      await expect(
+        presaleFactory
+          .connect(owner)
+          .createPresale(
+            projectDetails,
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
+            [
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
+              liquidityPrecentage,
+              maxClaimPercentage,
+            ],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
+            {
+              value: serviceFee,
+            }
+          )
+      ).to.be.revertedWith("Presale Already Exists");
     });
 
     it("should be reverted, if presale start less than current time", async () => {
       await expect(
-        createPresale({
-          _tokenAmount: tokenAmount.toString(),
-          _startPresaleTime: dayjs(startPresaleTime).subtract(2, "day").unix(),
-        })
+        presaleFactory
+          .connect(owner)
+          .createPresale(
+            projectDetails,
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
+            [
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
+              liquidityPrecentage,
+              maxClaimPercentage,
+            ],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [
+              dayjs(startPresaleTime).subtract(2, "day").unix(),
+              endPresaleTime,
+              dayClaimInterval,
+              hourClaimInterval,
+              liquidityLockTime,
+            ],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
+            {
+              value: serviceFee,
+            }
+          )
       ).to.be.revertedWith("Presale startTime > block.timestamp");
     });
 
     it("should be reverted, if presale end time less than start time", async () => {
       await expect(
-        createPresale({
-          _tokenAmount: tokenAmount.toString(),
-          _endPresaleTime: dayjs(endPresaleTime).subtract(2, "day").unix(),
-        })
+        presaleFactory
+          .connect(owner)
+          .createPresale(
+            projectDetails,
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
+            [
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
+              liquidityPrecentage,
+              maxClaimPercentage,
+            ],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [
+              startPresaleTime,
+              dayjs(endPresaleTime).subtract(2, "day").unix(),
+              dayClaimInterval,
+              hourClaimInterval,
+              liquidityLockTime,
+            ],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
+            {
+              value: serviceFee,
+            }
+          )
       ).to.be.revertedWith("Presale End time > presale start time");
     });
 
     it("should be reverted, if minBuy greater than maxBuy", async () => {
       await expect(
-        createPresale({ _tokenAmount: tokenAmount.toString(), _minBuy: (Number(minBuy) + Number(maxBuy)).toString() })
+        presaleFactory
+          .connect(owner)
+          .createPresale(
+            projectDetails,
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
+            [
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
+              liquidityPrecentage,
+              maxClaimPercentage,
+            ],
+            [
+              parseEther((Number(minBuy) + Number(maxBuy)).toString()),
+              parseEther(maxBuy),
+              parseEther(softCap),
+              parseEther(hardCap),
+            ],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
+            {
+              value: serviceFee,
+            }
+          )
       ).to.be.revertedWith("MinBuy should be less than maxBuy");
     });
 
     it("should be reverted, if softCap less than 50% of hardCap", async () => {
       await expect(
-        createPresale({ _tokenAmount: tokenAmount.toString(), _softCap: (Number(hardCap) * 0.4).toString() })
+        presaleFactory
+          .connect(owner)
+          .createPresale(
+            projectDetails,
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
+            [
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
+              liquidityPrecentage,
+              maxClaimPercentage,
+            ],
+            [
+              parseEther(minBuy),
+              parseEther(maxBuy),
+              parseEther((Number(hardCap) * 0.4).toString()),
+              parseEther(hardCap),
+            ],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
+            {
+              value: serviceFee,
+            }
+          )
       ).to.be.revertedWith("Softcap should be greater than or equal to 50% of hardcap");
     });
 
     it("should be reverted, if liquidity% less than 25%", async () => {
       await expect(
-        createPresale({ _tokenAmount: tokenAmount.toString(), _liquidityPrecentage: 24 })
+        presaleFactory
+          .connect(owner)
+          .createPresale(
+            projectDetails,
+            [
+              presaleToken.address,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              summitRouter.address,
+              summitRouter.address,
+              admin.address,
+            ],
+            [
+              parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+              parseEther(presalePrice),
+              parseEther(listingPrice),
+              24,
+              maxClaimPercentage,
+            ],
+            [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+            [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+            [refundType, listingChoice],
+            [isWhiteListPhase, isVestingEnabled],
+            {
+              value: serviceFee,
+            }
+          )
       ).to.be.revertedWith("Liquidity Percentage should be between 25% & 100%");
     });
 
     it("should be able to set insert newly created presale address into presaleAddresses and tokenPresales", async () => {
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
-
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
       const presaleAddress = await presaleFactory.pendingPresales(0);
       const presaleAddressFromTokenPresales = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
       assert.equal(presaleAddress, presaleAddressFromTokenPresales);
@@ -334,9 +513,26 @@ describe("SummitFactoryPresale", () => {
 
     it("should be able to send service fee to serviceFeeReceiver address", async () => {
       const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
-
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
       const finalBalance = await provider.getBalance(serviceFeeReceiver.address);
       const feeToServiceFeeAddress = finalBalance.sub(initialBalance).toString();
       assert.equal(feeToServiceFeeAddress, serviceFee.toString());
@@ -344,9 +540,26 @@ describe("SummitFactoryPresale", () => {
 
     it("should be able to send token amount to presale contract from factory", async () => {
       const initialTokenAmount = await presaleToken.balanceOf(owner.address);
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
-
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
       const finalTokenAmount = await presaleToken.balanceOf(owner.address);
       const changeTokenAmountOwner = initialTokenAmount.sub(finalTokenAmount).toString();
       const presaleAddress = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
@@ -356,22 +569,82 @@ describe("SummitFactoryPresale", () => {
     });
 
     it("should be able to create presale again if last token presale cancelled", async () => {
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
       const presaleAddress = (await presaleFactory.getTokenPresales(presaleToken.address))[0];
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       const summitCustomPresale = SummitCustomPresale.attach(presaleAddress);
       await summitCustomPresale.connect(owner).cancelPresale();
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
-
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
       assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 2);
     });
 
     it("should be able to create presale with feeToken", async () => {
       const feeToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
-
-      await createPresale({ _tokenAmount: tokenAmount.toString(), _raisedTokenAddress: feeToken.address });
-
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [
+            presaleToken.address,
+            feeToken.address,
+            ZERO_ADDRESS,
+            summitRouter.address,
+            summitRouter.address,
+            admin.address,
+          ],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
       assert.equal((await presaleFactory.getTokenPresales(presaleToken.address)).length, 1);
     });
   });
@@ -382,9 +655,26 @@ describe("SummitFactoryPresale", () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
-
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       assert.equal(tokenPresales.length, 1);
     });
@@ -396,8 +686,26 @@ describe("SummitFactoryPresale", () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
     });
     it("should be pendingPresales.length == 1", async () => {
       const pendingPresales = await presaleFactory.getPendingPresales();
@@ -491,8 +799,26 @@ describe("SummitFactoryPresale", () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
     });
 
     it("should admin be only able to set feeInfo", async () => {
@@ -542,8 +868,26 @@ describe("SummitFactoryPresale", () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
     });
 
     it("should admin be only able to set presaleInfo", async () => {
@@ -632,8 +976,26 @@ describe("SummitFactoryPresale", () => {
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity;
-
-      await createPresale({ _tokenAmount: tokenAmount.toString() });
+      await presaleFactory
+        .connect(owner)
+        .createPresale(
+          projectDetails,
+          [presaleToken.address, ZERO_ADDRESS, ZERO_ADDRESS, summitRouter.address, summitRouter.address, admin.address],
+          [
+            parseUnits(tokenAmount.toString(), await presaleToken.decimals()),
+            parseEther(presalePrice),
+            parseEther(listingPrice),
+            liquidityPrecentage,
+            maxClaimPercentage,
+          ],
+          [parseEther(minBuy), parseEther(maxBuy), parseEther(softCap), parseEther(hardCap)],
+          [startPresaleTime, endPresaleTime, dayClaimInterval, hourClaimInterval, liquidityLockTime],
+          [refundType, listingChoice],
+          [isWhiteListPhase, isVestingEnabled],
+          {
+            value: serviceFee,
+          }
+        );
     });
 
     it("should admin be only able to grant ADMIN role to presale", async () => {

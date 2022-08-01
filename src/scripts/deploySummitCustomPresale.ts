@@ -20,7 +20,7 @@ interface BnbAmounts {
   hardCap: string;
 }
 
-export async function deployCustomPresale(
+export async function deploySummitCustomPresale(
   createPresaleFee: BigNumber,
   serviceFeeReciever: string,
   admin: string,
@@ -129,7 +129,7 @@ async function main() {
   const isVestingEnabled = false;
   const projectDetails = ["icon_Url", "Name", "Contact", "Position", "Telegram Id", "Discord Id", "Email", "Twitter"];
 
-  await deployCustomPresale(
+  await deploySummitCustomPresale(
     createPresaleFee,
     serviceFeeReciever,
     admin,

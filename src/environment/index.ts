@@ -25,6 +25,16 @@ const SummitswapRouters = {
   "97": "0x1ebCD5e8a378F3b72900bF5BaEb073872f105B73",
 } as Record<string, string>;
 
+const SummitswapLockers = {
+  "56": "",
+  "97": "0xC5b6aCbb53e575Be3fEe3B4A5E472b9C08a5d41A",
+} as Record<string, string>;
+
+const SummitswapReferrals = {
+  "56": "",
+  "97": "0xDF8b4F4414aeB9598000666eF703E18A9aFfF47b",
+} as Record<string, string>;
+
 const RpcUrls = {
   "56": "https://bsc-dataseed.binance.org/",
   "97": "https://data-seed-prebsc-1-s1.binance.org:8545/",
@@ -48,6 +58,10 @@ export const environment = {
   SUMMITSWAP_FACTORY: SummitswapFactories[hre.network.name],
   SUMMITSWAP_ROUTERS: SummitswapRouters,
   SUMMITSWAP_ROUTER: SummitswapRouters[hre.network.name],
+  SUMMITSWAP_LOCKERS: SummitswapLockers,
+  SUMMITSWAP_LOCKER: SummitswapLockers[hre.network.name],
+  SUMMITSWAP_REFERRALS: SummitswapReferrals,
+  SUMMITSWAP_REFERRAL: SummitswapReferrals[hre.network.name],
   RPC_URLS: RpcUrls,
   RPC_URL: RpcUrls[hre.network.name],
   IS_VERIFY_SUPPORTED: VERIFY_SUPPORTED_ON.includes(hre.network.name),

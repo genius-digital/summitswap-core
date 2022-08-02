@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Developed by: dxsoftware.net
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.6;
 
 import "./SummitCustomPresale.sol";
 import "./interfaces/ISummitCustomPresale.sol";

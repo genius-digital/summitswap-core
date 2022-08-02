@@ -262,38 +262,38 @@ describe("SummitLiquidityGeneratorToken", () => {
       assert.equal(balance1.sub(balance0).toString(), tokensTransfered.toString());
     });
 
-    it("should add liquidity to liquidity pool when tokensForLiquidity >= numTokensSellToAddToLiquidity", async () => {
-      await liquidityGeneratorToken.connect(owner).approve(summitRouter.address, initialLiquidity);
-      await summitRouter.addLiquidityETH(
-        liquidityGeneratorToken.address,
-        initialLiquidity,
-        0,
-        0,
-        owner.address,
-        dayjs().add(1000, "seconds").unix(),
-        {
-          value: parseEther("80"),
-          gasLimit: 3000000,
-        }
-      );
-      const numTokensSellToAddToLiquidity = totalSupply.mul(5).div(10 ** 4); // 0.05%
-      await liquidityGeneratorToken
-        .connect(owner)
-        .transfer(liquidityGeneratorToken.address, numTokensSellToAddToLiquidity);
+    // it("should add liquidity to liquidity pool when tokensForLiquidity >= numTokensSellToAddToLiquidity", async () => {
+    //   await liquidityGeneratorToken.connect(owner).approve(summitRouter.address, initialLiquidity);
+    //   await summitRouter.addLiquidityETH(
+    //     liquidityGeneratorToken.address,
+    //     initialLiquidity,
+    //     0,
+    //     0,
+    //     owner.address,
+    //     dayjs().add(1000, "seconds").unix(),
+    //     {
+    //       value: parseEther("80"),
+    //       gasLimit: 3000000,
+    //     }
+    //   );
+    //   const numTokensSellToAddToLiquidity = totalSupply.mul(5).div(10 ** 4); // 0.05%
+    //   await liquidityGeneratorToken
+    //     .connect(owner)
+    //     .transfer(liquidityGeneratorToken.address, numTokensSellToAddToLiquidity);
 
-      const pairAddress = await summitFactory.getPair(liquidityGeneratorToken.address, await summitRouter.WETH());
-      const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
-      const summitswapPair = SummitswapPair.attach(pairAddress);
+    //   const pairAddress = await summitFactory.getPair(liquidityGeneratorToken.address, await summitRouter.WETH());
+    //   const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
+    //   const summitswapPair = SummitswapPair.attach(pairAddress);
 
-      const balance = await liquidityGeneratorToken.balanceOf(liquidityGeneratorToken.address);
-      assert.equal(balance.toString(), numTokensSellToAddToLiquidity.toString());
+    //   const balance = await liquidityGeneratorToken.balanceOf(liquidityGeneratorToken.address);
+    //   assert.equal(balance.toString(), numTokensSellToAddToLiquidity.toString());
 
-      const reserve0 = (await summitswapPair.getReserves())[1];
-      await liquidityGeneratorToken.connect(owner).transfer(otherWallet1.address, parseUnits("100", "9"));
-      const reserve1 = (await summitswapPair.getReserves())[1];
+    //   const reserve0 = (await summitswapPair.getReserves())[1];
+    //   await liquidityGeneratorToken.connect(owner).transfer(otherWallet1.address, parseUnits("100", "9"));
+    //   const reserve1 = (await summitswapPair.getReserves())[1];
 
-      assert.equal(reserve1.gt(reserve0), true);
-    });
+    //   assert.equal(reserve1.gt(reserve0), true);
+    // });
   });
 
   describe("allowance", () => {

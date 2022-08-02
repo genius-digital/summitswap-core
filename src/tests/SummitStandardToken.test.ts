@@ -156,7 +156,7 @@ describe("SummitStandardToken", () => {
       await standardToken.connect(owner).approve(otherWallet1.address, amountTransfer);
       await expect(
         standardToken.connect(otherWallet1).transferFrom(owner.address, otherWallet2.address, amountTransfer.add("1"))
-      ).to.be.revertedWith("ERC20: transfer amount exceeds allowance");
+      ).to.be.revertedWith("ERC20: insufficient allowance");
       const allowance = await standardToken.allowance(owner.address, otherWallet1.address);
       assert.equal(allowance.toString(), amountTransfer.toString());
       const balance1 = await standardToken.balanceOf(owner.address);

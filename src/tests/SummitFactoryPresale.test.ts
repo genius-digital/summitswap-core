@@ -9,7 +9,7 @@ import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
-import { MAX_APPROVE_AMOUNT } from "src/environment";
+import { MAX_VALUE } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
@@ -123,7 +123,7 @@ describe("SummitFactoryPresale", () => {
 
   describe("getAccountPresales()", () => {
     it("should be accountPresales.length == 1", async () => {
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
@@ -167,7 +167,7 @@ describe("SummitFactoryPresale", () => {
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
       const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
       await presaleFactory.connect(owner).setServiceFeeReceiver(presaleFactory.address);
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       await presaleFactory
         .connect(owner)
         .createPresale(
@@ -203,7 +203,7 @@ describe("SummitFactoryPresale", () => {
     const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);
     const tokenAmount = presaleTokenAmount + tokensForLiquidity + feeTokens;
     beforeEach(async () => {
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
     });
     it("should be reverted, if not enough fee", async () => {
       await expect(
@@ -557,7 +557,7 @@ describe("SummitFactoryPresale", () => {
 
   describe("getTokenPresales()", () => {
     it("should be tokenPresales.length == 1", async () => {
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_APPROVE_AMOUNT);
+      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       const presaleTokenAmount = Number(presalePrice) * Number(hardCap);
       const tokensForLiquidity = Number(liquidityPrecentage / 100) * Number(hardCap) * Number(listingPrice);
       const feeTokens = feeType === 0 ? 0 : presaleTokenAmount * (BNB_FEE_TYPE_1 / FEE_DENOMINATOR);

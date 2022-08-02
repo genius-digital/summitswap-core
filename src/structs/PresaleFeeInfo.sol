@@ -1,4 +1,4 @@
-pragma solidity 0.7.6;
+pragma solidity 0.8.6;
 
 struct PresaleFeeInfo {
   address paymentToken; // BNB/BUSD/ | address(0) native coin

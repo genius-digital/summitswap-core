@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 // Developed by: dxsoftware.net
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.6;
 
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./libraries/BokkyPooBahsDateTimeLibrary.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/ISummitswapRouter02.sol";
 import "./interfaces/IERC20.sol";
 import "../structs/PresaleInfo.sol";

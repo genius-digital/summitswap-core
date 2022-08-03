@@ -79,7 +79,7 @@ describe("SummitCustomPresale", () => {
     presaleToken: ZERO_ADDRESS,
     router0: ZERO_ADDRESS,
     router1: ZERO_ADDRESS,
-    pairToken: ZERO_ADDRESS,
+    listingToken: ZERO_ADDRESS,
     presalePrice: parseEther(presalePrice),
     listingPrice: parseEther(listingPrice),
     liquidityLockTime,
@@ -128,7 +128,7 @@ describe("SummitCustomPresale", () => {
     _caller,
     _paymentToken,
     _pancakeRouterAddress,
-    _pairToken,
+    _listingToken,
     _presalePrice,
     _listingPrice,
     _liquidityPercentage,
@@ -152,7 +152,7 @@ describe("SummitCustomPresale", () => {
     _caller?: Wallet;
     _paymentToken?: string;
     _pancakeRouterAddress?: string;
-    _pairToken?: string;
+    _listingToken?: string;
     _presalePrice?: string;
     _listingPrice?: string;
     _liquidityPercentage?: number;
@@ -186,7 +186,7 @@ describe("SummitCustomPresale", () => {
         presaleToken: presaleToken.address,
         router0: summitRouter.address,
         router1: _pancakeRouterAddress || summitRouter.address,
-        pairToken: _pairToken || ZERO_ADDRESS,
+        listingToken: _listingToken || ZERO_ADDRESS,
         presalePrice: parseEther(_presalePrice || presalePrice),
         listingPrice: parseEther(_listingPrice || listingPrice),
         liquidityLockTime: _liquidityLockTime || liquidityLockTime,
@@ -437,7 +437,7 @@ describe("SummitCustomPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
 
-      await createPresale({ _paymentToken: paymentToken.address, _pairToken: paymentToken.address });
+      await createPresale({ _paymentToken: paymentToken.address, _listingToken: paymentToken.address });
 
       const bigListingPrice = parseEther(listingPrice);
       const bigHardCap = parseUnits(hardCap.toString(), await paymentToken.decimals());
@@ -459,7 +459,7 @@ describe("SummitCustomPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
 
-      await createPresale({ _paymentToken: paymentToken.address, _pairToken: paymentToken.address });
+      await createPresale({ _paymentToken: paymentToken.address, _listingToken: paymentToken.address });
 
       const bigListingPrice = parseEther(listingPrice);
       const bigHardCap = parseUnits(hardCap.toString(), await paymentToken.decimals());
@@ -718,8 +718,8 @@ describe("SummitCustomPresale", () => {
       paymentToken = (await deployContract(otherWallet2, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
 
-      // pairToken (liquidity will be added with payment token)
-      await createPresale({ _pairToken: paymentToken.address, _paymentToken: paymentToken.address });
+      // listingToken (liquidity will be added with payment token)
+      await createPresale({ _listingToken: paymentToken.address, _paymentToken: paymentToken.address });
 
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -1658,7 +1658,7 @@ describe("SummitCustomPresale", () => {
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
 
-      await createPresale({ _pairToken: paymentToken.address, _paymentToken: paymentToken.address });
+      await createPresale({ _listingToken: paymentToken.address, _paymentToken: paymentToken.address });
 
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -1788,14 +1788,14 @@ describe("SummitCustomPresale", () => {
         assert.equal((await summitswapPair.balanceOf(customPresale.address)).gt("0"), true);
       });
 
-      it("should reserves be equal to amount of liquidity added, if liquidity added with pairToken and payment token is BNB", async () => {
-        const pairToken = (await deployContract(otherWallet2, TokenArtifact, [])) as DummyToken;
+      it("should reserves be equal to amount of liquidity added, if liquidity added with listingToken and payment token is BNB", async () => {
+        const listingToken = (await deployContract(otherWallet2, TokenArtifact, [])) as DummyToken;
         const addLiquidityBNBAmount = parseEther("80");
-        await pairToken.connect(otherWallet2).approve(summitRouter.address, addLiquidityBNBAmount.mul(10));
+        await listingToken.connect(otherWallet2).approve(summitRouter.address, addLiquidityBNBAmount.mul(10));
         await summitRouter
           .connect(otherWallet2)
           .addLiquidityETH(
-            pairToken.address,
+            listingToken.address,
             addLiquidityBNBAmount.mul(10),
             0,
             0,
@@ -1808,7 +1808,7 @@ describe("SummitCustomPresale", () => {
 
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        await createPresale({ _pairToken: pairToken.address });
+        await createPresale({ _listingToken: listingToken.address });
 
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -1835,11 +1835,11 @@ describe("SummitCustomPresale", () => {
 
         const amountOut = await summitRouter.getAmountsOut(amountBNBRaised, [
           await summitRouter.WETH(),
-          pairToken.address,
+          listingToken.address,
         ]);
         await customPresale.connect(owner).finalize();
 
-        const pairAddress = await summitFactory.getPair(presaleToken.address, pairToken.address);
+        const pairAddress = await summitFactory.getPair(presaleToken.address, listingToken.address);
         const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
         const summitswapPair = SummitswapPair.attach(pairAddress);
 
@@ -1850,12 +1850,12 @@ describe("SummitCustomPresale", () => {
         assert.equal((await summitswapPair.balanceOf(customPresale.address)).gt("0"), true);
       });
 
-      it("should reserves be equal to amount of liquidity added, if liquidity added with paymentToken and pairToken is paymentToken", async () => {
+      it("should reserves be equal to amount of liquidity added, if liquidity added with paymentToken and listingToken is paymentToken", async () => {
         paymentToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        // pairToken == paymentToken
-        await createPresale({ _pairToken: paymentToken.address, _paymentToken: paymentToken.address });
+        // listingToken == paymentToken
+        await createPresale({ _listingToken: paymentToken.address, _paymentToken: paymentToken.address });
 
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -1912,8 +1912,8 @@ describe("SummitCustomPresale", () => {
 
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        // pairToken == BNB
-        await createPresale({ _pairToken: ZERO_ADDRESS, _paymentToken: paymentToken.address });
+        // listingToken == BNB
+        await createPresale({ _listingToken: ZERO_ADDRESS, _paymentToken: paymentToken.address });
 
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -1955,7 +1955,7 @@ describe("SummitCustomPresale", () => {
         assert.equal(reserves[0].eq(presaleTokenForLiquidity) || reserves[1].eq(presaleTokenForLiquidity), true);
       });
 
-      it("should reserves be equal to amount of liquidity added, if liquidity added with pairToken and paymentToken is not pairToken", async () => {
+      it("should reserves be equal to amount of liquidity added, if liquidity added with listingToken and paymentToken is not listingToken", async () => {
         const addLiquidityBNBAmount = parseEther("80");
         paymentToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
         await paymentToken.connect(otherWallet1).approve(summitRouter.address, addLiquidityBNBAmount);
@@ -1973,12 +1973,12 @@ describe("SummitCustomPresale", () => {
             }
           );
 
-        const pairToken = (await deployContract(otherWallet2, TokenArtifact, [])) as DummyToken;
-        await pairToken.connect(otherWallet2).approve(summitRouter.address, addLiquidityBNBAmount);
+        const listingToken = (await deployContract(otherWallet2, TokenArtifact, [])) as DummyToken;
+        await listingToken.connect(otherWallet2).approve(summitRouter.address, addLiquidityBNBAmount);
         await summitRouter
           .connect(otherWallet2)
           .addLiquidityETH(
-            pairToken.address,
+            listingToken.address,
             addLiquidityBNBAmount,
             0,
             0,
@@ -1991,7 +1991,7 @@ describe("SummitCustomPresale", () => {
 
         presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
         await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-        await createPresale({ _pairToken: pairToken.address, _paymentToken: paymentToken.address });
+        await createPresale({ _listingToken: listingToken.address, _paymentToken: paymentToken.address });
 
         const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
         const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
@@ -2019,12 +2019,12 @@ describe("SummitCustomPresale", () => {
         const amountOut = await summitRouter.getAmountsOut(amountBNBRaised, [
           paymentToken.address,
           await summitRouter.WETH(),
-          pairToken.address,
+          listingToken.address,
         ]);
 
         await customPresale.connect(owner).finalize();
 
-        const pairAddress = await summitFactory.getPair(presaleToken.address, pairToken.address);
+        const pairAddress = await summitFactory.getPair(presaleToken.address, listingToken.address);
         const SummitswapPair = await ethers.getContractFactory("SummitswapPair");
         const summitswapPair = SummitswapPair.attach(pairAddress);
 
@@ -2264,7 +2264,7 @@ describe("SummitCustomPresale", () => {
           await presaleToken.approve(presaleFactory.address, MAX_VALUE);
           //  25% Summitswap router & 75% Summitswap router
           await createPresale({
-            _pairToken: paymentToken.address,
+            _listingToken: paymentToken.address,
             _paymentToken: paymentToken.address,
             _pancakeRouterAddress: pancakeRouter.address,
             _listingChoice: 3,
@@ -2604,7 +2604,7 @@ describe("SummitCustomPresale", () => {
       paymentToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
       presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
       await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await createPresale({ _pairToken: paymentToken.address, _paymentToken: paymentToken.address });
+      await createPresale({ _listingToken: paymentToken.address, _paymentToken: paymentToken.address });
 
       const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");

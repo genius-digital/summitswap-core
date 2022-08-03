@@ -23,7 +23,7 @@ struct TokenInfo {
   Phase phase;
 }
 
-contract SummitWhitelistNFT is ERC721AQueryable, BaseTokenURI {
+contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   using Strings for uint256;
   using ECDSA for bytes32;
 

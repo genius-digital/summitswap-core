@@ -84,7 +84,7 @@ describe("SummitFactoryPresale", () => {
     presaleToken: ZERO_ADDRESS,
     router0: ZERO_ADDRESS,
     router1: ZERO_ADDRESS,
-    pairToken: ZERO_ADDRESS,
+    listingToken: ZERO_ADDRESS,
     presalePrice: parseEther(presalePrice),
     listingPrice: parseEther(listingPrice),
     liquidityLockTime,
@@ -132,7 +132,7 @@ describe("SummitFactoryPresale", () => {
     _caller,
     _paymentTokenAddress,
     _pancakeRouterAddress,
-    _pairToken,
+    _listingToken,
     _presalePrice,
     _listingPrice,
     _liquidityPercentage,
@@ -155,7 +155,7 @@ describe("SummitFactoryPresale", () => {
     _caller?: Wallet;
     _paymentTokenAddress?: string;
     _pancakeRouterAddress?: string;
-    _pairToken?: string;
+    _listingToken?: string;
     _presalePrice?: string;
     _listingPrice?: string;
     _liquidityPercentage?: number;
@@ -187,7 +187,7 @@ describe("SummitFactoryPresale", () => {
         presaleToken: presaleToken.address,
         router0: summitRouter.address,
         router1: _pancakeRouterAddress || summitRouter.address,
-        pairToken: _pairToken || ZERO_ADDRESS,
+        listingToken: _listingToken || ZERO_ADDRESS,
         presalePrice: parseEther(_presalePrice || presalePrice),
         listingPrice: parseEther(_listingPrice || listingPrice),
         liquidityLockTime: _liquidityLockTime || liquidityLockTime,

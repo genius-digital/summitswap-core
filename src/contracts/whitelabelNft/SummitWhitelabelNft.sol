@@ -4,9 +4,25 @@
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../shared/BaseTokenURI.sol";
-import "./SummitWhitelabelNftStructs.sol";
 
 pragma solidity ^0.8.6;
+
+enum Phase {
+  Paused,
+  Whitelist,
+  Public
+}
+
+struct TokenInfo {
+  string name;
+  string symbol;
+  uint256 maxSupply;
+  uint256 whitelistMintPrice;
+  uint256 publicMintPrice;
+  uint8 startTokenId;
+  address signer;
+  Phase phase;
+}
 
 contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   using Strings for uint256;

@@ -1,8 +1,6 @@
 import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
 import { ethers } from "hardhat";
-import { MAX_VALUE } from "src/environment";
-import { deployDummyToken } from "./deployDummyToken";
 import { deploySummitFactoryPresale } from "./deploySummitFactoryPresale";
 import { tryVerify } from "./utils/verify";
 
@@ -12,12 +10,7 @@ export async function deploySummitCustomPresale(
   admin: string
 ) {
   const summitFactoryPresale = await deploySummitFactoryPresale(createPresaleFee, serviceFeeReciever, admin);
-  const dummyToken = await deployDummyToken();
 
-  console.log("Approving Factory");
-  await dummyToken.approve(summitFactoryPresale.address, MAX_VALUE);
-
-  console.log("Factory Approved");
   console.log("Starting to deploy SummitCustomPresaleLibrary");
 
   const SummitCustomPresaleLibrary = await ethers.getContractFactory("SummitCustomPresale");

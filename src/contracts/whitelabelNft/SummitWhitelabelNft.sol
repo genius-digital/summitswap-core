@@ -42,8 +42,6 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     string memory _initialURI,
     address _owner
   ) ERC721A(_tokenInfo.name, _tokenInfo.symbol) BaseTokenURI(_initialURI) {
-    require(bytes(name()).length == 0, "Contract already initialized");
-
     tokenInfo = _tokenInfo;
 
     transferOwnership(_owner);

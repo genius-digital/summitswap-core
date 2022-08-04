@@ -36,10 +36,10 @@ contract SummitswapKickstarterFactory is Ownable {
   receive() external payable {}
 
   function createProject(
-    string _title,
-    string _creator,
-    string _projectDescription,
-    string _rewardDescription,
+    string memory _title,
+    string memory _creator,
+    string memory _projectDescription,
+    string memory _rewardDescription,
     uint256 _minContribution,
     uint256 _projectGoals,
     uint256 _rewardDistributionTimestamp,
@@ -82,11 +82,11 @@ contract SummitswapKickstarterFactory is Ownable {
     );
   }
 
-  function getProjects() external view returns (address[]) {
+  function getProjects() external view returns (address[] memory) {
     return projects;
   }
 
-  function getProjectsOf(address _walletAddress) external view returns (SummitswapKickstarter[] memory) {
+  function getProjectsOf(address _walletAddress) external view returns (address[] memory) {
     return userProjects[_walletAddress];
   }
 
@@ -100,11 +100,11 @@ contract SummitswapKickstarterFactory is Ownable {
 
   // ** OWNER FUNCTIONS **
 
-  function setServiceFee(uint256 _serviceFee) onlyOwner {
+  function setServiceFee(uint256 _serviceFee) external onlyOwner {
     serviceFee = _serviceFee;
   }
 
-  function setServiceFeeReceiver(address _serviceFeeReceiver) onlyOwner {
+  function setServiceFeeReceiver(address _serviceFeeReceiver) external onlyOwner {
     serviceFeeReceiver = _serviceFeeReceiver;
   }
 

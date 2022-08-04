@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Developed by: dxsoftware.net
 
-pragma solidity 0.7.6;
+pragma solidity ^0.8.6;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SummitswapKickstarter is Ownable {
-  using SafeMath for uint256;
-
   mapping(address => uint256) public contributions;
   mapping(address => uint256) public contributorIndexes;
 
@@ -35,10 +32,10 @@ contract SummitswapKickstarter is Ownable {
   event Refund(address indexed contributor, uint256 amount, uint256 timestamp);
 
   constructor(
-    string _title,
-    string _creator,
-    string _projectDescription,
-    string _rewardDescription,
+    string memory _title,
+    string memory _creator,
+    string memory _projectDescription,
+    string memory _rewardDescription,
     uint256 _minContribution,
     uint256 _projectGoals,
     uint256 _rewardDistributionTimestamp,
@@ -53,29 +50,30 @@ contract SummitswapKickstarter is Ownable {
     minContribution = _minContribution;
     projectGoals = _projectGoals;
 
+    rewardDistributionTimestamp = _rewardDistributionTimestamp;
     startTimestamp = _startTimestamp;
     endTimestamp = _endTimestamp;
   }
 
   receive() external payable {}
 
-  function setTitle(string _title) external onlyOwner {
-    require(_title != "", "Title cannot be empty");
+  function setTitle(string memory _title) external onlyOwner {
+    require(bytes(_title).length > 0, "Title cannot be empty");
     title = _title;
   }
 
-  function setCreator(string _creator) external onlyOwner {
-    require(_creator != "", "Creator cannot be empty");
+  function setCreator(string memory _creator) external onlyOwner {
+    require(bytes(_creator).length > 0, "Creator cannot be empty");
     creator = _creator;
   }
 
-  function setProjectDescription(string _projectDescription) external onlyOwner {
-    require(_projectDescription != "", "Project description cannot be empty");
+  function setProjectDescription(string memory _projectDescription) external onlyOwner {
+    require(bytes(_projectDescription).length > 0, "Project description cannot be empty");
     projectDescription = _projectDescription;
   }
 
-  function setRewardDescription(string _rewardDescription) external onlyOwner {
-    require(_rewardDescription != "", "Reward description cannot be empty");
+  function setRewardDescription(string memory _rewardDescription) external onlyOwner {
+    require(bytes(_rewardDescription).length > 0, "Reward description cannot be empty");
     rewardDescription = _rewardDescription;
   }
 
@@ -107,10 +105,10 @@ contract SummitswapKickstarter is Ownable {
   }
 
   function configProjectInfo(
-    string _title,
-    string _creator,
-    string _projectDescription,
-    string _rewardDescription,
+    string memory _title,
+    string memory _creator,
+    string memory _projectDescription,
+    string memory _rewardDescription,
     uint256 _minContribution,
     uint256 _projectGoals,
     uint256 _rewardDistributionTimestamp,
@@ -125,6 +123,7 @@ contract SummitswapKickstarter is Ownable {
     minContribution = _minContribution;
     projectGoals = _projectGoals;
 
+    rewardDistributionTimestamp = _rewardDistributionTimestamp;
     startTimestamp = _startTimestamp;
     endTimestamp = _endTimestamp;
   }

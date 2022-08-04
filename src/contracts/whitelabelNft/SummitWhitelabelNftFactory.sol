@@ -47,6 +47,14 @@ contract SummitWhitelableNftFactory is Ownable {
     }
   }
 
+  function setServiceFee(uint256 _serviceFee) external onlyOwner {
+    serviceFee = _serviceFee;
+  }
+
+  function setServiceFeeReceiver(address _serviceFeeReceiver) external onlyOwner {
+    serviceFeeReceiver = _serviceFeeReceiver;
+  }
+
   function withdraw(address _receiver) external onlyOwner {
     (bool success, ) = address(_receiver).call{value: address(this).balance}("");
     require(success, "Unable to withdraw Ether");

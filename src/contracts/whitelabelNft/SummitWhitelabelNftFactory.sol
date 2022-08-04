@@ -7,19 +7,12 @@ import "./SummitWhitelabelNft.sol";
 pragma solidity ^0.8.6;
 
 contract SummitWhitelableNftFactory is Ownable {
-  address public implementation;
-
   mapping(address => SummitWhitelabelNft[]) private nfts;
 
   uint256 public serviceFee;
   address public serviceFeeReceiver;
 
-  constructor(
-    address _implementation,
-    uint256 _serviceFee,
-    address _serviceFeeReceiver
-  ) {
-    implementation = _implementation;
+  constructor(uint256 _serviceFee, address _serviceFeeReceiver) {
     serviceFee = _serviceFee;
     serviceFeeReceiver = _serviceFeeReceiver;
   }

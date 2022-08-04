@@ -55,7 +55,7 @@ contract SummitWhitelistNFTFactory is Ownable {
   }
 
   function withdraw(address _receiver) external onlyOwner {
-    (bool success, ) = address(_msgSender()).call{value: address(this).balance}("");
+    (bool success, ) = address(_receiver).call{value: address(this).balance}("");
     require(success, "Unable to withdraw Ether");
   }
 }

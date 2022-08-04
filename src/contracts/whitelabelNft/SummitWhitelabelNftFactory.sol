@@ -6,7 +6,7 @@ import "./SummitWhitelabelNft.sol";
 
 pragma solidity ^0.8.6;
 
-contract SummitWhitelistNFTFactory is Ownable {
+contract SummitWhitelableNftFactory is Ownable {
   address public implementation;
 
   mapping(address => SummitWhitelabelNft[]) private nfts;

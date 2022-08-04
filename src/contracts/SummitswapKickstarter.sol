@@ -15,28 +15,81 @@ contract SummitswapKickstarter is Ownable {
   address[] public contributors;
 
   uint256 public totalContribution;
-  uint256 public minContribution;
 
+  // ProjectInfo
+  string public title;
+  string public creator;
+  string public projectDescription;
+  string public rewardDescription;
+
+  uint256 public minContribution;
+  uint256 public projectGoals;
+
+  uint256 public rewardDistributionTimestamp;
   uint256 public startTimestamp;
   uint256 public endTimestamp;
+
+  bool public hasDistributedRewards = false;
 
   event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
   event Refund(address indexed contributor, uint256 amount, uint256 timestamp);
 
   constructor(
+    string _title,
+    string _creator,
+    string _projectDescription,
+    string _rewardDescription,
     uint256 _minContribution,
+    uint256 _projectGoals,
+    uint256 _rewardDistributionTimestamp,
     uint256 _startTimestamp,
     uint256 _endTimestamp
   ) {
+    title = _title;
+    creator = _creator;
+    projectDescription = _projectDescription;
+    rewardDescription = _rewardDescription;
+
     minContribution = _minContribution;
+    projectGoals = _projectGoals;
+
     startTimestamp = _startTimestamp;
     endTimestamp = _endTimestamp;
   }
 
   receive() external payable {}
 
+  function setTitle(string _title) external onlyOwner {
+    require(_title != "", "Title cannot be empty");
+    title = _title;
+  }
+
+  function setCreator(string _creator) external onlyOwner {
+    require(_creator != "", "Creator cannot be empty");
+    creator = _creator;
+  }
+
+  function setProjectDescription(string _projectDescription) external onlyOwner {
+    require(_projectDescription != "", "Project description cannot be empty");
+    projectDescription = _projectDescription;
+  }
+
+  function setRewardDescription(string _rewardDescription) external onlyOwner {
+    require(_rewardDescription != "", "Reward description cannot be empty");
+    rewardDescription = _rewardDescription;
+  }
+
   function setMinContribution(uint256 _minContribution) external onlyOwner {
     minContribution = _minContribution;
+  }
+
+  function setProjectGoals(uint256 _projectGoals) external onlyOwner {
+    require(_projectGoals > 0, "Project goals must be greater than 0");
+    projectGoals = _projectGoals;
+  }
+
+  function setRewardDistributionTimestamp(uint256 _rewardDistributionTimestamp) external onlyOwner {
+    rewardDistributionTimestamp = _rewardDistributionTimestamp;
   }
 
   function setStartTimestamp(uint256 _startTimestamp) external onlyOwner {
@@ -46,6 +99,33 @@ contract SummitswapKickstarter is Ownable {
 
   function setEndTimestamp(uint256 _endTimestamp) external onlyOwner {
     require(_endTimestamp > startTimestamp, "End timestamp must be after start timestamp");
+    endTimestamp = _endTimestamp;
+  }
+
+  function setHasDistributedRewards(bool _hasDistributedRewards) external onlyOwner {
+    hasDistributedRewards = _hasDistributedRewards;
+  }
+
+  function configProjectInfo(
+    string _title,
+    string _creator,
+    string _projectDescription,
+    string _rewardDescription,
+    uint256 _minContribution,
+    uint256 _projectGoals,
+    uint256 _rewardDistributionTimestamp,
+    uint256 _startTimestamp,
+    uint256 _endTimestamp
+  ) external onlyOwner {
+    title = _title;
+    creator = _creator;
+    projectDescription = _projectDescription;
+    rewardDescription = _rewardDescription;
+
+    minContribution = _minContribution;
+    projectGoals = _projectGoals;
+
+    startTimestamp = _startTimestamp;
     endTimestamp = _endTimestamp;
   }
 

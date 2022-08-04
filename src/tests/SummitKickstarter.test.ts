@@ -49,6 +49,35 @@ describe("summitswapKickstarter", () => {
     });
   });
 
+  describe("serviceFee", async () => {
+    it("should return SERVICE_FEE", async () => {
+      const serviceFee = await summitKickstarterFactory.serviceFee();
+      assert.equal(serviceFee.toString(), SERVICE_FEE.toString());
+    });
+  });
+
+  describe("setServiceFee", async () => {
+    it("should revert when called by nonOwner", async () => {
+      await expect(summitKickstarterFactory.connect(otherWallet).setServiceFee(1)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to set serviceFee to 100", async () => {
+      let serviceFee = await summitKickstarterFactory.serviceFee();
+      assert.equal(serviceFee.toString(), SERVICE_FEE.toString());
+
+      const newServiceFee = 100;
+      await summitKickstarterFactory.setServiceFee(newServiceFee.toString());
+
+      serviceFee = await summitKickstarterFactory.serviceFee();
+      assert.equal(serviceFee.toString(), newServiceFee.toString());
+    });
+  });
+
+  // describe("setServiceFeeReceiver", async () => {
+
+  // });
+
   // describe("minContribution", async () => {
   //   it(`should be ${MIN_CONTRIBUTION}`, async () => {
   //     const minContribution = await summitswapKickstarter.minContribution();

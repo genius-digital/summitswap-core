@@ -5,7 +5,7 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract SummitswapKickstarter is Ownable {
+contract SummitKickstarter is Ownable {
   mapping(address => uint256) public contributions;
   mapping(address => uint256) public contributorIndexes;
 

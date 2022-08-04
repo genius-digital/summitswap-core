@@ -2,11 +2,11 @@
 // Developed by: dxsoftware.net
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./SummitswapKickstarter.sol";
+import "./SummitKickstarter.sol";
 
 pragma solidity ^0.8.6;
 
-contract SummitswapKickstarterFactory is Ownable {
+contract SummitKickstarterFactory is Ownable {
   address[] public projects;
   mapping(address => address[]) public userProjects;
 
@@ -49,7 +49,7 @@ contract SummitswapKickstarterFactory is Ownable {
     require(msg.value >= serviceFee, "Not enough serviceFee sent");
     refundExcessiveFee();
 
-    SummitswapKickstarter project = new SummitswapKickstarter(
+    SummitKickstarter project = new SummitKickstarter(
       _title,
       _creator,
       _projectDescription,

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Developed by: dxsoftware.net
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.6;
 
 import "./interfaces/ISummitswapLockerCalculator.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SummitswapLockerCalculator is Ownable, ISummitswapLockerCalculator {

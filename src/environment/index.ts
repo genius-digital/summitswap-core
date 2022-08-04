@@ -17,12 +17,17 @@ const KODAs = {
 
 const SummitswapFactories = {
   "56": "0x7067079bc460d2c5984cC89008786fE46839FCF0",
-  "97": "0x765317D857df6BceA1B3489b8B66422B9967eF8B",
+  "97": "0xD7803eB47da0B1Cf569F5AFf169DA5373Ef3e41B",
 } as Record<string, string>;
 
 const SummitswapRouters = {
   "56": "0x2e8C54d980D930C16eFeb28f7061b0f3A78c0A87",
   "97": "0x1ebCD5e8a378F3b72900bF5BaEb073872f105B73",
+} as Record<string, string>;
+
+const PancakeswapRouters = {
+  "56": "0x10ed43c718714eb63d5aa57b78b54704e256024e",
+  "97": "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3",
 } as Record<string, string>;
 
 const RpcUrls = {
@@ -33,6 +38,9 @@ const RpcUrls = {
 const VERIFY_SUPPORTED_ON = ["56", "97"];
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+
+export const MAX_VALUE = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
 export const environment = {
   WBNBS: WBNBs,
@@ -45,6 +53,8 @@ export const environment = {
   SUMMITSWAP_FACTORY: SummitswapFactories[hre.network.name],
   SUMMITSWAP_ROUTERS: SummitswapRouters,
   SUMMITSWAP_ROUTER: SummitswapRouters[hre.network.name],
+  PANCAKESWAP_ROUTERS: PancakeswapRouters,
+  PANCAKESWAP_ROUTER: PancakeswapRouters[hre.network.name],
   RPC_URLS: RpcUrls,
   RPC_URL: RpcUrls[hre.network.name],
   IS_VERIFY_SUPPORTED: VERIFY_SUPPORTED_ON.includes(hre.network.name),

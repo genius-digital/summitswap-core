@@ -12,6 +12,8 @@ contract SummitWhitelableNftFactory is Ownable {
   uint256 public serviceFee;
   address public serviceFeeReceiver;
 
+  event CreateNft(address indexed owner, TokenInfo tokenInfo);
+
   constructor(uint256 _serviceFee, address _serviceFeeReceiver) {
     serviceFee = _serviceFee;
     serviceFeeReceiver = _serviceFeeReceiver;
@@ -26,6 +28,8 @@ contract SummitWhitelableNftFactory is Ownable {
 
     refundExcessiveFee();
     sendFee();
+
+    emit CreateNft(_collectionOwner, _tokenInfo);
   }
 
   function nftsOf(address _collectionOwner) external view returns (SummitWhitelabelNft[] memory) {
@@ -47,6 +51,7 @@ contract SummitWhitelableNftFactory is Ownable {
     }
   }
 
+  // OWNER FUNCTIONS
   function setServiceFee(uint256 _serviceFee) external onlyOwner {
     serviceFee = _serviceFee;
   }

@@ -7,12 +7,13 @@ import "./SummitWhitelabelNft.sol";
 pragma solidity ^0.8.6;
 
 contract SummitWhitelableNftFactory is Ownable {
-  mapping(address => SummitWhitelabelNft[]) private nfts;
+  address[] public nfts;
+  mapping(address => address[]) public userNfts;
 
   uint256 public serviceFee;
   address public serviceFeeReceiver;
 
-  event CreateNft(address indexed owner, TokenInfo tokenInfo);
+  event CreateNft(address indexed owner, address indexed nftAddress, TokenInfo tokenInfo, uint256 timestamp);
 
   constructor(uint256 _serviceFee, address _serviceFeeReceiver) {
     serviceFee = _serviceFee;
@@ -24,16 +25,24 @@ contract SummitWhitelableNftFactory is Ownable {
 
     address _collectionOwner = _msgSender();
 
-    nfts[_collectionOwner].push(new SummitWhitelabelNft(_tokenInfo, _initialURI, _collectionOwner));
+    SummitWhitelabelNft nft = new SummitWhitelabelNft(_tokenInfo, _initialURI, _collectionOwner);
+    address nftAddress = address(nft);
+
+    nfts.push(nftAddress);
+    userNfts[_collectionOwner].push(nftAddress);
 
     refundExcessiveFee();
     sendFee();
 
-    emit CreateNft(_collectionOwner, _tokenInfo);
+    emit CreateNft(_collectionOwner, nftAddress, _tokenInfo, block.timestamp);
   }
 
-  function nftsOf(address _collectionOwner) external view returns (SummitWhitelabelNft[] memory) {
-    return nfts[_collectionOwner];
+  function getNfts() external view returns (address[] memory) {
+    return nfts;
+  }
+
+  function nftsOf(address _collectionOwner) external view returns (address[] memory) {
+    return userNfts[_collectionOwner];
   }
 
   function sendFee() internal virtual {

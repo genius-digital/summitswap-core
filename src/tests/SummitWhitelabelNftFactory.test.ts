@@ -144,4 +144,16 @@ describe("SummitWhitelabelNftFactory", () => {
       assert((await summitWhitelabelNftFactory.serviceFee()).toString(), newServiceFee.toString());
     });
   });
+
+  describe("setServiceFeeReceiver", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(
+        summitWhitelabelNftFactory.connect(wallet1).setServiceFeeReceiver(wallet2.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+    it("should be able to set a new serviceFeeReceiver", async () => {
+      await summitWhitelabelNftFactory.connect(owner).setServiceFeeReceiver(wallet2.address);
+      assert(await summitWhitelabelNftFactory.serviceFeeReceiver(), wallet2.address);
+    });
+  });
 });

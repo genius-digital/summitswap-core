@@ -8,7 +8,7 @@ import "../shared/BaseTokenURI.sol";
 pragma solidity ^0.8.6;
 
 enum Phase {
-  Paused,
+  Pause,
   Whitelist,
   Public
 }
@@ -49,13 +49,13 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   }
 
   function mint(uint256 _mintAmount, bytes memory _signature) external payable {
+    require(tokenInfo.phase != Phase.Pause, "Minting is paused");
     require(tokenInfo.phase == Phase.Public || isSignatureValid(_msgSender(), _signature), "Invalid signature");
 
     mintX(_msgSender(), _mintAmount);
   }
 
   function mintX(address _to, uint256 _mintAmount) private {
-    require(tokenInfo.phase != Phase.Paused, "Minting is paused");
     require(_mintAmount > 0, "_mintAmount can not be 0");
     require(totalSupply() + _mintAmount <= tokenInfo.maxSupply, "Purchase would exceed max supply");
 
@@ -65,7 +65,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
       if (msg.value > price * _mintAmount) {
         uint256 excessETH = msg.value - (price * _mintAmount);
-        (bool success, ) = address(msg.sender).call{value: excessETH}("");
+        (bool success, ) = address(_msgSender()).call{value: excessETH}("");
         require(success, "Unable to refund excess Ether");
       }
     }

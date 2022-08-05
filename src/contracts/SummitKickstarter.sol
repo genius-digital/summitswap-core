@@ -32,6 +32,7 @@ contract SummitKickstarter is Ownable {
   event Refund(address indexed contributor, uint256 amount, uint256 timestamp);
 
   constructor(
+    address _owner,
     string memory _title,
     string memory _creator,
     string memory _projectDescription,
@@ -42,6 +43,8 @@ contract SummitKickstarter is Ownable {
     uint256 _startTimestamp,
     uint256 _endTimestamp
   ) {
+    transferOwnership(_owner);
+
     title = _title;
     creator = _creator;
     projectDescription = _projectDescription;

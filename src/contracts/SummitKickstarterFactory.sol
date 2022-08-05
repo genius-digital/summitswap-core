@@ -48,6 +48,7 @@ contract SummitKickstarterFactory is Ownable {
     refundExcessiveFee();
 
     SummitKickstarter project = new SummitKickstarter(
+      _msgSender(),
       _title,
       _creator,
       _projectDescription,

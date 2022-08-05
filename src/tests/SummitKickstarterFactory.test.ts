@@ -153,8 +153,9 @@ describe("summitswapKickstarter", () => {
       assert.equal(userProjects[0], projectAddress);
 
       const SummitKickstarterContract = await ethers.getContractFactory("SummitKickstarter");
-      const summitKickstarter = SummitKickstarterContract.attach(projectAddress);
+      const summitKickstarter = SummitKickstarterContract.attach(projectAddress) as SummitKickstarter;
 
+      const owner = await summitKickstarter.owner();
       const title = await summitKickstarter.title();
       const creator = await summitKickstarter.creator();
       const projectDescription = await summitKickstarter.projectDescription();
@@ -165,6 +166,7 @@ describe("summitswapKickstarter", () => {
       const startTimestamp = await summitKickstarter.startTimestamp();
       const endTimestamp = await summitKickstarter.endTimestamp();
 
+      assert(owner, otherWallet.address);
       assert(title, TITLE);
       assert(creator, CREATOR);
       assert(projectDescription, PROJECT_DESCRIPTION);

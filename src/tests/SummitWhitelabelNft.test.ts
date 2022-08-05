@@ -30,7 +30,6 @@ describe("SummitWhitelabelNft", () => {
     maxSupply: 100,
     whitelistMintPrice: parseEther("0.001"),
     publicMintPrice: parseEther("0.02"),
-    startTokenId: 0,
     signer: signer.address,
     phase: Phase.Paused,
   };
@@ -77,7 +76,6 @@ describe("SummitWhitelabelNft", () => {
       assert.equal(contractTokenInfo.maxSupply, tokenInfo.maxSupply);
       assert.equal(contractTokenInfo.whitelistMintPrice.toString(), tokenInfo.whitelistMintPrice.toString());
       assert.equal(contractTokenInfo.publicMintPrice.toString(), tokenInfo.publicMintPrice.toString());
-      assert.equal(contractTokenInfo.startTokenId, tokenInfo.startTokenId);
       assert.equal(contractTokenInfo.signer, tokenInfo.signer);
       assert.equal(contractTokenInfo.phase, tokenInfo.phase);
       assert.equal(await summitWhitelabelNft.owner(), nftOwner.address);

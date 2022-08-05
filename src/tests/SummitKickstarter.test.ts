@@ -146,6 +146,13 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("hasDistributedRewards", async () => {
+    it("should be false", async () => {
+      const hasDistributedRewards = await summitKickstarter.hasDistributedRewards();
+      assert.equal(hasDistributedRewards, false);
+    });
+  });
+
   describe("setTitle", async () => {
     const NEW_TITLE = "New Title";
     it("should not set setTitle when called by nonOwner", async () => {
@@ -298,6 +305,18 @@ describe("summitKickstarter", () => {
 
       const newStartTimestamp = await summitKickstarter.endTimestamp();
       assert.equal(newStartTimestamp.toString(), expectedEndTimestamp);
+    });
+  });
+
+  describe("setHasDistributedRewards", async () => {
+    it("should not set hasDistributedRewards when called by nonOwner", async () => {
+      await expect(summitKickstarter.connect(otherWallet).setHasDistributedRewards(true)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should set hasDistributedRewards", async () => {
+      await summitKickstarter.setHasDistributedRewards(true);
+      assert.equal(await summitKickstarter.hasDistributedRewards(), true);
     });
   });
 

@@ -96,6 +96,11 @@ describe("SummitWhitelabelNft", () => {
         await summitWhitelabelNft.connect(nftOwner).enterWhitelistPhase();
       });
 
+      it("should be reverted if mint without signature", async () => {
+        await expect(summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount)).to.be.revertedWith(
+          "Please provide signature"
+        );
+      });
       it("should be reverted if minter is not whitelisted", async () => {
         await expect(
           summitWhitelabelNft.connect(whitelistMinter2)["mint(uint256,bytes)"](mintAmount, validSign1.signature)
@@ -108,6 +113,14 @@ describe("SummitWhitelabelNft", () => {
             value: mintPrice.mul(mintAmount).sub(1),
           })
         ).to.be.revertedWith("Ether sent is less than minting cost");
+      });
+      it("should be reverted if mint amount is 0", async () => {
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;
+        await expect(
+          summitWhitelabelNft.connect(whitelistMinter1)["mint(uint256,bytes)"](0, validSign1.signature, {
+            value: mintPrice.mul(0),
+          })
+        ).to.be.revertedWith("_mintAmount can not be 0");
       });
       it("should be able to refund excess fee", async () => {
         const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;

@@ -23,9 +23,6 @@ describe("summitswapKickstarter", () => {
   const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7; // one week after the end date
 
   let summitKickstarterFactory: SummitKickstarterFactory;
-  let summitKickstarter: SummitKickstarter;
-
-  const getTimestampFromMinutes = (minutes: number) => minutes * 60;
 
   beforeEach(async () => {
     summitKickstarterFactory = (await deployContract(owner, SummitKickstarterFactoryArtifact, [

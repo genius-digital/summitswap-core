@@ -11,7 +11,6 @@ contract SummitKickstarterFactory is Ownable {
   mapping(address => address[]) public userProjects;
 
   uint256 public serviceFee;
-  address public serviceFeeReceiver;
 
   event ProjectCreated(
     address indexed _owner,
@@ -28,9 +27,8 @@ contract SummitKickstarterFactory is Ownable {
     uint256 timestamp
   );
 
-  constructor(uint256 _serviceFee, address _serviceFeeReceiver) {
+  constructor(uint256 _serviceFee) {
     serviceFee = _serviceFee;
-    serviceFeeReceiver = _serviceFeeReceiver;
   }
 
   receive() external payable {}
@@ -102,10 +100,6 @@ contract SummitKickstarterFactory is Ownable {
 
   function setServiceFee(uint256 _serviceFee) external onlyOwner {
     serviceFee = _serviceFee;
-  }
-
-  function setServiceFeeReceiver(address _serviceFeeReceiver) external onlyOwner {
-    serviceFeeReceiver = _serviceFeeReceiver;
   }
 
   function withdraw(address _receiver) external onlyOwner {

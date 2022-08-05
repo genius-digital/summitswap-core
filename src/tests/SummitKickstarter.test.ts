@@ -8,7 +8,7 @@ import { utils } from "ethers";
 const { deployContract, provider } = waffle;
 
 describe("summitswapKickstarter", () => {
-  const [owner, otherWallet, feeReceiverWallet] = provider.getWallets();
+  const [owner, otherWallet] = provider.getWallets();
   const SERVICE_FEE = utils.parseEther("0.1");
   const MIN_CONTRIBUTION = 1000;
   const PROJECT_GOAL = 1000000;
@@ -23,7 +23,6 @@ describe("summitswapKickstarter", () => {
   beforeEach(async () => {
     summitKickstarterFactory = (await deployContract(owner, SummitKickstarterFactoryArtifact, [
       SERVICE_FEE,
-      feeReceiverWallet.address,
     ])) as SummitKickstarterFactory;
   });
 
@@ -73,30 +72,6 @@ describe("summitswapKickstarter", () => {
 
       serviceFee = await summitKickstarterFactory.serviceFee();
       assert.equal(serviceFee.toString(), newServiceFee.toString());
-    });
-  });
-
-  describe("serviceFeeReceiver", async () => {
-    it("should return feeReceiverWallet", async () => {
-      const serviceFeeReceiver = await summitKickstarterFactory.serviceFeeReceiver();
-      assert.equal(serviceFeeReceiver, feeReceiverWallet.address);
-    });
-  });
-
-  describe("setServiceFeeReceiver", async () => {
-    it("should revert when called by nonOwner", async () => {
-      await expect(
-        summitKickstarterFactory.connect(otherWallet).setServiceFeeReceiver(owner.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-    });
-    it("should be able to set serviceFeeReceiver to owner address", async () => {
-      let serviceFeeReceiver = await summitKickstarterFactory.serviceFeeReceiver();
-      assert.equal(serviceFeeReceiver, feeReceiverWallet.address);
-
-      await summitKickstarterFactory.setServiceFeeReceiver(owner.address);
-
-      serviceFeeReceiver = await summitKickstarterFactory.serviceFeeReceiver();
-      assert.equal(serviceFeeReceiver, owner.address);
     });
   });
 

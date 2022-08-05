@@ -46,7 +46,7 @@ contract SummitKickstarterFactory is Ownable {
     uint256 _startTimestamp,
     uint256 _endTimestamp
   ) external payable {
-    require(msg.value >= serviceFee, "Not enough serviceFee sent");
+    require(msg.value >= serviceFee, "Service Fee is not enough");
     refundExcessiveFee();
 
     SummitKickstarter project = new SummitKickstarter(

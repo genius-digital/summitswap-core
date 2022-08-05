@@ -20,6 +20,8 @@ contract SummitWhitelableNftFactory is Ownable {
     serviceFeeReceiver = _serviceFeeReceiver;
   }
 
+  receive() external payable {}
+
   function createNft(TokenInfo calldata _tokenInfo, string memory _initialURI) external payable {
     require(msg.value >= serviceFee, "Not enough serviceFee sent");
 

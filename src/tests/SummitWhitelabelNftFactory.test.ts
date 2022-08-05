@@ -102,4 +102,18 @@ describe("SummitWhitelabelNftFactory", () => {
       ).to.emit(summitWhitelabelNftFactory, "CreateNft");
     });
   });
+
+  describe("getNfts", () => {
+    it("should get all nft addresses", async () => {
+      const nfts0 = await summitWhitelabelNftFactory.getNfts();
+      assert.equal(nfts0.length, 0);
+
+      await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+        value: serviceFee,
+      });
+
+      const nfts1 = await summitWhitelabelNftFactory.getNfts();
+      assert.equal(nfts1.length, 1);
+    });
+  });
 });

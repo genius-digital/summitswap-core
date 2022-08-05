@@ -8,7 +8,8 @@ import { waffle } from "hardhat";
 const { deployContract, provider } = waffle;
 
 describe("SummitWhitelabelNftFactory", () => {
-  const [owner, signer, serviceFeeReceiver, wallet1, wallet2, withdrawReceiver] = provider.getWallets();
+  const [owner, signer, serviceFeeReceiver, wallet1, wallet2, withdrawReceiver, withdrawOperator] =
+    provider.getWallets();
 
   let summitWhitelabelNftFactory: SummitWhitelableNftFactory;
 
@@ -152,20 +153,34 @@ describe("SummitWhitelabelNftFactory", () => {
   });
 
   describe("withdraw", () => {
-    it("should be reverted if called by non-owner", async () => {
-      await expect(summitWhitelabelNftFactory.connect(wallet1).withdraw(wallet2.address)).to.be.revertedWith(
-        "Ownable: caller is not the owner"
-      );
-    });
-
-    it("should be able to withdraw native coin", async () => {
+    beforeEach(async () => {
       await wallet1.sendTransaction({
         to: summitWhitelabelNftFactory.address,
         value: serviceFee,
       });
+      await summitWhitelabelNftFactory.connect(owner).addWithdrawOperators([withdrawOperator.address]);
+    });
 
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNftFactory.connect(wallet1).withdraw(withdrawReceiver.address)).to.be.revertedWith(
+        "Not a withdraw operator"
+      );
+    });
+    it("should be reverted if not an operator", async () => {
+      await expect(summitWhitelabelNftFactory.connect(wallet2).withdraw(withdrawReceiver.address)).to.be.revertedWith(
+        "Not a withdraw operator"
+      );
+    });
+    it("should be able to withdraw native coin", async () => {
       const withdrawReceiverBalance0 = await provider.getBalance(withdrawReceiver.address);
       await summitWhitelabelNftFactory.connect(owner).withdraw(withdrawReceiver.address);
+      const withdrawReceiverBalance1 = await provider.getBalance(withdrawReceiver.address);
+
+      assert.equal(withdrawReceiverBalance0.sub(withdrawReceiverBalance1).abs().toString(), serviceFee.toString());
+    });
+    it("should be able to withdraw native coin by withdraw operator", async () => {
+      const withdrawReceiverBalance0 = await provider.getBalance(withdrawReceiver.address);
+      await summitWhitelabelNftFactory.connect(withdrawOperator).withdraw(withdrawReceiver.address);
       const withdrawReceiverBalance1 = await provider.getBalance(withdrawReceiver.address);
 
       assert.equal(withdrawReceiverBalance0.sub(withdrawReceiverBalance1).abs().toString(), serviceFee.toString());

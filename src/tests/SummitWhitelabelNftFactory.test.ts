@@ -1,6 +1,6 @@
-import SummitWhitelabelNftFactoryArtifact from "@built-contracts/whitelabelNft/SummitWhitelabelNftFactory.sol/SummitWhitelableNftFactory.json";
-import { SummitWhitelableNftFactory } from "build/typechain";
-import { TokenInfoStruct } from "build/typechain/SummitWhitelableNftFactory";
+import SummitWhitelabelNftFactoryArtifact from "@built-contracts/whitelabelNft/SummitWhitelabelNftFactory.sol/SummitWhitelabelNftFactory.json";
+import { SummitWhitelabelNftFactory } from "build/typechain";
+import { TokenInfoStruct } from "build/typechain/SummitWhitelabelNftFactory";
 import { assert, expect } from "chai";
 import { parseEther } from "ethers/lib/utils";
 import { waffle } from "hardhat";
@@ -11,7 +11,7 @@ describe("SummitWhitelabelNftFactory", () => {
   const [owner, signer, serviceFeeReceiver, wallet1, wallet2, withdrawReceiver, withdrawOperator] =
     provider.getWallets();
 
-  let summitWhitelabelNftFactory: SummitWhitelableNftFactory;
+  let summitWhitelabelNftFactory: SummitWhitelabelNftFactory;
 
   const serviceFee = parseEther("0.001");
   const baseUri = "ipfs://QmSAo4kt2N9mdgwTF5MREgSWHoF3CxwwmbhZV5M3u83SVg/";
@@ -30,7 +30,7 @@ describe("SummitWhitelabelNftFactory", () => {
     summitWhitelabelNftFactory = (await deployContract(owner, SummitWhitelabelNftFactoryArtifact, [
       serviceFee,
       serviceFeeReceiver.address,
-    ])) as SummitWhitelableNftFactory;
+    ])) as SummitWhitelabelNftFactory;
   });
 
   describe("constructor", () => {

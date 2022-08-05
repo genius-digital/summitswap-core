@@ -48,9 +48,16 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     return tokenInfo.startTokenId;
   }
 
+  function mint(uint256 _mintAmount) external payable {
+    require(tokenInfo.phase != Phase.Pause, "Minting is paused");
+    require(tokenInfo.phase == Phase.Public, "Please provide signature");
+
+    mintX(_msgSender(), _mintAmount);
+  }
+
   function mint(uint256 _mintAmount, bytes memory _signature) external payable {
     require(tokenInfo.phase != Phase.Pause, "Minting is paused");
-    require(tokenInfo.phase == Phase.Public || isSignatureValid(_msgSender(), _signature), "Invalid signature");
+    require(isSignatureValid(_msgSender(), _signature), "Invalid signature");
 
     mintX(_msgSender(), _mintAmount);
   }

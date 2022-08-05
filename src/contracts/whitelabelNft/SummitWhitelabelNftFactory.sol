@@ -9,6 +9,7 @@ pragma solidity ^0.8.6;
 contract SummitWhitelableNftFactory is Ownable {
   address[] public nfts;
   mapping(address => address[]) public userNfts;
+  mapping(address => bool) public isWithdrawOperator;
 
   uint256 public serviceFee;
   address public serviceFeeReceiver;
@@ -71,7 +72,21 @@ contract SummitWhitelableNftFactory is Ownable {
     serviceFeeReceiver = _serviceFeeReceiver;
   }
 
-  function withdraw(address _receiver) external onlyOwner {
+  function addWithdrawOperators(address[] calldata _operators) external onlyOwner {
+    for (uint256 i = 0; i < _operators.length; i++) {
+      isWithdrawOperator[_operators[i]] = true;
+    }
+  }
+
+  function removeWithdrawOperators(address[] calldata _operators) external onlyOwner {
+    for (uint256 i = 0; i < _operators.length; i++) {
+      isWithdrawOperator[_operators[i]] = false;
+    }
+  }
+
+  function withdraw(address _receiver) external {
+    require(isWithdrawOperator[_msgSender()] || _msgSender() == owner(), "Not a withdraw operator");
+
     (bool success, ) = address(_receiver).call{value: address(this).balance}("");
     require(success, "Unable to withdraw Ether");
   }

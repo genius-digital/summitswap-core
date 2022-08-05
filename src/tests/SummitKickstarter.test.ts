@@ -11,8 +11,10 @@ describe("summitswapKickstarter", () => {
   const [owner, otherWallet, feeReceiverWallet] = provider.getWallets();
   const SERVICE_FEE = utils.parseEther("0.1");
   const MIN_CONTRIBUTION = 1000;
+  const PROJECT_GOAL = 1000000;
   const START_TIMESTAMP = Math.floor(Date.now() / 1000);
   const END_TIMESTAMP = START_TIMESTAMP + 60 * 60 * 24 * 7; // one week from now
+  const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7; // one week after the end date
 
   let summitKickstarterFactory: SummitKickstarterFactory;
 
@@ -96,6 +98,57 @@ describe("summitswapKickstarter", () => {
       serviceFeeReceiver = await summitKickstarterFactory.serviceFeeReceiver();
       assert.equal(serviceFeeReceiver, owner.address);
     });
+  });
+
+  describe("createProject", async () => {
+    it("should not be able to create project if pay less than service fee", async () => {
+      await expect(
+        summitKickstarterFactory.createProject(
+          "Lorem Ipsum",
+          "John Doe",
+          "This is a project description",
+          "This is a reward description",
+          MIN_CONTRIBUTION.toString(),
+          PROJECT_GOAL.toString(),
+          REWARD_DISTRIBUTION_TIMESTAMP.toString(),
+          START_TIMESTAMP.toString(),
+          END_TIMESTAMP.toString()
+        )
+      ).to.be.revertedWith("Service Fee is not enough");
+    });
+    it("should be able to get refund excessive fee if pay more than service fee", async () => {
+      const walletBalance = await provider.getBalance(otherWallet.address);
+      const kickstarterContractBalance = await provider.getBalance(summitKickstarterFactory.address);
+
+      const tx = await summitKickstarterFactory
+        .connect(otherWallet)
+        .createProject(
+          "Lorem Ipsum",
+          "John Doe",
+          "This is a project description",
+          "This is a reward description",
+          MIN_CONTRIBUTION.toString(),
+          PROJECT_GOAL.toString(),
+          REWARD_DISTRIBUTION_TIMESTAMP.toString(),
+          START_TIMESTAMP.toString(),
+          END_TIMESTAMP.toString(),
+          { value: SERVICE_FEE.add(1) }
+        );
+
+      const txReceipt = await tx.wait();
+      const gasUsed = txReceipt.gasUsed;
+      const gasPrice = txReceipt.effectiveGasPrice;
+      const gasCost = gasUsed.mul(gasPrice);
+      assert.equal(
+        walletBalance.sub(SERVICE_FEE).sub(gasCost).toString(),
+        (await provider.getBalance(otherWallet.address)).toString()
+      );
+      assert.equal(
+        kickstarterContractBalance.add(SERVICE_FEE).toString(),
+        (await provider.getBalance(summitKickstarterFactory.address)).toString()
+      );
+    });
+    it("should be able to create project", async () => {});
   });
 
   // describe("minContribution", async () => {

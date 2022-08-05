@@ -86,6 +86,9 @@ describe("SummitWhitelabelNft", () => {
 
   describe("mint", () => {
     it("should be reverted when phase is paused", async () => {
+      await expect(summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount)).to.be.revertedWith(
+        "Minting is paused"
+      );
       await expect(
         summitWhitelabelNft.connect(whitelistMinter2)["mint(uint256,bytes)"](mintAmount, validSign1.signature)
       ).to.be.revertedWith("Minting is paused");
@@ -171,6 +174,11 @@ describe("SummitWhitelabelNft", () => {
         await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
       });
 
+      it("should be reverted if mint with signature", async () => {
+        await expect(
+          summitWhitelabelNft.connect(whitelistMinter2)["mint(uint256,bytes)"](mintAmount, validSign1.signature)
+        ).to.be.revertedWith("Invalid signature");
+      });
       it("should be reverted if not enough fee", async () => {
         const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
         await expect(
@@ -178,6 +186,53 @@ describe("SummitWhitelabelNft", () => {
             value: mintPrice.mul(mintAmount).sub(1),
           })
         ).to.be.revertedWith("Ether sent is less than minting cost");
+      });
+      it("should be reverted if mint amount is 0", async () => {
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
+        await expect(
+          summitWhitelabelNft.connect(whitelistMinter1)["mint(uint256)"](0, {
+            value: mintPrice.mul(0),
+          })
+        ).to.be.revertedWith("_mintAmount can not be 0");
+      });
+      it("should be able to refund excess fee", async () => {
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
+        const excessFund = parseEther("1");
+
+        const minterMinterBalanceInitial = await provider.getBalance(minter.address);
+
+        const tx = await summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount, {
+          value: mintPrice.mul(mintAmount).add(excessFund),
+        });
+
+        const txReceipt = await tx.wait();
+        const gasUsed = txReceipt.gasUsed;
+        const gasPrice = txReceipt.effectiveGasPrice;
+        const gasCost = gasUsed.mul(gasPrice);
+
+        const minterMinterBalanceFinal = await provider.getBalance(minter.address);
+
+        assert.equal(
+          minterMinterBalanceInitial.sub(minterMinterBalanceFinal).toString(),
+          mintPrice.mul(mintAmount).add(gasCost).toString()
+        );
+      });
+      it("should be able to mint", async () => {
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
+        await summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount, {
+          value: mintPrice.mul(mintAmount),
+        });
+
+        const mintAmount2 = 2;
+        await summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount2, {
+          value: mintPrice.mul(mintAmount2),
+        });
+
+        assert.equal(
+          (await summitWhitelabelNft.balanceOf(minter.address)).toString(),
+          (mintAmount + mintAmount2).toString()
+        );
+        assert.equal((await summitWhitelabelNft.totalSupply()).toString(), (mintAmount + mintAmount2).toString());
       });
     });
   });

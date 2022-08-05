@@ -130,4 +130,18 @@ describe("SummitWhitelabelNftFactory", () => {
       assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet2.address)).length, 0);
     });
   });
+
+  describe("setServiceFee", () => {
+    it("should be reverted if called by non-owner", async () => {
+      const newServiceFee = parseEther("1");
+      await expect(summitWhitelabelNftFactory.connect(wallet1).setServiceFee(newServiceFee)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to set a new serviceFee", async () => {
+      const newServiceFee = parseEther("1");
+      await summitWhitelabelNftFactory.connect(owner).setServiceFee(newServiceFee);
+      assert((await summitWhitelabelNftFactory.serviceFee()).toString(), newServiceFee.toString());
+    });
+  });
 });

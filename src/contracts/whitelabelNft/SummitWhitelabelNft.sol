@@ -28,14 +28,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   using Strings for uint256;
   using ECDSA for bytes32;
 
-  mapping(address => bool) public isWithdrawOperator;
-
   TokenInfo public tokenInfo;
-
-  modifier canWithdraw(address operator) {
-    require(isWithdrawOperator[operator], "Not a withdraw operator");
-    _;
-  }
 
   constructor(
     TokenInfo memory _tokenInfo,
@@ -110,7 +103,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     tokenInfo.publicMintPrice = _publicMintPrice;
   }
 
-  function withdraw(address _receipient) external canWithdraw(_msgSender()) {
+  function withdraw(address _receipient) external onlyOwner {
     (bool sent, ) = payable(_receipient).call{value: address(this).balance}("");
     require(sent, "Failed to send Ether");
   }

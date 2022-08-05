@@ -14,7 +14,7 @@ enum Phase {
 }
 
 describe("SummitWhitelabelNftFactory", () => {
-  const [owner, signer, serviceFeeReceiver, wallet1] = provider.getWallets();
+  const [owner, signer, serviceFeeReceiver, wallet1, wallet2, withdrawReceiver] = provider.getWallets();
 
   let summitWhitelabelNftFactory: SummitWhitelableNftFactory;
 
@@ -114,6 +114,20 @@ describe("SummitWhitelabelNftFactory", () => {
 
       const nfts1 = await summitWhitelabelNftFactory.getNfts();
       assert.equal(nfts1.length, 1);
+    });
+  });
+
+  describe("nftsOf", () => {
+    it("should get nft addresses of a user", async () => {
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet1.address)).length, 0);
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet2.address)).length, 0);
+
+      await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+        value: serviceFee,
+      });
+
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet1.address)).length, 1);
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet2.address)).length, 0);
     });
   });
 });

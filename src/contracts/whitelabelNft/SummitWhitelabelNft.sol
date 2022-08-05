@@ -49,8 +49,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   }
 
   function mint(uint256 _mintAmount, bytes memory _signature) external payable {
-    require(isSignatureValid(_msgSender(), _signature), "Invalid signature");
-    require(balanceOf(_msgSender()) + _mintAmount <= tokenInfo.maxSupply, "Purchase would exceed max supply");
+    require(tokenInfo.phase == Phase.Public || isSignatureValid(_msgSender(), _signature), "Invalid signature");
 
     mintX(_msgSender(), _mintAmount);
   }
@@ -58,6 +57,8 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   function mintX(address _to, uint256 _mintAmount) private {
     require(tokenInfo.phase != Phase.Paused, "Minting is paused");
     require(_mintAmount > 0, "_mintAmount can not be 0");
+    require(totalSupply() + _mintAmount <= tokenInfo.maxSupply, "Purchase would exceed max supply");
+
     if (_to != owner() && _msgSender() != owner()) {
       uint256 price = tokenInfo.phase == Phase.Whitelist ? tokenInfo.whitelistMintPrice : tokenInfo.publicMintPrice;
       require(msg.value >= price * _mintAmount, "Ether sent is less than minting cost");

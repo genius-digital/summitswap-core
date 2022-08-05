@@ -1,9 +1,9 @@
 import SummitWhitelabelNftFactoryArtifact from "@built-contracts/whitelabelNft/SummitWhitelabelNftFactory.sol/SummitWhitelabelNftFactory.json";
 import { SummitWhitelabelNft, SummitWhitelabelNftFactory } from "build/typechain";
 import { TokenInfoStruct } from "build/typechain/SummitWhitelabelNftFactory";
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import { parseEther } from "ethers/lib/utils";
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, web3 } from "hardhat";
 
 const { deployContract, provider } = waffle;
 
@@ -14,10 +14,12 @@ enum Phase {
 }
 
 describe("SummitWhitelabelNft", () => {
-  const [owner, nftOwner, signer, serviceFeeReceiver] = provider.getWallets();
+  const [owner, nftOwner, signer, serviceFeeReceiver, whitelistMinter1, whitelistMinter2] = provider.getWallets();
 
   let summitWhitelabelNftFactory: SummitWhitelabelNftFactory;
   let summitWhitelabelNft: SummitWhitelabelNft;
+  let validSign1: any;
+  let validSign2: any;
 
   const serviceFee = parseEther("0.001");
   const baseUri = "ipfs://QmSAo4kt2N9mdgwTF5MREgSWHoF3CxwwmbhZV5M3u83SVg/";
@@ -31,6 +33,7 @@ describe("SummitWhitelabelNft", () => {
     signer: signer.address,
     phase: Phase.Paused,
   };
+  const mintAmount = 1;
 
   beforeEach(async () => {
     summitWhitelabelNftFactory = (await deployContract(owner, SummitWhitelabelNftFactoryArtifact, [
@@ -45,6 +48,20 @@ describe("SummitWhitelabelNft", () => {
     const SummitCustomPresale = await ethers.getContractFactory("SummitWhitelabelNft");
     const summitWhitelabelNftAddress = await summitWhitelabelNftFactory.nfts(0);
     summitWhitelabelNft = SummitCustomPresale.attach(summitWhitelabelNftAddress);
+
+    const hash =
+      web3.utils.soliditySha3(
+        { t: "address", v: summitWhitelabelNft.address },
+        { t: "address", v: whitelistMinter1.address }
+      ) || "";
+    validSign1 = web3.eth.accounts.sign(hash, signer.privateKey);
+
+    const otherHash =
+      web3.utils.soliditySha3(
+        { t: "address", v: summitWhitelabelNft.address },
+        { t: "address", v: whitelistMinter2.address }
+      ) || "";
+    validSign2 = web3.eth.accounts.sign(otherHash, signer.privateKey);
   });
 
   describe("constructor", () => {
@@ -63,6 +80,74 @@ describe("SummitWhitelabelNft", () => {
       assert.equal(contractTokenInfo.signer, tokenInfo.signer);
       assert.equal(contractTokenInfo.phase, tokenInfo.phase);
       assert.equal(await summitWhitelabelNft.owner(), nftOwner.address);
+    });
+  });
+
+  describe("mint", () => {
+    it("should be reverted when phase is paused", async () => {
+      await expect(
+        summitWhitelabelNft.connect(whitelistMinter2).mint(mintAmount, validSign1.signature)
+      ).to.be.revertedWith("Minting is paused");
+    });
+
+    describe("Phase: whitelisted", () => {
+      beforeEach(async () => {
+        await summitWhitelabelNft.connect(nftOwner).enterWhitelistPhase();
+      });
+
+      it("should be reverted if minter is not whitelisted", async () => {
+        await expect(
+          summitWhitelabelNft.connect(whitelistMinter2).mint(mintAmount, validSign1.signature)
+        ).to.be.revertedWith("Invalid signature");
+      });
+      it("should be reverted if not enough fee", async () => {
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;
+        await expect(
+          summitWhitelabelNft.connect(whitelistMinter1).mint(mintAmount, validSign1.signature, {
+            value: mintPrice.mul(mintAmount).sub(1),
+          })
+        ).to.be.revertedWith("Ether sent is less than minting cost");
+      });
+      it("should be able to refund excess fee", async () => {
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;
+        const excessFund = parseEther("1");
+
+        const whitelistMinterBalanceInitial = await provider.getBalance(whitelistMinter1.address);
+
+        const tx = await summitWhitelabelNft.connect(whitelistMinter1).mint(mintAmount, validSign1.signature, {
+          value: mintPrice.mul(mintAmount).add(excessFund),
+        });
+
+        const txReceipt = await tx.wait();
+        const gasUsed = txReceipt.gasUsed;
+        const gasPrice = txReceipt.effectiveGasPrice;
+        const gasCost = gasUsed.mul(gasPrice);
+
+        const whitelistMinterBalanceFinal = await provider.getBalance(whitelistMinter1.address);
+
+        assert.equal(
+          whitelistMinterBalanceInitial.sub(whitelistMinterBalanceFinal).toString(),
+          mintPrice.mul(mintAmount).add(gasCost).toString()
+        );
+      });
+      it("should be able to mint", async () => {
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;
+        await summitWhitelabelNft.connect(whitelistMinter1).mint(mintAmount, validSign1.signature, {
+          value: mintPrice.mul(mintAmount),
+        });
+
+        const mintAmount2 = 2;
+        await summitWhitelabelNft.connect(whitelistMinter2).mint(mintAmount2, validSign2.signature, {
+          value: mintPrice.mul(mintAmount2),
+        });
+
+        assert.equal((await summitWhitelabelNft.balanceOf(whitelistMinter1.address)).toString(), mintAmount.toString());
+        assert.equal(
+          (await summitWhitelabelNft.balanceOf(whitelistMinter2.address)).toString(),
+          mintAmount2.toString()
+        );
+        assert.equal((await summitWhitelabelNft.totalSupply()).toString(), (mintAmount + mintAmount2).toString());
+      });
     });
   });
 });

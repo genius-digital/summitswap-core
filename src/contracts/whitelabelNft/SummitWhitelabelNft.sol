@@ -19,7 +19,6 @@ struct TokenInfo {
   uint256 maxSupply;
   uint256 whitelistMintPrice;
   uint256 publicMintPrice;
-  uint8 startTokenId;
   address signer;
   Phase phase;
 }
@@ -42,10 +41,6 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
   function _baseURI() internal view override(BaseTokenURI, ERC721A) returns (string memory) {
     return BaseTokenURI._baseURI();
-  }
-
-  function _startTokenId() internal view virtual override returns (uint256) {
-    return tokenInfo.startTokenId;
   }
 
   function mint(uint256 _mintAmount) external payable {

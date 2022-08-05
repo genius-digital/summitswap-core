@@ -23,6 +23,16 @@ describe("summitKickstarter", () => {
 
   const SERVICE_FEE = utils.parseEther("0.1");
 
+  const NEW_TITLE = "New Title";
+  const NEW_CREATOR = "New Creator";
+  const NEW_PROJECT_DESCRIPTION = "New Project Description";
+  const NEW_REWARD_DESCRIPTION = "New Reward Description";
+  const NEW_MIN_CONTRIBUTION = 12345678;
+  const NEW_PROJECT_GOALS = 12345678;
+  const NEW_REWARD_DISTRIBUTION_TIMESTAMP = 12345678;
+  const NEW_START_TIMESTAMP = 12345678;
+  const NEW_END_TIMESTAMP = 12345678;
+
   let summitKickstarterFactory: SummitKickstarterFactory;
   let summitKickstarter: SummitKickstarter;
 
@@ -154,7 +164,6 @@ describe("summitKickstarter", () => {
   });
 
   describe("setTitle", async () => {
-    const NEW_TITLE = "New Title";
     it("should not set setTitle when called by nonOwner", async () => {
       await expect(summitKickstarter.connect(otherWallet).setTitle(NEW_TITLE)).to.be.revertedWith(
         "Ownable: caller is not the owner"
@@ -167,7 +176,6 @@ describe("summitKickstarter", () => {
   });
 
   describe("setCreator", async () => {
-    const NEW_CREATOR = "New Creator";
     it("should not set setCreator when called by nonOwner", async () => {
       await expect(summitKickstarter.connect(otherWallet).setCreator(NEW_CREATOR)).to.be.revertedWith(
         "Ownable: caller is not the owner"
@@ -180,7 +188,6 @@ describe("summitKickstarter", () => {
   });
 
   describe("setProjectDescription", async () => {
-    const NEW_PROJECT_DESCRIPTION = "New Project Description";
     it("should not set setProjectDescription when called by nonOwner", async () => {
       await expect(
         summitKickstarter.connect(otherWallet).setProjectDescription(NEW_PROJECT_DESCRIPTION)
@@ -193,7 +200,6 @@ describe("summitKickstarter", () => {
   });
 
   describe("setRewardDescription", async () => {
-    const NEW_REWARD_DESCRIPTION = "New Reward Description";
     it("should not set setRewardDescription when called by nonOwner", async () => {
       await expect(
         summitKickstarter.connect(otherWallet).setRewardDescription(NEW_REWARD_DESCRIPTION)
@@ -226,7 +232,6 @@ describe("summitKickstarter", () => {
   });
 
   describe("setProjectGoals", async () => {
-    const NEW_PROJECT_GOALS = 12345678;
     it("should not set setProjectGoals when called by nonOwner", async () => {
       await expect(
         summitKickstarter.connect(otherWallet).setProjectGoals(NEW_PROJECT_GOALS.toString())
@@ -239,7 +244,6 @@ describe("summitKickstarter", () => {
   });
 
   describe("setRewardDistributionTimestamp", async () => {
-    const NEW_REWARD_DISTRIBUTION_TIMESTAMP = 12345678;
     it("should not set setRewardDistributionTimestamp when called by nonOwner", async () => {
       await expect(
         summitKickstarter
@@ -317,6 +321,79 @@ describe("summitKickstarter", () => {
     it("should set hasDistributedRewards", async () => {
       await summitKickstarter.setHasDistributedRewards(true);
       assert.equal(await summitKickstarter.hasDistributedRewards(), true);
+    });
+  });
+
+  describe("configProjectInfo", async () => {
+    it("should not set configProjectInfo when called by nonOwner", async () => {
+      await expect(
+        summitKickstarter
+          .connect(otherWallet)
+          .configProjectInfo(
+            NEW_TITLE,
+            NEW_CREATOR,
+            NEW_PROJECT_DESCRIPTION,
+            NEW_REWARD_DESCRIPTION,
+            NEW_MIN_CONTRIBUTION,
+            NEW_PROJECT_GOALS,
+            NEW_REWARD_DISTRIBUTION_TIMESTAMP,
+            NEW_START_TIMESTAMP,
+            NEW_END_TIMESTAMP
+          )
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+    it("should set configProjectInfo", async () => {
+      let title = await summitKickstarter.title();
+      let creator = await summitKickstarter.creator();
+      let projectDescription = await summitKickstarter.projectDescription();
+      let rewardDescription = await summitKickstarter.rewardDescription();
+      let minContribution = await summitKickstarter.minContribution();
+      let projectGoals = await summitKickstarter.projectGoals();
+      let rewardDistributionTimestamp = await summitKickstarter.rewardDistributionTimestamp();
+      let startTimestamp = await summitKickstarter.startTimestamp();
+      let endTimestamp = await summitKickstarter.endTimestamp();
+
+      assert(title, TITLE);
+      assert(creator, CREATOR);
+      assert(projectDescription, PROJECT_DESCRIPTION);
+      assert(rewardDescription, REWARD_DESCRIPTION);
+      assert(minContribution.toString(), MIN_CONTRIBUTION.toString());
+      assert(projectGoals.toString(), PROJECT_GOALS.toString());
+      assert(rewardDistributionTimestamp.toString(), REWARD_DISTRIBUTION_TIMESTAMP.toString());
+      assert(startTimestamp.toString(), START_TIMESTAMP.toString());
+      assert(endTimestamp.toString(), END_TIMESTAMP.toString());
+
+      await summitKickstarter.configProjectInfo(
+        NEW_TITLE,
+        NEW_CREATOR,
+        NEW_PROJECT_DESCRIPTION,
+        NEW_REWARD_DESCRIPTION,
+        NEW_MIN_CONTRIBUTION,
+        NEW_PROJECT_GOALS,
+        NEW_REWARD_DISTRIBUTION_TIMESTAMP,
+        NEW_START_TIMESTAMP,
+        NEW_END_TIMESTAMP
+      );
+
+      title = await summitKickstarter.title();
+      creator = await summitKickstarter.creator();
+      projectDescription = await summitKickstarter.projectDescription();
+      rewardDescription = await summitKickstarter.rewardDescription();
+      minContribution = await summitKickstarter.minContribution();
+      projectGoals = await summitKickstarter.projectGoals();
+      rewardDistributionTimestamp = await summitKickstarter.rewardDistributionTimestamp();
+      startTimestamp = await summitKickstarter.startTimestamp();
+      endTimestamp = await summitKickstarter.endTimestamp();
+
+      assert(title, NEW_TITLE);
+      assert(creator, NEW_CREATOR);
+      assert(projectDescription, NEW_PROJECT_DESCRIPTION);
+      assert(rewardDescription, NEW_REWARD_DESCRIPTION);
+      assert(minContribution.toString(), NEW_MIN_CONTRIBUTION.toString());
+      assert(projectGoals.toString(), NEW_PROJECT_GOALS.toString());
+      assert(rewardDistributionTimestamp.toString(), NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString());
+      assert(startTimestamp.toString(), NEW_START_TIMESTAMP.toString());
+      assert(endTimestamp.toString(), NEW_END_TIMESTAMP.toString());
     });
   });
 

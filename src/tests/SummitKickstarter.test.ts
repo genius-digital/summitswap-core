@@ -139,6 +139,13 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("rewardDistributionTimestamp", async () => {
+    it(`should be ${REWARD_DISTRIBUTION_TIMESTAMP}`, async () => {
+      const rewardDistributionTimestamp = await summitKickstarter.rewardDistributionTimestamp();
+      assert.equal(rewardDistributionTimestamp.toString(), REWARD_DISTRIBUTION_TIMESTAMP.toString());
+    });
+  });
+
   describe("setTitle", async () => {
     const NEW_TITLE = "New Title";
     it("should not set setTitle when called by nonOwner", async () => {
@@ -221,6 +228,24 @@ describe("summitKickstarter", () => {
     it("should set setProjectGoals", async () => {
       await summitKickstarter.setProjectGoals(NEW_PROJECT_GOALS.toString());
       assert.equal((await summitKickstarter.projectGoals()).toString(), NEW_PROJECT_GOALS.toString());
+    });
+  });
+
+  describe("setRewardDistributionTimestamp", async () => {
+    const NEW_REWARD_DISTRIBUTION_TIMESTAMP = 12345678;
+    it("should not set setRewardDistributionTimestamp when called by nonOwner", async () => {
+      await expect(
+        summitKickstarter
+          .connect(otherWallet)
+          .setRewardDistributionTimestamp(NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString())
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+    it("should set setRewardDistributionTimestamp", async () => {
+      await summitKickstarter.setRewardDistributionTimestamp(NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString());
+      assert.equal(
+        (await summitKickstarter.rewardDistributionTimestamp()).toString(),
+        NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString()
+      );
     });
   });
 

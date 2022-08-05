@@ -92,6 +92,18 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     }
   }
 
+  function enterPausePhase() external onlyOwner {
+    tokenInfo.phase = Phase.Pause;
+  }
+
+  function enterWhitelistPhase() external onlyOwner {
+    tokenInfo.phase = Phase.Whitelist;
+  }
+
+  function enterPublicPhase() external onlyOwner {
+    tokenInfo.phase = Phase.Public;
+  }
+
   function setSigner(address _signer) external onlyOwner {
     tokenInfo.signer = _signer;
   }

@@ -90,6 +90,13 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("creator", async () => {
+    it(`should be ${CREATOR}`, async () => {
+      const creator = await summitKickstarter.creator();
+      assert.equal(creator.toString(), CREATOR.toString());
+    });
+  });
+
   describe("minContribution", async () => {
     it(`should be ${MIN_CONTRIBUTION}`, async () => {
       const minContribution = await summitKickstarter.minContribution();
@@ -121,6 +128,19 @@ describe("summitKickstarter", () => {
     it("should set setTitle", async () => {
       await summitKickstarter.setTitle(NEW_TITLE);
       assert.equal(await summitKickstarter.title(), NEW_TITLE);
+    });
+  });
+
+  describe("setCreator", async () => {
+    const NEW_CREATOR = "New Creator";
+    it("should not set setCreator when called by nonOwner", async () => {
+      await expect(summitKickstarter.connect(otherWallet).setCreator(NEW_CREATOR)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should set setCreator", async () => {
+      await summitKickstarter.setCreator(NEW_CREATOR);
+      assert.equal(await summitKickstarter.creator(), NEW_CREATOR);
     });
   });
 

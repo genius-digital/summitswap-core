@@ -7,12 +7,6 @@ import { waffle } from "hardhat";
 
 const { deployContract, provider } = waffle;
 
-enum Phase {
-  Paused,
-  Whitelist,
-  Public,
-}
-
 describe("SummitWhitelabelNftFactory", () => {
   const [owner, signer, serviceFeeReceiver, wallet1, wallet2, withdrawReceiver] = provider.getWallets();
 
@@ -28,7 +22,7 @@ describe("SummitWhitelabelNftFactory", () => {
     publicMintPrice: parseEther("0.02"),
     startTokenId: 0,
     signer: signer.address,
-    phase: Phase.Paused,
+    phase: 0, // 0 = paused, 1 = whitelisted, 2 = public
   };
 
   beforeEach(async () => {

@@ -156,4 +156,25 @@ describe("SummitWhitelabelNftFactory", () => {
       assert(await summitWhitelabelNftFactory.serviceFeeReceiver(), wallet2.address);
     });
   });
+
+  describe("withdraw", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNftFactory.connect(wallet1).withdraw(wallet2.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+
+    it("should be able to withdraw native coin", async () => {
+      await wallet1.sendTransaction({
+        to: summitWhitelabelNftFactory.address,
+        value: serviceFee,
+      });
+
+      const withdrawReceiverBalance0 = await provider.getBalance(withdrawReceiver.address);
+      await summitWhitelabelNftFactory.connect(owner).withdraw(withdrawReceiver.address);
+      const withdrawReceiverBalance1 = await provider.getBalance(withdrawReceiver.address);
+
+      assert.equal(withdrawReceiverBalance0.sub(withdrawReceiverBalance1).abs().toString(), serviceFee.toString());
+    });
+  });
 });

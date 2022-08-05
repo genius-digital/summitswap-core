@@ -15,7 +15,8 @@
     "flatten": "hardhat flatten",
     "node": "hardhat node",
     "console": "hardhat console",
-    "help": "hardhat help"
+    "help": "hardhat help",
+    "size": "hardhat size-contracts"
   },
   "lint-staged": {
     "**/*.{sol,json}": "prettier --write",

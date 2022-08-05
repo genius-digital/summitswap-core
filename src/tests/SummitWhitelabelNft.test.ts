@@ -14,7 +14,8 @@ enum Phase {
 }
 
 describe("SummitWhitelabelNft", () => {
-  const [owner, nftOwner, signer, serviceFeeReceiver, whitelistMinter1, whitelistMinter2] = provider.getWallets();
+  const [owner, nftOwner, signer, serviceFeeReceiver, whitelistMinter1, whitelistMinter2, minter] =
+    provider.getWallets();
 
   let summitWhitelabelNftFactory: SummitWhitelabelNftFactory;
   let summitWhitelabelNft: SummitWhitelabelNft;
@@ -86,7 +87,7 @@ describe("SummitWhitelabelNft", () => {
   describe("mint", () => {
     it("should be reverted when phase is paused", async () => {
       await expect(
-        summitWhitelabelNft.connect(whitelistMinter2).mint(mintAmount, validSign1.signature)
+        summitWhitelabelNft.connect(whitelistMinter2)["mint(uint256,bytes)"](mintAmount, validSign1.signature)
       ).to.be.revertedWith("Minting is paused");
     });
 
@@ -97,13 +98,13 @@ describe("SummitWhitelabelNft", () => {
 
       it("should be reverted if minter is not whitelisted", async () => {
         await expect(
-          summitWhitelabelNft.connect(whitelistMinter2).mint(mintAmount, validSign1.signature)
+          summitWhitelabelNft.connect(whitelistMinter2)["mint(uint256,bytes)"](mintAmount, validSign1.signature)
         ).to.be.revertedWith("Invalid signature");
       });
       it("should be reverted if not enough fee", async () => {
         const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;
         await expect(
-          summitWhitelabelNft.connect(whitelistMinter1).mint(mintAmount, validSign1.signature, {
+          summitWhitelabelNft.connect(whitelistMinter1)["mint(uint256,bytes)"](mintAmount, validSign1.signature, {
             value: mintPrice.mul(mintAmount).sub(1),
           })
         ).to.be.revertedWith("Ether sent is less than minting cost");
@@ -114,9 +115,11 @@ describe("SummitWhitelabelNft", () => {
 
         const whitelistMinterBalanceInitial = await provider.getBalance(whitelistMinter1.address);
 
-        const tx = await summitWhitelabelNft.connect(whitelistMinter1).mint(mintAmount, validSign1.signature, {
-          value: mintPrice.mul(mintAmount).add(excessFund),
-        });
+        const tx = await summitWhitelabelNft
+          .connect(whitelistMinter1)
+          ["mint(uint256,bytes)"](mintAmount, validSign1.signature, {
+            value: mintPrice.mul(mintAmount).add(excessFund),
+          });
 
         const txReceipt = await tx.wait();
         const gasUsed = txReceipt.gasUsed;
@@ -132,12 +135,12 @@ describe("SummitWhitelabelNft", () => {
       });
       it("should be able to mint", async () => {
         const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;
-        await summitWhitelabelNft.connect(whitelistMinter1).mint(mintAmount, validSign1.signature, {
+        await summitWhitelabelNft.connect(whitelistMinter1)["mint(uint256,bytes)"](mintAmount, validSign1.signature, {
           value: mintPrice.mul(mintAmount),
         });
 
         const mintAmount2 = 2;
-        await summitWhitelabelNft.connect(whitelistMinter2).mint(mintAmount2, validSign2.signature, {
+        await summitWhitelabelNft.connect(whitelistMinter2)["mint(uint256,bytes)"](mintAmount2, validSign2.signature, {
           value: mintPrice.mul(mintAmount2),
         });
 
@@ -147,6 +150,21 @@ describe("SummitWhitelabelNft", () => {
           mintAmount2.toString()
         );
         assert.equal((await summitWhitelabelNft.totalSupply()).toString(), (mintAmount + mintAmount2).toString());
+      });
+    });
+
+    describe("Phase: public", () => {
+      beforeEach(async () => {
+        await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
+      });
+
+      it("should be reverted if not enough fee", async () => {
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
+        await expect(
+          summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount, {
+            value: mintPrice.mul(mintAmount).sub(1),
+          })
+        ).to.be.revertedWith("Ether sent is less than minting cost");
       });
     });
   });

@@ -97,6 +97,13 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("projectDescription", async () => {
+    it(`should be ${PROJECT_DESCRIPTION}`, async () => {
+      const projectDescription = await summitKickstarter.projectDescription();
+      assert.equal(projectDescription.toString(), PROJECT_DESCRIPTION.toString());
+    });
+  });
+
   describe("minContribution", async () => {
     it(`should be ${MIN_CONTRIBUTION}`, async () => {
       const minContribution = await summitKickstarter.minContribution();
@@ -141,6 +148,19 @@ describe("summitKickstarter", () => {
     it("should set setCreator", async () => {
       await summitKickstarter.setCreator(NEW_CREATOR);
       assert.equal(await summitKickstarter.creator(), NEW_CREATOR);
+    });
+  });
+
+  describe("setProjectDescription", async () => {
+    const NEW_PROJECT_DESCRIPTION = "New Project Description";
+    it("should not set setProjectDescription when called by nonOwner", async () => {
+      await expect(
+        summitKickstarter.connect(otherWallet).setProjectDescription(NEW_PROJECT_DESCRIPTION)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+    it("should set setProjectDescription", async () => {
+      await summitKickstarter.setProjectDescription(NEW_PROJECT_DESCRIPTION);
+      assert.equal(await summitKickstarter.projectDescription(), NEW_PROJECT_DESCRIPTION);
     });
   });
 

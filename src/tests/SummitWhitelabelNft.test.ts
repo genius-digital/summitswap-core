@@ -368,4 +368,31 @@ describe("SummitWhitelabelNft", () => {
       assert.equal((await summitWhitelabelNft.tokenInfo()).publicMintPrice.toString(), newMintPrice.toString());
     });
   });
+
+  describe("withdraw", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNft.connect(minter).withdraw(owner.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to set public mint price", async () => {
+      await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
+
+      const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
+      const mintCost = mintPrice.mul(mintAmount);
+      await summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount, {
+        value: mintCost,
+      });
+
+      const initialOwnerBalance = await provider.getBalance(owner.address);
+
+      assert.equal((await provider.getBalance(summitWhitelabelNft.address)).toString(), mintCost.toString());
+      await summitWhitelabelNft.connect(nftOwner).withdraw(owner.address, { gasLimit: 1000000 });
+      assert.equal((await provider.getBalance(summitWhitelabelNft.address)).toString(), "0");
+
+      const finalOwnerBalance = await provider.getBalance(owner.address);
+
+      assert.equal(finalOwnerBalance.toString(), initialOwnerBalance.add(mintCost).toString());
+    });
+  });
 });

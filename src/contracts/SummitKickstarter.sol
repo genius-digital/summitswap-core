@@ -31,6 +31,8 @@ contract SummitKickstarter is Ownable {
   event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
   event Refund(address indexed contributor, uint256 amount, uint256 timestamp);
 
+  event TitleUpdated(string newTitle);
+
   constructor(
     address _owner,
     string memory _title,
@@ -63,6 +65,7 @@ contract SummitKickstarter is Ownable {
   function setTitle(string memory _title) external onlyOwner {
     require(bytes(_title).length > 0, "Title cannot be empty");
     title = _title;
+    emit TitleUpdated(_title);
   }
 
   function setCreator(string memory _creator) external onlyOwner {

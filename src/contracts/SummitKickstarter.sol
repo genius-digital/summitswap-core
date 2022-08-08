@@ -35,6 +35,7 @@ contract SummitKickstarter is Ownable {
   event CreatorUpdated(string newCreator);
   event ProjectDescriptionUpdated(string newProjectDescription);
   event RewardDescriptionUpdated(string newProjectDescription);
+  event MinContributionUpdated(uint256 newMinContribution);
   event ProjectGoalsUpdated(uint256 newProjectGoals);
 
   constructor(
@@ -96,6 +97,8 @@ contract SummitKickstarter is Ownable {
 
   function setMinContribution(uint256 _minContribution) external onlyOwner {
     minContribution = _minContribution;
+
+    emit MinContributionUpdated(_minContribution);
   }
 
   function setProjectGoals(uint256 _projectGoals) external onlyOwner {

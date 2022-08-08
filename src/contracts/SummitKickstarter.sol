@@ -30,6 +30,17 @@ contract SummitKickstarter is Ownable {
 
   event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
   event Refund(address indexed contributor, uint256 amount, uint256 timestamp);
+  event KickstarterUpdated(
+    string title,
+    string creator,
+    string projectDescription,
+    string rewardDescription,
+    uint256 minContribution,
+    uint256 projectGoals,
+    uint256 rewardDistributionTimestamp,
+    uint256 startTimestamp,
+    uint256 endTimestamp
+  );
 
   event TitleUpdated(string newTitle);
   event CreatorUpdated(string newCreator);
@@ -162,6 +173,18 @@ contract SummitKickstarter is Ownable {
     rewardDistributionTimestamp = _rewardDistributionTimestamp;
     startTimestamp = _startTimestamp;
     endTimestamp = _endTimestamp;
+
+    emit KickstarterUpdated(
+      _title,
+      _creator,
+      _projectDescription,
+      _rewardDescription,
+      _minContribution,
+      _projectGoals,
+      _rewardDistributionTimestamp,
+      _startTimestamp,
+      _endTimestamp
+    );
   }
 
   function getContributors() external view returns (address[] memory) {

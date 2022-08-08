@@ -286,4 +286,43 @@ describe("SummitWhitelabelNft", () => {
       assert.equal((await summitWhitelabelNft.totalSupply()).toString(), mintAmount.mul(2).toString());
     });
   });
+
+  describe("enterPausePhase", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNft.connect(minter).enterPausePhase()).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to enter pause phase", async () => {
+      await summitWhitelabelNft.connect(nftOwner).enterPausePhase();
+
+      assert.equal((await summitWhitelabelNft.tokenInfo()).phase, Phase.Paused);
+    });
+  });
+
+  describe("enterWhitelistPhase", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNft.connect(minter).enterWhitelistPhase()).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to enter whitelist phase", async () => {
+      await summitWhitelabelNft.connect(nftOwner).enterWhitelistPhase();
+
+      assert.equal((await summitWhitelabelNft.tokenInfo()).phase, Phase.Whitelisted);
+    });
+  });
+
+  describe("enterPublicPhase", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNft.connect(minter).enterPublicPhase()).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to enter public phase", async () => {
+      await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
+
+      assert.equal((await summitWhitelabelNft.tokenInfo()).phase, Phase.Public);
+    });
+  });
 });

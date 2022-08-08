@@ -21,6 +21,8 @@ describe("summitKickstarter", () => {
   const END_TIMESTAMP = START_TIMESTAMP + 60 * 60 * 24 * 7; // one week from now
   const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7; // one week after the end date
 
+  const NEW_HAS_DISTRIBUTED_REWARD = true;
+
   const SERVICE_FEE = utils.parseEther("0.1");
 
   const NEW_TITLE = "New Title";
@@ -338,7 +340,8 @@ describe("summitKickstarter", () => {
             NEW_PROJECT_GOALS,
             NEW_REWARD_DISTRIBUTION_TIMESTAMP,
             NEW_START_TIMESTAMP,
-            NEW_END_TIMESTAMP
+            NEW_END_TIMESTAMP,
+            NEW_HAS_DISTRIBUTED_REWARD
           )
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
@@ -353,7 +356,8 @@ describe("summitKickstarter", () => {
           NEW_PROJECT_GOALS,
           NEW_REWARD_DISTRIBUTION_TIMESTAMP,
           END_TIMESTAMP,
-          START_TIMESTAMP
+          START_TIMESTAMP,
+          NEW_HAS_DISTRIBUTED_REWARD
         )
       ).to.be.revertedWith("Start timestamp must be before end timestamp");
     });
@@ -367,6 +371,7 @@ describe("summitKickstarter", () => {
       let rewardDistributionTimestamp = await summitKickstarter.rewardDistributionTimestamp();
       let startTimestamp = await summitKickstarter.startTimestamp();
       let endTimestamp = await summitKickstarter.endTimestamp();
+      let hasDistributedRewards = await summitKickstarter.hasDistributedRewards();
 
       assert(title, TITLE);
       assert(creator, CREATOR);
@@ -377,6 +382,7 @@ describe("summitKickstarter", () => {
       assert(rewardDistributionTimestamp.toString(), REWARD_DISTRIBUTION_TIMESTAMP.toString());
       assert(startTimestamp.toString(), START_TIMESTAMP.toString());
       assert(endTimestamp.toString(), END_TIMESTAMP.toString());
+      assert.isFalse(hasDistributedRewards);
 
       await summitKickstarter.configProjectInfo(
         NEW_TITLE,
@@ -387,7 +393,8 @@ describe("summitKickstarter", () => {
         NEW_PROJECT_GOALS,
         NEW_REWARD_DISTRIBUTION_TIMESTAMP,
         NEW_START_TIMESTAMP,
-        NEW_END_TIMESTAMP
+        NEW_END_TIMESTAMP,
+        NEW_HAS_DISTRIBUTED_REWARD
       );
 
       title = await summitKickstarter.title();
@@ -399,6 +406,7 @@ describe("summitKickstarter", () => {
       rewardDistributionTimestamp = await summitKickstarter.rewardDistributionTimestamp();
       startTimestamp = await summitKickstarter.startTimestamp();
       endTimestamp = await summitKickstarter.endTimestamp();
+      hasDistributedRewards = await summitKickstarter.hasDistributedRewards();
 
       assert(title, NEW_TITLE);
       assert(creator, NEW_CREATOR);
@@ -409,6 +417,7 @@ describe("summitKickstarter", () => {
       assert(rewardDistributionTimestamp.toString(), NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString());
       assert(startTimestamp.toString(), NEW_START_TIMESTAMP.toString());
       assert(endTimestamp.toString(), NEW_END_TIMESTAMP.toString());
+      assert.isTrue(hasDistributedRewards);
     });
   });
 

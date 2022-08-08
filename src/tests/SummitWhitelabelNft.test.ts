@@ -237,19 +237,20 @@ describe("SummitWhitelabelNft", () => {
 
   describe("tokenURI", () => {
     it("should revert if tokenId not exists", async () => {
-      await expect(await summitWhitelabelNft.tokenURI(0)).to.be.revertedWith("tokenId not exists");
+      await expect(summitWhitelabelNft.tokenURI(0)).to.be.revertedWith("tokenId not exists");
     });
     it("should return tokenURI", async () => {
-      await summitWhitelabelNft.enterPublicPhase();
+      await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
 
       const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
-      await summitWhitelabelNft["mint(uint256)"](mintAmount, {
+      await summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount, {
         value: mintPrice.mul(mintAmount),
       });
 
       const tokenId = (await summitWhitelabelNft.tokensOfOwner(minter.address))[0];
+      const tokenUri = `${baseUri + tokenId.toString()}.json`;
 
-      assert.equal(await summitWhitelabelNft.tokenURI(tokenId), baseUri + mintAmount.toString());
+      assert.equal(await summitWhitelabelNft.tokenURI(tokenId), tokenUri);
     });
   });
 });

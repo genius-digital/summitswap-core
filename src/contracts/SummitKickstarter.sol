@@ -34,6 +34,7 @@ contract SummitKickstarter is Ownable {
   event TitleUpdated(string newTitle);
   event CreatorUpdated(string newCreator);
   event ProjectDescriptionUpdated(string newProjectDescription);
+  event RewardDescriptionUpdated(string newProjectDescription);
 
   constructor(
     address _owner,
@@ -88,6 +89,8 @@ contract SummitKickstarter is Ownable {
   function setRewardDescription(string memory _rewardDescription) external onlyOwner {
     require(bytes(_rewardDescription).length > 0, "Reward description cannot be empty");
     rewardDescription = _rewardDescription;
+
+    emit RewardDescriptionUpdated(_rewardDescription);
   }
 
   function setMinContribution(uint256 _minContribution) external onlyOwner {

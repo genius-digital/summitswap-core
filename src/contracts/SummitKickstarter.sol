@@ -46,7 +46,7 @@ contract SummitKickstarter is Ownable {
   event TitleUpdated(string newTitle);
   event CreatorUpdated(string newCreator);
   event ProjectDescriptionUpdated(string newProjectDescription);
-  event RewardDescriptionUpdated(string newProjectDescription);
+  event RewardDescriptionUpdated(string newRewardDescription);
   event MinContributionUpdated(uint256 newMinContribution);
   event ProjectGoalsUpdated(uint256 newProjectGoals);
   event RewardDistributionTimestampUpdated(uint256 newRewardDistributionTimestamp);

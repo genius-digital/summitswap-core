@@ -40,6 +40,7 @@ contract SummitKickstarter is Ownable {
   event RewardDistributionTimestampUpdated(uint256 newRewardDistributionTimestamp);
   event StartTimestampUpdated(uint256 newStartTimestamp);
   event EndTimestampUpdated(uint256 newEndTimestamp);
+  event HasDistributedRewardsUpdated(bool newHasDistributedRewards);
 
   constructor(
     address _owner,
@@ -133,6 +134,8 @@ contract SummitKickstarter is Ownable {
 
   function setHasDistributedRewards(bool _hasDistributedRewards) external onlyOwner {
     hasDistributedRewards = _hasDistributedRewards;
+
+    emit HasDistributedRewardsUpdated(_hasDistributedRewards);
   }
 
   function configProjectInfo(

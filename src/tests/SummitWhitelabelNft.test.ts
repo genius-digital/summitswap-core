@@ -92,6 +92,17 @@ describe("SummitWhitelabelNft", () => {
         summitWhitelabelNft.connect(whitelistMinter2)["mint(uint256,bytes)"](mintAmount, validSign1.signature)
       ).to.be.revertedWith("Minting is paused");
     });
+    it("should be reverted if mint more than max supply", async () => {
+      const mintAmount = BigNumber.from(tokenInfo.maxSupply).add(1);
+      const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
+      await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
+
+      await expect(
+        summitWhitelabelNft.connect(minter)["mint(uint256)"](mintAmount, {
+          value: mintPrice.mul(mintAmount),
+        })
+      ).to.be.revertedWith("Purchase would exceed max supply");
+    });
 
     describe("Phase: whitelisted", () => {
       beforeEach(async () => {

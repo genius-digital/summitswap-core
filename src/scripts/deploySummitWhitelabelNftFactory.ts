@@ -3,7 +3,7 @@ import { parseEther } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { tryVerify } from "./utils/verify";
 
-export async function deployWhitelabelNftFactory(serviceFee: BigNumber, serviceFeeReceiver: string) {
+export async function deploySummitWhitelabelNftFactory(serviceFee: BigNumber, serviceFeeReceiver: string) {
   console.log("Starting to deploy SummitWhitelabelNftFactory");
 
   const SummitWhitelabelNftFactory = await ethers.getContractFactory("SummitWhitelabelNftFactory");
@@ -21,7 +21,7 @@ async function main() {
   const serviceFee = parseEther("0.001");
   const serviceFeeReceiver = "0xEF0c0cCC6F249352B32290E47023E992f7E7592C";
 
-  await deployWhitelabelNftFactory(serviceFee, serviceFeeReceiver);
+  await deploySummitWhitelabelNftFactory(serviceFee, serviceFeeReceiver);
 }
 
 if (require.main === module) {

@@ -38,6 +38,7 @@ contract SummitKickstarter is Ownable {
   event MinContributionUpdated(uint256 newMinContribution);
   event ProjectGoalsUpdated(uint256 newProjectGoals);
   event RewardDistributionTimestampUpdated(uint256 newRewardDistributionTimestamp);
+  event StartTimestampUpdated(uint256 newStartTimestamp);
 
   constructor(
     address _owner,
@@ -118,6 +119,8 @@ contract SummitKickstarter is Ownable {
   function setStartTimestamp(uint256 _startTimestamp) external onlyOwner {
     require(_startTimestamp < endTimestamp, "Start timestamp must be before end timestamp");
     startTimestamp = _startTimestamp;
+
+    emit StartTimestampUpdated(_startTimestamp);
   }
 
   function setEndTimestamp(uint256 _endTimestamp) external onlyOwner {

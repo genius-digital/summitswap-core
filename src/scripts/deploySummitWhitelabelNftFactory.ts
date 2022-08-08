@@ -19,7 +19,7 @@ export async function deploySummitWhitelabelNftFactory(serviceFee: BigNumber, se
 
 async function main() {
   const serviceFee = parseEther("0.001");
-  const serviceFeeReceiver = "0xEF0c0cCC6F249352B32290E47023E992f7E7592C";
+  const serviceFeeReceiver = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
 
   await deploySummitWhitelabelNftFactory(serviceFee, serviceFeeReceiver);
 }

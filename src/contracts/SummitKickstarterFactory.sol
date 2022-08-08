@@ -14,7 +14,7 @@ contract SummitKickstarterFactory is Ownable {
 
   event ProjectCreated(
     address indexed _owner,
-    address indexed _projectAddress,
+    address indexed _kickstarterAddress,
     string _title,
     string _creator,
     string _projectDescription,

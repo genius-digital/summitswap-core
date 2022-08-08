@@ -35,6 +35,7 @@ contract SummitKickstarter is Ownable {
   event CreatorUpdated(string newCreator);
   event ProjectDescriptionUpdated(string newProjectDescription);
   event RewardDescriptionUpdated(string newProjectDescription);
+  event ProjectGoalsUpdated(uint256 newProjectGoals);
 
   constructor(
     address _owner,
@@ -100,6 +101,8 @@ contract SummitKickstarter is Ownable {
   function setProjectGoals(uint256 _projectGoals) external onlyOwner {
     require(_projectGoals > 0, "Project goals must be greater than 0");
     projectGoals = _projectGoals;
+
+    emit ProjectGoalsUpdated(_projectGoals);
   }
 
   function setRewardDistributionTimestamp(uint256 _rewardDistributionTimestamp) external onlyOwner {

@@ -118,6 +118,8 @@ contract SummitKickstarter is Ownable {
     uint256 _startTimestamp,
     uint256 _endTimestamp
   ) external onlyOwner {
+    require(_startTimestamp < endTimestamp, "Start timestamp must be before end timestamp");
+
     title = _title;
     creator = _creator;
     projectDescription = _projectDescription;

@@ -342,6 +342,21 @@ describe("summitKickstarter", () => {
           )
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
+    it("should not set configProjectInfo if start date is greater than end date", async () => {
+      await expect(
+        summitKickstarter.configProjectInfo(
+          NEW_TITLE,
+          NEW_CREATOR,
+          NEW_PROJECT_DESCRIPTION,
+          NEW_REWARD_DESCRIPTION,
+          NEW_MIN_CONTRIBUTION,
+          NEW_PROJECT_GOALS,
+          NEW_REWARD_DISTRIBUTION_TIMESTAMP,
+          END_TIMESTAMP,
+          START_TIMESTAMP
+        )
+      ).to.be.revertedWith("Start timestamp must be before end timestamp");
+    });
     it("should set configProjectInfo", async () => {
       let title = await summitKickstarter.title();
       let creator = await summitKickstarter.creator();

@@ -31,15 +31,16 @@ contract SummitKickstarter is Ownable {
   event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
   event Refund(address indexed contributor, uint256 amount, uint256 timestamp);
   event KickstarterUpdated(
-    string title,
-    string creator,
-    string projectDescription,
-    string rewardDescription,
-    uint256 minContribution,
-    uint256 projectGoals,
-    uint256 rewardDistributionTimestamp,
-    uint256 startTimestamp,
-    uint256 endTimestamp
+    string newTitle,
+    string newCreator,
+    string newProjectDescription,
+    string newRewardDescription,
+    uint256 newMinContribution,
+    uint256 newProjectGoals,
+    uint256 newRewardDistributionTimestamp,
+    uint256 newStartTimestamp,
+    uint256 newEndTimestamp,
+    bool newHasDistributedRewards
   );
 
   event TitleUpdated(string newTitle);
@@ -158,7 +159,8 @@ contract SummitKickstarter is Ownable {
     uint256 _projectGoals,
     uint256 _rewardDistributionTimestamp,
     uint256 _startTimestamp,
-    uint256 _endTimestamp
+    uint256 _endTimestamp,
+    bool _hasDistributedRewards
   ) external onlyOwner {
     require(_startTimestamp < endTimestamp, "Start timestamp must be before end timestamp");
 
@@ -174,6 +176,8 @@ contract SummitKickstarter is Ownable {
     startTimestamp = _startTimestamp;
     endTimestamp = _endTimestamp;
 
+    hasDistributedRewards = _hasDistributedRewards;
+
     emit KickstarterUpdated(
       _title,
       _creator,
@@ -183,7 +187,8 @@ contract SummitKickstarter is Ownable {
       _projectGoals,
       _rewardDistributionTimestamp,
       _startTimestamp,
-      _endTimestamp
+      _endTimestamp,
+      _hasDistributedRewards
     );
   }
 

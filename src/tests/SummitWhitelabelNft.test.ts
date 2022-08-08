@@ -2,6 +2,7 @@ import SummitWhitelabelNftFactoryArtifact from "@built-contracts/whitelabelNft/S
 import { SummitWhitelabelNft, SummitWhitelabelNftFactory } from "build/typechain";
 import { TokenInfoStruct } from "build/typechain/SummitWhitelabelNftFactory";
 import { assert, expect } from "chai";
+import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
 import { ethers, waffle, web3 } from "hardhat";
 
@@ -251,6 +252,27 @@ describe("SummitWhitelabelNft", () => {
       const tokenUri = `${baseUri + tokenId.toString()}.json`;
 
       assert.equal(await summitWhitelabelNft.tokenURI(tokenId), tokenUri);
+    });
+  });
+
+  describe("devMints", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNft.connect(minter).devMints([minter.address], mintAmount)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to mint to multiple addresses with X amount", async () => {
+      const mintAmount = BigNumber.from(3);
+
+      assert.equal((await summitWhitelabelNft.balanceOf(minter.address)).toString(), "0");
+      assert.equal((await summitWhitelabelNft.balanceOf(whitelistMinter1.address)).toString(), "0");
+
+      await summitWhitelabelNft.connect(nftOwner).devMints([minter.address, whitelistMinter1.address], mintAmount);
+
+      assert.equal((await summitWhitelabelNft.balanceOf(minter.address)).toString(), mintAmount.toString());
+      assert.equal((await summitWhitelabelNft.balanceOf(whitelistMinter1.address)).toString(), mintAmount.toString());
+
+      assert.equal((await summitWhitelabelNft.totalSupply()).toString(), mintAmount.mul(2).toString());
     });
   });
 });

@@ -430,7 +430,7 @@ describe("summitKickstarter", () => {
 
     it("should be reverted if contribute before startTimestamp", async () => {
       const currentTime = Math.floor(Date.now() / 1000);
-      await summitKickstarter.setStartTimestamp(currentTime + getTimestampFromMinutes(5));
+      await summitKickstarter.setStartTimestamp(currentTime + getTimestampFromMinutes(100));
       await expect(summitKickstarter.contribute({ value: MIN_CONTRIBUTION.toString() })).to.be.revertedWith(
         "You can contribute only after start time"
       );
@@ -483,75 +483,6 @@ describe("summitKickstarter", () => {
 
       assert.equal(contributors[0], owner.address);
       assert.equal(contributors[1], otherWallet.address);
-    });
-  });
-
-  describe("refund", async () => {
-    beforeEach(async () => {
-      const initialTotalContribution = await summitKickstarter.totalContribution();
-      assert.equal(initialTotalContribution.toString(), "0");
-
-      const expectedOwnerContribution = MIN_CONTRIBUTION;
-      await summitKickstarter.contribute({ value: expectedOwnerContribution.toString() });
-
-      const totalContribution = await summitKickstarter.totalContribution();
-      assert.equal(totalContribution.toString(), expectedOwnerContribution.toString());
-
-      const ownerContribution = await summitKickstarter.contributions(owner.address);
-      assert.equal(ownerContribution.toString(), expectedOwnerContribution.toString());
-    });
-
-    it("should not refund when called by nonOwner", async () => {
-      await expect(summitKickstarter.connect(otherWallet).refund(owner.address, "1")).to.be.revertedWith(
-        "Ownable: caller is not the owner"
-      );
-    });
-
-    it("should not refund than the user contribution", async () => {
-      await expect(summitKickstarter.refund(owner.address, (MIN_CONTRIBUTION + 1).toString())).to.be.revertedWith(
-        "You cannot refund more than you have contributed"
-      );
-    });
-
-    it("should not be able to refund more than the contract balance", async () => {
-      await summitKickstarter.withdrawBNB("1", owner.address);
-      await expect(summitKickstarter.refund(owner.address, MIN_CONTRIBUTION.toString())).to.be.revertedWith(
-        "You cannot withdraw more than you have"
-      );
-    });
-
-    it("should be able to refund half of the contribution", async () => {
-      const halfOfContribution = MIN_CONTRIBUTION / 2;
-      await summitKickstarter.refund(owner.address, halfOfContribution.toString());
-
-      const totalContribution = await summitKickstarter.totalContribution();
-      assert.equal(totalContribution.toString(), halfOfContribution.toString());
-
-      const ownerContribution = await summitKickstarter.contributions(owner.address);
-      assert.equal(ownerContribution.toString(), halfOfContribution.toString());
-
-      const contributors = await summitKickstarter.getContributors();
-      assert(contributors.length.toString(), "1");
-
-      const ownerContributionIndex = await summitKickstarter.contributorIndexes(owner.address);
-      assert.equal(ownerContributionIndex.toString(), "0");
-    });
-
-    it("should be able to refund all of the contribution", async () => {
-      const allOfContribution = MIN_CONTRIBUTION;
-      await summitKickstarter.refund(owner.address, allOfContribution.toString());
-
-      const totalContribution = await summitKickstarter.totalContribution();
-      assert.equal(totalContribution.toString(), "0");
-
-      const ownerContribution = await summitKickstarter.contributions(owner.address);
-      assert.equal(ownerContribution.toString(), "0");
-
-      const contributors = await summitKickstarter.getContributors();
-      assert(contributors.length.toString(), "0");
-
-      const ownerContributionIndex = await summitKickstarter.contributorIndexes(owner.address);
-      assert.equal(ownerContributionIndex.toString(), "0");
     });
   });
 

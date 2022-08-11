@@ -29,7 +29,6 @@ contract SummitKickstarter is Ownable {
   bool public hasDistributedRewards = false;
 
   event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
-  event Refund(address indexed contributor, uint256 amount, uint256 timestamp);
   event KickstarterUpdated(
     string newTitle,
     string newCreator,
@@ -208,21 +207,6 @@ contract SummitKickstarter is Ownable {
     contributors.push(msg.sender);
 
     emit Contribute(msg.sender, msg.value, block.timestamp);
-  }
-
-  function refund(address _contributor, uint256 _amount) external onlyOwner {
-    require(contributions[_contributor] >= _amount, "You cannot refund more than you have contributed");
-    require(address(this).balance >= _amount, "You cannot withdraw more than you have");
-
-    totalContribution -= _amount;
-    contributions[_contributor] -= _amount;
-
-    if (contributions[_contributor] == 0) {
-      removeContributor(_contributor);
-    }
-
-    payable(_contributor).transfer(_amount);
-    emit Refund(_contributor, _amount, block.timestamp);
   }
 
   function withdrawBNB(uint256 _amount, address _receiver) external onlyOwner {

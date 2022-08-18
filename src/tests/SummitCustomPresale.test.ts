@@ -2387,7 +2387,8 @@ describe("SummitCustomPresale", () => {
           .connect(admin)
           .updatePresaleAndApprove(
             { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
-            feeInfo
+            feeInfo,
+            projectDetails
           )
       ).to.be.revertedWith("Presale is approved");
     });
@@ -2407,7 +2408,8 @@ describe("SummitCustomPresale", () => {
             maxBuy: parseEther(maxBuy).add("1"),
             softCap: parseEther(softCap).add("1"),
           },
-          feeInfo
+          feeInfo,
+          projectDetails
         )
       ).to.be.revertedWith("Only admin or defaultAdmin can call this function");
 
@@ -2439,6 +2441,7 @@ describe("SummitCustomPresale", () => {
           feePaymentToken: (4 * FEE_DENOMINATOR) / 100,
           feeEmergencyWithdraw: (1 * FEE_DENOMINATOR) / 100,
         },
+        projectDetails,
         {
           gasLimit: 30000000,
         }

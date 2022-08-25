@@ -13,12 +13,18 @@ contract SummitWhitelabelNftFactory is Ownable {
 
   uint256 public serviceFee;
   address public serviceFeeReceiver;
+  address public signer;
 
   event CreateNft(address indexed owner, address indexed nftAddress, TokenInfo tokenInfo, uint256 timestamp);
 
-  constructor(uint256 _serviceFee, address _serviceFeeReceiver) {
+  constructor(
+    uint256 _serviceFee,
+    address _serviceFeeReceiver,
+    address _signer
+  ) {
     serviceFee = _serviceFee;
     serviceFeeReceiver = _serviceFeeReceiver;
+    signer = _signer;
   }
 
   receive() external payable {}
@@ -28,7 +34,7 @@ contract SummitWhitelabelNftFactory is Ownable {
 
     address _collectionOwner = _msgSender();
 
-    SummitWhitelabelNft nft = new SummitWhitelabelNft(_tokenInfo, _initialURI, _collectionOwner);
+    SummitWhitelabelNft nft = new SummitWhitelabelNft(_tokenInfo, _initialURI, _collectionOwner, signer);
     address nftAddress = address(nft);
 
     nfts.push(nftAddress);
@@ -64,6 +70,10 @@ contract SummitWhitelabelNftFactory is Ownable {
   }
 
   // OWNER FUNCTIONS
+  function setSigner(address _signer) external onlyOwner {
+    signer = _signer;
+  }
+
   function setServiceFee(uint256 _serviceFee) external onlyOwner {
     serviceFee = _serviceFee;
   }

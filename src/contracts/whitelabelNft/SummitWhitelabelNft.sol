@@ -19,7 +19,6 @@ struct TokenInfo {
   uint256 maxSupply;
   uint256 whitelistMintPrice;
   uint256 publicMintPrice;
-  address signer;
   Phase phase;
 }
 
@@ -29,12 +28,17 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
   TokenInfo public tokenInfo;
 
+  address public immutable signer;
+
   constructor(
     TokenInfo memory _tokenInfo,
     string memory _initialURI,
-    address _owner
+    address _owner,
+    address _signer
   ) ERC721A(_tokenInfo.name, _tokenInfo.symbol) BaseTokenURI(_initialURI) {
     tokenInfo = _tokenInfo;
+
+    signer = _signer;
 
     transferOwnership(_owner);
   }
@@ -84,7 +88,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   function isSignatureValid(address _whitelistAddress, bytes memory signature) private view returns (bool) {
     bytes32 hash = keccak256(abi.encodePacked(address(this), _whitelistAddress));
     hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
-    return tokenInfo.signer == hash.recover(signature);
+    return signer == hash.recover(signature);
   }
 
   // Owner function
@@ -104,10 +108,6 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
   function enterPublicPhase() external onlyOwner {
     tokenInfo.phase = Phase.Public;
-  }
-
-  function setSigner(address _signer) external onlyOwner {
-    tokenInfo.signer = _signer;
   }
 
   function setWhitelistMintPrice(uint256 _whitelistMintPrice) external onlyOwner {

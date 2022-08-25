@@ -31,7 +31,6 @@ describe("SummitWhitelabelNft", () => {
     maxSupply: 100,
     whitelistMintPrice: parseEther("0.001"),
     publicMintPrice: parseEther("0.02"),
-    signer: signer.address,
     phase: Phase.Paused,
   };
   const mintAmount = 1;
@@ -40,6 +39,7 @@ describe("SummitWhitelabelNft", () => {
     summitWhitelabelNftFactory = (await deployContract(owner, SummitWhitelabelNftFactoryArtifact, [
       serviceFee,
       serviceFeeReceiver.address,
+      signer.address,
     ])) as SummitWhitelabelNftFactory;
 
     await summitWhitelabelNftFactory.connect(nftOwner).createNft(tokenInfo, baseUri, {
@@ -77,7 +77,6 @@ describe("SummitWhitelabelNft", () => {
       assert.equal(contractTokenInfo.maxSupply, tokenInfo.maxSupply);
       assert.equal(contractTokenInfo.whitelistMintPrice.toString(), tokenInfo.whitelistMintPrice.toString());
       assert.equal(contractTokenInfo.publicMintPrice.toString(), tokenInfo.publicMintPrice.toString());
-      assert.equal(contractTokenInfo.signer, tokenInfo.signer);
       assert.equal(contractTokenInfo.phase, tokenInfo.phase);
       assert.equal(await summitWhitelabelNft.owner(), nftOwner.address);
     });
@@ -323,19 +322,6 @@ describe("SummitWhitelabelNft", () => {
       await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).phase, Phase.Public);
-    });
-  });
-
-  describe("setSigner", () => {
-    it("should be reverted if called by non-owner", async () => {
-      await expect(summitWhitelabelNft.connect(minter).setSigner(whitelistMinter1.address)).to.be.revertedWith(
-        "Ownable: caller is not the owner"
-      );
-    });
-    it("should be able to enter public phase", async () => {
-      await summitWhitelabelNft.connect(nftOwner).setSigner(minter.address);
-
-      assert.equal((await summitWhitelabelNft.tokenInfo()).signer, minter.address);
     });
   });
 

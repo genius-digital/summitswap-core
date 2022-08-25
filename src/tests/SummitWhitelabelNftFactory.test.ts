@@ -21,7 +21,6 @@ describe("SummitWhitelabelNftFactory", () => {
     maxSupply: 100,
     whitelistMintPrice: parseEther("0.001"),
     publicMintPrice: parseEther("0.02"),
-    signer: signer.address,
     phase: 0, // 0 = paused, 1 = whitelisted, 2 = public
   };
 
@@ -29,6 +28,7 @@ describe("SummitWhitelabelNftFactory", () => {
     summitWhitelabelNftFactory = (await deployContract(owner, SummitWhitelabelNftFactoryArtifact, [
       serviceFee,
       serviceFeeReceiver.address,
+      signer.address,
     ])) as SummitWhitelabelNftFactory;
   });
 

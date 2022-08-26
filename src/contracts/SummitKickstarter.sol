@@ -16,6 +16,8 @@ contract SummitKickstarter is Ownable {
   // ProjectInfo
   string public title;
   string public creator;
+  string public imageUrl;
+
   string public projectDescription;
   string public rewardDescription;
 
@@ -32,6 +34,7 @@ contract SummitKickstarter is Ownable {
   event KickstarterUpdated(
     string newTitle,
     string newCreator,
+    string newImageUrl,
     string newProjectDescription,
     string newRewardDescription,
     uint256 newMinContribution,
@@ -44,6 +47,7 @@ contract SummitKickstarter is Ownable {
 
   event TitleUpdated(string newTitle);
   event CreatorUpdated(string newCreator);
+  event ImageUrlUpdated(string newImageUrl);
   event ProjectDescriptionUpdated(string newProjectDescription);
   event RewardDescriptionUpdated(string newRewardDescription);
   event MinContributionUpdated(uint256 newMinContribution);
@@ -57,6 +61,7 @@ contract SummitKickstarter is Ownable {
     address _owner,
     string memory _title,
     string memory _creator,
+    string memory _imageUrl,
     string memory _projectDescription,
     string memory _rewardDescription,
     uint256 _minContribution,
@@ -69,6 +74,8 @@ contract SummitKickstarter is Ownable {
 
     title = _title;
     creator = _creator;
+    imageUrl = _imageUrl;
+
     projectDescription = _projectDescription;
     rewardDescription = _rewardDescription;
 
@@ -94,6 +101,13 @@ contract SummitKickstarter is Ownable {
     creator = _creator;
 
     emit CreatorUpdated(_creator);
+  }
+
+  function setImageUrl(string memory _imageUrl) external onlyOwner {
+    require(bytes(_imageUrl).length > 0, "Image URL cannot be empty");
+    imageUrl = _imageUrl;
+
+    emit ImageUrlUpdated(_imageUrl);
   }
 
   function setProjectDescription(string memory _projectDescription) external onlyOwner {
@@ -152,6 +166,7 @@ contract SummitKickstarter is Ownable {
   function configProjectInfo(
     string memory _title,
     string memory _creator,
+    string memory _imageUrl,
     string memory _projectDescription,
     string memory _rewardDescription,
     uint256 _minContribution,
@@ -165,6 +180,8 @@ contract SummitKickstarter is Ownable {
 
     title = _title;
     creator = _creator;
+    imageUrl = _imageUrl;
+
     projectDescription = _projectDescription;
     rewardDescription = _rewardDescription;
 
@@ -180,6 +197,7 @@ contract SummitKickstarter is Ownable {
     emit KickstarterUpdated(
       _title,
       _creator,
+      _imageUrl,
       _projectDescription,
       _rewardDescription,
       _minContribution,

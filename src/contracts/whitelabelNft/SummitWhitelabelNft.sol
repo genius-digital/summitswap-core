@@ -30,6 +30,11 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
   address public immutable signer;
 
+  event Mint(address indexed recipient, uint256 mintCount, uint256 price, Phase phase, uint256 timestamp);
+  event PhaseUpdated(Phase phase);
+  event WhitelistMintPriceUpdated(uint256 price);
+  event PublicMintPriceUpdated(uint256 price);
+
   constructor(
     TokenInfo memory _tokenInfo,
     string memory _initialURI,
@@ -65,8 +70,8 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     require(_mintAmount > 0, "_mintAmount can not be 0");
     require(totalSupply() + _mintAmount <= tokenInfo.maxSupply, "Purchase would exceed max supply");
 
+    uint256 price = tokenInfo.phase == Phase.Whitelist ? tokenInfo.whitelistMintPrice : tokenInfo.publicMintPrice;
     if (_to != owner() && _msgSender() != owner()) {
-      uint256 price = tokenInfo.phase == Phase.Whitelist ? tokenInfo.whitelistMintPrice : tokenInfo.publicMintPrice;
       require(msg.value >= price * _mintAmount, "Ether sent is less than minting cost");
 
       if (msg.value > price * _mintAmount) {
@@ -76,6 +81,8 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
       }
     }
     _safeMint(_to, _mintAmount);
+
+    emit Mint(_to, _mintAmount, price, tokenInfo.phase, block.timestamp);
   }
 
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
@@ -100,22 +107,27 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
   function enterPausePhase() external onlyOwner {
     tokenInfo.phase = Phase.Pause;
+    emit PhaseUpdated(tokenInfo.phase);
   }
 
   function enterWhitelistPhase() external onlyOwner {
     tokenInfo.phase = Phase.Whitelist;
+    emit PhaseUpdated(tokenInfo.phase);
   }
 
   function enterPublicPhase() external onlyOwner {
     tokenInfo.phase = Phase.Public;
+    emit PhaseUpdated(tokenInfo.phase);
   }
 
   function setWhitelistMintPrice(uint256 _whitelistMintPrice) external onlyOwner {
     tokenInfo.whitelistMintPrice = _whitelistMintPrice;
+    emit WhitelistMintPriceUpdated(_whitelistMintPrice);
   }
 
   function setPublicMintPrice(uint256 _publicMintPrice) external onlyOwner {
     tokenInfo.publicMintPrice = _publicMintPrice;
+    emit PublicMintPriceUpdated(_publicMintPrice);
   }
 
   function withdraw(address _receipient) external onlyOwner {

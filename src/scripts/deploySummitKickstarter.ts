@@ -8,6 +8,7 @@ export async function deploySummitKickstarter() {
   const OWNER = "0xE01C1Cd3c0a544adF8cB764dCCF855bcE4943B1F";
   const TITLE = "SummitSwap Kickstarter";
   const CREATOR = "Summitswap";
+  const IMAGE_URL = "https://images.com/example.png";
   const PROJECT_DESCRIPTION = "SummitSwap Kickstarter";
   const REWARD_DESCRIPTION = "SummitSwap Kickstarter";
   const MIN_CONTRIBUTION = utils.parseEther("0.01");
@@ -21,6 +22,7 @@ export async function deploySummitKickstarter() {
     OWNER,
     TITLE,
     CREATOR,
+    IMAGE_URL,
     PROJECT_DESCRIPTION,
     REWARD_DESCRIPTION,
     MIN_CONTRIBUTION,
@@ -37,6 +39,7 @@ export async function deploySummitKickstarter() {
     OWNER,
     TITLE,
     CREATOR,
+    IMAGE_URL,
     PROJECT_DESCRIPTION,
     REWARD_DESCRIPTION,
     MIN_CONTRIBUTION,

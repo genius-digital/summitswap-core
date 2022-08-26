@@ -13,6 +13,7 @@ describe("summitswapKickstarter", () => {
 
   const TITLE = "Lorem Ipsum";
   const CREATOR = "John Doe";
+  const IMAGE_URL = "https://images.com/example.png";
   const PROJECT_DESCRIPTION = "This is a project description";
   const REWARD_DESCRIPTION = "This is a reward description";
 
@@ -83,10 +84,11 @@ describe("summitswapKickstarter", () => {
     it("should not be able to create project if pay less than service fee", async () => {
       await expect(
         summitKickstarterFactory.createProject(
-          "Lorem Ipsum",
-          "John Doe",
-          "This is a project description",
-          "This is a reward description",
+          TITLE,
+          CREATOR,
+          IMAGE_URL,
+          PROJECT_DESCRIPTION,
+          REWARD_DESCRIPTION,
           MIN_CONTRIBUTION.toString(),
           PROJECT_GOALS.toString(),
           REWARD_DISTRIBUTION_TIMESTAMP.toString(),
@@ -104,6 +106,7 @@ describe("summitswapKickstarter", () => {
         .createProject(
           TITLE,
           CREATOR,
+          IMAGE_URL,
           PROJECT_DESCRIPTION,
           REWARD_DESCRIPTION,
           MIN_CONTRIBUTION.toString(),
@@ -133,6 +136,7 @@ describe("summitswapKickstarter", () => {
         .createProject(
           TITLE,
           CREATOR,
+          IMAGE_URL,
           PROJECT_DESCRIPTION,
           REWARD_DESCRIPTION,
           MIN_CONTRIBUTION.toString(),

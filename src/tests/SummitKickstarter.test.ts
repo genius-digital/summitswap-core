@@ -12,6 +12,7 @@ describe("summitKickstarter", () => {
 
   const TITLE = "Lorem Ipsum";
   const CREATOR = "John Doe";
+  const IMAGE_URL = "https://images.com/example.png";
   const PROJECT_DESCRIPTION = "This is a project description";
   const REWARD_DESCRIPTION = "This is a reward description";
 
@@ -27,6 +28,7 @@ describe("summitKickstarter", () => {
 
   const NEW_TITLE = "New Title";
   const NEW_CREATOR = "New Creator";
+  const NEW_IMAGE_URL = "https://images.com/new-example.png";
   const NEW_PROJECT_DESCRIPTION = "New Project Description";
   const NEW_REWARD_DESCRIPTION = "New Reward Description";
   const NEW_MIN_CONTRIBUTION = 12345678;
@@ -48,6 +50,7 @@ describe("summitKickstarter", () => {
     await summitKickstarterFactory.createProject(
       TITLE,
       CREATOR,
+      IMAGE_URL,
       PROJECT_DESCRIPTION,
       REWARD_DESCRIPTION,
       MIN_CONTRIBUTION.toString(),
@@ -106,6 +109,13 @@ describe("summitKickstarter", () => {
     it(`should be ${CREATOR}`, async () => {
       const creator = await summitKickstarter.creator();
       assert.equal(creator.toString(), CREATOR.toString());
+    });
+  });
+
+  describe("imageUrl", async () => {
+    it(`should be ${IMAGE_URL}`, async () => {
+      const imageUrl = await summitKickstarter.imageUrl();
+      assert.equal(imageUrl.toString(), IMAGE_URL.toString());
     });
   });
 
@@ -186,6 +196,18 @@ describe("summitKickstarter", () => {
     it("should set setCreator", async () => {
       await summitKickstarter.setCreator(NEW_CREATOR);
       assert.equal(await summitKickstarter.creator(), NEW_CREATOR);
+    });
+  });
+
+  describe("setImageUrl", async () => {
+    it("should not set setImageUrl when called by nonOwner", async () => {
+      await expect(summitKickstarter.connect(otherWallet).setImageUrl(NEW_IMAGE_URL)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should set setImageUrl", async () => {
+      await summitKickstarter.setImageUrl(NEW_IMAGE_URL);
+      assert.equal(await summitKickstarter.imageUrl(), NEW_IMAGE_URL);
     });
   });
 
@@ -334,6 +356,7 @@ describe("summitKickstarter", () => {
           .configProjectInfo(
             NEW_TITLE,
             NEW_CREATOR,
+            NEW_IMAGE_URL,
             NEW_PROJECT_DESCRIPTION,
             NEW_REWARD_DESCRIPTION,
             NEW_MIN_CONTRIBUTION,
@@ -350,6 +373,7 @@ describe("summitKickstarter", () => {
         summitKickstarter.configProjectInfo(
           NEW_TITLE,
           NEW_CREATOR,
+          NEW_IMAGE_URL,
           NEW_PROJECT_DESCRIPTION,
           NEW_REWARD_DESCRIPTION,
           NEW_MIN_CONTRIBUTION,
@@ -364,6 +388,7 @@ describe("summitKickstarter", () => {
     it("should set configProjectInfo", async () => {
       let title = await summitKickstarter.title();
       let creator = await summitKickstarter.creator();
+      let imageUrl = await summitKickstarter.imageUrl();
       let projectDescription = await summitKickstarter.projectDescription();
       let rewardDescription = await summitKickstarter.rewardDescription();
       let minContribution = await summitKickstarter.minContribution();
@@ -375,6 +400,7 @@ describe("summitKickstarter", () => {
 
       assert(title, TITLE);
       assert(creator, CREATOR);
+      assert(imageUrl, IMAGE_URL);
       assert(projectDescription, PROJECT_DESCRIPTION);
       assert(rewardDescription, REWARD_DESCRIPTION);
       assert(minContribution.toString(), MIN_CONTRIBUTION.toString());
@@ -387,6 +413,7 @@ describe("summitKickstarter", () => {
       await summitKickstarter.configProjectInfo(
         NEW_TITLE,
         NEW_CREATOR,
+        IMAGE_URL,
         NEW_PROJECT_DESCRIPTION,
         NEW_REWARD_DESCRIPTION,
         NEW_MIN_CONTRIBUTION,
@@ -399,6 +426,7 @@ describe("summitKickstarter", () => {
 
       title = await summitKickstarter.title();
       creator = await summitKickstarter.creator();
+      imageUrl = await summitKickstarter.imageUrl();
       projectDescription = await summitKickstarter.projectDescription();
       rewardDescription = await summitKickstarter.rewardDescription();
       minContribution = await summitKickstarter.minContribution();
@@ -410,6 +438,7 @@ describe("summitKickstarter", () => {
 
       assert(title, NEW_TITLE);
       assert(creator, NEW_CREATOR);
+      assert(imageUrl, IMAGE_URL);
       assert(projectDescription, NEW_PROJECT_DESCRIPTION);
       assert(rewardDescription, NEW_REWARD_DESCRIPTION);
       assert(minContribution.toString(), NEW_MIN_CONTRIBUTION.toString());

@@ -14,7 +14,7 @@ export async function deploySummitWhitelabelNft(tokenInfo: TokenInfoStruct, init
 
   console.log("SummitWhitelabelNft deployed to:", summitWhitelabelNft.address);
 
-  await tryVerify(summitWhitelabelNft.address, [tokenInfo, initialUri, owner]);
+  await tryVerify(summitWhitelabelNft.address, [tokenInfo, initialUri, owner, signerAddress]);
 
   return summitWhitelabelNft;
 }

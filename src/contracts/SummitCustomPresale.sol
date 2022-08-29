@@ -275,13 +275,18 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     path[0] = ISummitswapRouter02(presale.router0).WETH();
     path[1] = presale.listingToken;
 
-    uint256[] memory amounts = ISummitswapRouter02(presale.router0).swapExactETHForTokens{value: amountRaised}(
+    ISummitswapRouter02(presale.router0).swapExactETHForTokens{value: amountRaised}(
       0,
       path,
       address(this),
       block.timestamp
     );
-    _addLiquidityTokens(amountToken, amounts[1], presale.listingToken, presale.router0);
+    _addLiquidityTokens(
+      amountToken,
+      IERC20(presale.listingToken).balanceOf(address(this)),
+      presale.listingToken,
+      presale.router0
+    );
   }
 
   function swapTokenForETHAndLiquify(uint256 amountToken, uint256 amountRaised) private {
@@ -307,14 +312,19 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     path[2] = presale.listingToken;
 
     IERC20(feeInfo.paymentToken).approve(presale.router0, amountRaised);
-    uint256[] memory amounts = ISummitswapRouter02(presale.router0).swapExactTokensForTokens(
+    ISummitswapRouter02(presale.router0).swapExactTokensForTokens(
       amountRaised,
       0,
       path,
       address(this),
       block.timestamp
     );
-    _addLiquidityTokens(amountToken, amounts[2], presale.listingToken, presale.router0);
+    _addLiquidityTokens(
+      amountToken,
+      IERC20(presale.listingToken).balanceOf(address(this)),
+      presale.listingToken,
+      presale.router0
+    );
   }
 
   function _addLiquidityETH(

@@ -37,6 +37,11 @@ contract SummitKickstarterFactory is Ownable {
 
   receive() external payable {}
 
+  modifier onlyAdminAndOwner() {
+    require(isAdmin[msg.sender] || msg.sender == owner(), "Only admin or owner can call this function");
+    _;
+  }
+
   function createProject(
     string memory _title,
     string memory _creator,
@@ -112,11 +117,16 @@ contract SummitKickstarterFactory is Ownable {
     }
   }
 
-  function setKickstarterStatus(address _kickstarterAddress, ISummitKickstarter.Status status) external onlyOwner {
+  // ** OWNER AND ADMIN FUNCTIONS **
+
+  function setKickstarterStatus(address _kickstarterAddress, ISummitKickstarter.Status status)
+    external
+    onlyAdminAndOwner
+  {
     ISummitKickstarter(_kickstarterAddress).setKickstarterStatus(status);
   }
 
-  function setServiceFee(uint256 _serviceFee) external onlyOwner {
+  function setServiceFee(uint256 _serviceFee) external onlyAdminAndOwner {
     serviceFee = _serviceFee;
   }
 

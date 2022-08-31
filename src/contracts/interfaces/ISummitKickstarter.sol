@@ -42,6 +42,10 @@ interface ISummitKickstarter {
 
   function endTimestamp() external view returns (uint256);
 
+  function percentageFeeAmount() external view returns (uint256);
+
+  function fixFeeAmount() external view returns (uint256);
+
   function getContributors() external view returns (address[] memory);
 
   function contribute() external payable;

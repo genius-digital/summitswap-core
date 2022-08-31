@@ -8,6 +8,8 @@ import "./interfaces/ISummitKickstarter.sol";
 import "./interfaces/ISummitKickstarterFactory.sol";
 
 contract SummitKickstarter is Ownable {
+  uint256 public constant FEE_DENOMINATOR = 10000;
+
   address public factory;
   mapping(address => bool) public isAdmin;
 
@@ -34,6 +36,9 @@ contract SummitKickstarter is Ownable {
   uint256 public rewardDistributionTimestamp;
   uint256 public startTimestamp;
   uint256 public endTimestamp;
+
+  uint256 public percentageFeeAmount = 0;
+  uint256 public fixFeeAmount = 0;
 
   event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
   event KickstarterUpdated(
@@ -247,8 +252,15 @@ contract SummitKickstarter is Ownable {
 
   function withdrawBNB(uint256 _amount, address _receiver) external onlyOwner {
     require(address(this).balance >= _amount, "You cannot withdraw more than you have");
+    require(address(this).balance > fixFeeAmount, "You cannot withraw less than widrawal fee");
 
-    payable(_receiver).transfer(_amount);
+    uint256 percentageFeeAmount = (_amount * percentageFeeAmount) / FEE_DENOMINATOR;
+
+    uint256 withdrawalFee = fixFeeAmount + percentageFeeAmount;
+    uint256 receiverAmount = _amount - withdrawalFee;
+
+    payable(_receiver).transfer(receiverAmount);
+    payable(factory).transfer(withdrawalFee);
   }
 
   // ** FACTORY ADMIN FUNCTIONS **

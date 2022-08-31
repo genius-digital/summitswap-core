@@ -62,6 +62,8 @@ contract SummitKickstarter is Ownable {
   event EndTimestampUpdated(uint256 newEndTimestamp);
   event HasDistributedRewardsUpdated(bool newHasDistributedRewards);
 
+  event StatusUpdated(ISummitKickstarter.Status status);
+
   constructor(
     address _owner,
     string memory _title,
@@ -251,5 +253,6 @@ contract SummitKickstarter is Ownable {
 
   function setKickstarterStatus(ISummitKickstarter.Status _status) external onlyFactory {
     status = _status;
+    emit StatusUpdated(status);
   }
 }

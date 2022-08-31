@@ -4,6 +4,12 @@
 pragma solidity 0.8.6;
 
 interface ISummitKickstarter {
+  enum Status {
+    PENDING,
+    APPROVED,
+    REJECTED
+  }
+
   function factory() external view returns (address);
 
   function contributions(address _walletAddress) external returns (uint256);

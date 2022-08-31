@@ -4,14 +4,9 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/ISummitKickstarter.sol";
 
 contract SummitKickstarter is Ownable {
-  enum Status {
-    PENDING,
-    APPROVED,
-    REJECTED
-  }
-
   address public factory;
 
   mapping(address => uint256) public contributions;
@@ -26,7 +21,7 @@ contract SummitKickstarter is Ownable {
   string public creator;
   string public imageUrl;
 
-  Status public status = Status.PENDING;
+  ISummitKickstarter.Status public status = ISummitKickstarter.Status.PENDING;
 
   string public projectDescription;
   string public rewardDescription;
@@ -254,7 +249,7 @@ contract SummitKickstarter is Ownable {
 
   // ** FACTORY FUNCTIONS **
 
-  function setKickstarterStatus(Status _status) external onlyFactory {
+  function setKickstarterStatus(ISummitKickstarter.Status _status) external onlyFactory {
     status = _status;
   }
 }

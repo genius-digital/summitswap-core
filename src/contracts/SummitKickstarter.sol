@@ -6,6 +6,14 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SummitKickstarter is Ownable {
+  enum Status {
+    PENDING,
+    APPROVED,
+    REJECTED
+  }
+
+  address public factory;
+
   mapping(address => uint256) public contributions;
   mapping(address => uint256) public contributorIndexes;
 
@@ -17,6 +25,8 @@ contract SummitKickstarter is Ownable {
   string public title;
   string public creator;
   string public imageUrl;
+
+  Status public status = Status.PENDING;
 
   string public projectDescription;
   string public rewardDescription;
@@ -72,6 +82,8 @@ contract SummitKickstarter is Ownable {
   ) {
     transferOwnership(_owner);
 
+    factory = msg.sender;
+
     title = _title;
     creator = _creator;
     imageUrl = _imageUrl;
@@ -88,6 +100,26 @@ contract SummitKickstarter is Ownable {
   }
 
   receive() external payable {}
+
+  function getContributors() external view returns (address[] memory) {
+    return contributors;
+  }
+
+  function contribute() external payable {
+    require(msg.value >= minContribution, "Contribution must be greater than or equal to minContribution");
+    require(block.timestamp >= startTimestamp, "You can contribute only after start time");
+    require(block.timestamp <= endTimestamp, "You can contribute only before end time");
+
+    totalContribution += msg.value;
+
+    contributions[msg.sender] += msg.value;
+    contributorIndexes[msg.sender] = contributors.length;
+    contributors.push(msg.sender);
+
+    emit Contribute(msg.sender, msg.value, block.timestamp);
+  }
+
+  // ** OWNER FUNCTIONS **
 
   function setTitle(string memory _title) external onlyOwner {
     require(bytes(_title).length > 0, "Title cannot be empty");
@@ -209,41 +241,9 @@ contract SummitKickstarter is Ownable {
     );
   }
 
-  function getContributors() external view returns (address[] memory) {
-    return contributors;
-  }
-
-  function contribute() external payable {
-    require(msg.value >= minContribution, "Contribution must be greater than or equal to minContribution");
-    require(block.timestamp >= startTimestamp, "You can contribute only after start time");
-    require(block.timestamp <= endTimestamp, "You can contribute only before end time");
-
-    totalContribution += msg.value;
-
-    contributions[msg.sender] += msg.value;
-    contributorIndexes[msg.sender] = contributors.length;
-    contributors.push(msg.sender);
-
-    emit Contribute(msg.sender, msg.value, block.timestamp);
-  }
-
   function withdrawBNB(uint256 _amount, address _receiver) external onlyOwner {
     require(address(this).balance >= _amount, "You cannot withdraw more than you have");
 
     payable(_receiver).transfer(_amount);
-  }
-
-  function removeContributor(address _address) private {
-    uint256 index = contributorIndexes[_address];
-    if (contributors[index] == _address) {
-      contributorIndexes[_address] = 0;
-
-      uint256 lastIndex = contributors.length - 1;
-      address lastContributor = contributors[lastIndex];
-
-      contributors[index] = lastContributor;
-      contributorIndexes[lastContributor] = index == lastIndex ? 0 : index;
-      contributors.pop();
-    }
   }
 }

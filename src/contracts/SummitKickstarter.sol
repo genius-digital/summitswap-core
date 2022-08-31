@@ -40,6 +40,8 @@ contract SummitKickstarter is Ownable {
   uint256 public percentageFeeAmount = 0;
   uint256 public fixFeeAmount = 0;
 
+  string public rejectReason;
+
   event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
   event KickstarterUpdated(
     string newTitle,
@@ -52,6 +54,17 @@ contract SummitKickstarter is Ownable {
     uint256 newRewardDistributionTimestamp,
     uint256 newStartTimestamp,
     uint256 newEndTimestamp
+  );
+  event KickstarterUpdatedByFactoryAdmin(
+    string[] projectInfo,
+    ISummitKickstarter.Status newStatus,
+    uint256 newMinContribution,
+    uint256 newProjectGoals,
+    uint256 newRewardDistributionTimestamp,
+    uint256 newStartTimestamp,
+    uint256 newEndTimestamp,
+    uint256 newPercentageFeeAmount,
+    uint256 newFixFeeAmount
   );
 
   event TitleUpdated(string newTitle);
@@ -66,6 +79,11 @@ contract SummitKickstarter is Ownable {
   event EndTimestampUpdated(uint256 newEndTimestamp);
 
   event StatusUpdated(ISummitKickstarter.Status status);
+  event PercentageFeeAmountUpdated(uint256 newPercentageFeeAmount);
+  event FixFeeAmountUpdated(uint256 newFixFeeAmount);
+
+  event Approved(uint256 percentageFeeAmount, uint256 fixFeeAmount);
+  event Rejected(string rejectedReason);
 
   constructor(
     address _owner,
@@ -74,7 +92,6 @@ contract SummitKickstarter is Ownable {
     string memory _imageUrl,
     string memory _projectDescription,
     string memory _rewardDescription,
-    ISummitKickstarter.Status _status,
     uint256 _minContribution,
     uint256 _projectGoals,
     uint256 _rewardDistributionTimestamp,
@@ -253,11 +270,10 @@ contract SummitKickstarter is Ownable {
 
   function withdrawBNB(uint256 _amount, address _receiver) external onlyOwner {
     require(address(this).balance >= _amount, "You cannot withdraw more than you have");
-    require(address(this).balance > fixFeeAmount, "You cannot withraw less than widrawal fee");
 
-    uint256 percentageFeeAmount = (_amount * percentageFeeAmount) / FEE_DENOMINATOR;
+    uint256 withdrawalFee = fixFeeAmount + ((_amount * percentageFeeAmount) / FEE_DENOMINATOR);
+    require(address(this).balance > withdrawalFee, "You cannot withraw less than widrawal fee");
 
-    uint256 withdrawalFee = fixFeeAmount + percentageFeeAmount;
     uint256 receiverAmount = _amount - withdrawalFee;
 
     payable(_receiver).transfer(receiverAmount);
@@ -266,9 +282,73 @@ contract SummitKickstarter is Ownable {
 
   // ** FACTORY ADMIN FUNCTIONS **
 
+  function configProjectInfo(
+    string[] memory projectInfo, // [title, creator, imageUrl, projectDescription, rewardDescription]
+    ISummitKickstarter.Status _status,
+    uint256 _minContribution,
+    uint256 _projectGoals,
+    uint256 _rewardDistributionTimestamp,
+    uint256[] memory _startAndEndTimestamp,
+    uint256 _percentageFeeAmount,
+    uint256 _fixFeeAmount
+  ) external onlyFactoryAdmin {
+    require(projectInfo.length == 5, "projectInfo is invalid");
+    require(_startAndEndTimestamp.length == 2, "Start and End timestamp is invalid");
+    require(_startAndEndTimestamp[0] < _startAndEndTimestamp[1], "Start timestamp must be before end timestamp");
+    require(_percentageFeeAmount <= FEE_DENOMINATOR, "percentageFeeAmount should be less than FEE_DENOMINATOR");
+
+    title = projectInfo[0];
+    creator = projectInfo[1];
+    imageUrl = projectInfo[2];
+
+    projectDescription = projectInfo[3];
+    rewardDescription = projectInfo[4];
+
+    status = _status;
+
+    minContribution = _minContribution;
+    projectGoals = _projectGoals;
+
+    rewardDistributionTimestamp = _rewardDistributionTimestamp;
+    startTimestamp = _startAndEndTimestamp[0];
+    endTimestamp = _startAndEndTimestamp[1];
+
+    percentageFeeAmount = _percentageFeeAmount;
+    fixFeeAmount = _fixFeeAmount;
+
+    emit KickstarterUpdatedByFactoryAdmin(
+      projectInfo,
+      _status,
+      _minContribution,
+      _projectGoals,
+      _rewardDistributionTimestamp,
+      _startAndEndTimestamp[0],
+      _startAndEndTimestamp[1],
+      _percentageFeeAmount,
+      _fixFeeAmount
+    );
+  }
+
+  function approve(uint256 _percentageFeeAmount, uint256 _fixFeeAmount) external onlyFactoryAdmin {
+    require(_percentageFeeAmount <= FEE_DENOMINATOR, "percentageFeeAmount should be less than FEE_DENOMINATOR");
+
+    percentageFeeAmount = _percentageFeeAmount;
+    fixFeeAmount = _fixFeeAmount;
+    status = ISummitKickstarter.Status.APPROVED;
+
+    emit Approved(_percentageFeeAmount, _fixFeeAmount);
+  }
+
+  function reject(string memory _rejectReason) external onlyFactoryAdmin {
+    rejectReason = _rejectReason;
+    status = ISummitKickstarter.Status.REJECTED;
+
+    emit Rejected(_rejectReason);
+  }
+
   function setKickstarterStatus(ISummitKickstarter.Status _status) external onlyFactoryAdmin {
     status = _status;
-    emit StatusUpdated(status);
+    emit StatusUpdated(_status);
   }
 
   function setAdmins(address[] calldata _walletsAddress, bool _isAdmin) external onlyFactoryAdmin {
@@ -280,9 +360,13 @@ contract SummitKickstarter is Ownable {
   function setPercentageFeeAmount(uint256 _percentageFeeAmount) external onlyFactoryAdmin {
     require(_percentageFeeAmount <= FEE_DENOMINATOR, "percentageFeeAmount should be less than FEE_DENOMINATOR");
     percentageFeeAmount = _percentageFeeAmount;
+
+    emit PercentageFeeAmountUpdated(_percentageFeeAmount);
   }
 
   function setFixFeeAmount(uint256 _fixFeeAmount) external onlyFactoryAdmin {
     fixFeeAmount = _fixFeeAmount;
+
+    emit FixFeeAmountUpdated(_fixFeeAmount);
   }
 }

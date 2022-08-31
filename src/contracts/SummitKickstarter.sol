@@ -101,6 +101,11 @@ contract SummitKickstarter is Ownable {
 
   receive() external payable {}
 
+  modifier onlyFactory() {
+    require(msg.sender == factory);
+    _;
+  }
+
   function getContributors() external view returns (address[] memory) {
     return contributors;
   }
@@ -245,5 +250,11 @@ contract SummitKickstarter is Ownable {
     require(address(this).balance >= _amount, "You cannot withdraw more than you have");
 
     payable(_receiver).transfer(_amount);
+  }
+
+  // ** FACTORY FUNCTIONS **
+
+  function setKickstarterStatus(Status _status) external onlyFactory {
+    status = _status;
   }
 }

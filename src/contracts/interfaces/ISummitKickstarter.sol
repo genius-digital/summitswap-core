@@ -66,8 +66,6 @@ interface ISummitKickstarter {
 
   function setEndTimestamp(uint256 _endTimestamp) external;
 
-  function setHasDistributedRewards(bool _hasDistributedRewards) external;
-
   function configProjectInfo(
     string memory _title,
     string memory _creator,
@@ -78,8 +76,7 @@ interface ISummitKickstarter {
     uint256 _projectGoals,
     uint256 _rewardDistributionTimestamp,
     uint256 _startTimestamp,
-    uint256 _endTimestamp,
-    bool _hasDistributedRewards
+    uint256 _endTimestamp
   ) external;
 
   function withdrawBNB(uint256 _amount, address _receiver) external;

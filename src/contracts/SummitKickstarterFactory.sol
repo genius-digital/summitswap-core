@@ -2,33 +2,20 @@
 // Developed by: dxsoftware.net
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {Kickstarter} from "./interfaces/ISummitKickstarter.sol";
 import "./SummitKickstarter.sol";
 
 pragma solidity ^0.8.6;
 
 contract SummitKickstarterFactory is Ownable {
   mapping(address => bool) public isAdmin;
+  mapping(address => address[]) public userProjects;
 
   address[] public projects;
-  mapping(address => address[]) public userProjects;
 
   uint256 public serviceFee;
 
-  event ProjectCreated(
-    address indexed _owner,
-    address indexed _kickstarterAddress,
-    string _title,
-    string _creator,
-    string _imageUrl,
-    string _projectDescription,
-    string _rewardDescription,
-    uint256 _minContribution,
-    uint256 _projectGoals,
-    uint256 _rewardDistributionTimestamp,
-    uint256 _startTimestamp,
-    uint256 _endTimestamp,
-    uint256 timestamp
-  );
+  event ProjectCreated(Kickstarter kickstarter);
 
   constructor(uint256 _serviceFee) {
     serviceFee = _serviceFee;
@@ -36,60 +23,23 @@ contract SummitKickstarterFactory is Ownable {
 
   receive() external payable {}
 
-  modifier onlyAdminAndOwner() {
+  modifier onlyAdminOrOwner() {
     require(isAdmin[msg.sender] || msg.sender == owner(), "Only admin or owner can call this function");
     _;
   }
 
-  function createProject(
-    string memory _title,
-    string memory _creator,
-    string memory _imageUrl,
-    string memory _projectDescription,
-    string memory _rewardDescription,
-    uint256 _minContribution,
-    uint256 _projectGoals,
-    uint256 _rewardDistributionTimestamp,
-    uint256 _startTimestamp,
-    uint256 _endTimestamp
-  ) external payable {
+  function createProject(Kickstarter calldata kickstarter) external payable {
     require(msg.value >= serviceFee, "Service Fee is not enough");
     refundExcessiveFee();
 
-    SummitKickstarter project = new SummitKickstarter(
-      _msgSender(),
-      _title,
-      _creator,
-      _imageUrl,
-      _projectDescription,
-      _rewardDescription,
-      _minContribution,
-      _projectGoals,
-      _rewardDistributionTimestamp,
-      _startTimestamp,
-      _endTimestamp
-    );
+    SummitKickstarter project = new SummitKickstarter(kickstarter);
 
     address projectAddress = address(project);
 
     projects.push(projectAddress);
     userProjects[_msgSender()].push(projectAddress);
 
-    emit ProjectCreated(
-      _msgSender(),
-      projectAddress,
-      _title,
-      _creator,
-      _imageUrl,
-      _projectDescription,
-      _rewardDescription,
-      _minContribution,
-      _projectGoals,
-      _rewardDistributionTimestamp,
-      _startTimestamp,
-      _endTimestamp,
-      block.timestamp
-    );
+    emit ProjectCreated(kickstarter);
   }
 
   function getProjects() external view returns (address[] memory) {
@@ -123,7 +73,7 @@ contract SummitKickstarterFactory is Ownable {
 
   // ** OWNER AND ADMIN FUNCTIONS **
 
-  function setServiceFee(uint256 _serviceFee) external onlyAdminAndOwner {
+  function setServiceFee(uint256 _serviceFee) external onlyAdminOrOwner {
     serviceFee = _serviceFee;
   }
 }

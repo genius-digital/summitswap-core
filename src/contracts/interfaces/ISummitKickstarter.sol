@@ -3,13 +3,30 @@
 
 pragma solidity 0.8.6;
 
-interface ISummitKickstarter {
-  enum Status {
-    PENDING,
-    APPROVED,
-    REJECTED
-  }
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+enum Status {
+  PENDING,
+  APPROVED,
+  REJECTED
+}
+
+struct Kickstarter {
+  IERC20 paymentToken;
+  address owner;
+  string title;
+  string creator;
+  string imageUrl;
+  string projectDescription;
+  string rewardDescription;
+  uint256 minContribution;
+  uint256 projectGoals;
+  uint256 rewardDistributionTimestamp;
+  uint256 startTimestamp;
+  uint256 endTimestamp;
+}
+
+interface ISummitKickstarter {
   function factory() external view returns (address);
 
   function contributions(address _walletAddress) external returns (uint256);

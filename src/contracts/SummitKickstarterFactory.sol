@@ -2,7 +2,6 @@
 // Developed by: dxsoftware.net
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/ISummitKickstarter.sol";
 import "./SummitKickstarter.sol";
 
 pragma solidity ^0.8.6;
@@ -123,13 +122,6 @@ contract SummitKickstarterFactory is Ownable {
   }
 
   // ** OWNER AND ADMIN FUNCTIONS **
-
-  function setKickstarterStatus(address _kickstarterAddress, ISummitKickstarter.Status status)
-    external
-    onlyAdminAndOwner
-  {
-    ISummitKickstarter(_kickstarterAddress).setKickstarterStatus(status);
-  }
 
   function setServiceFee(uint256 _serviceFee) external onlyAdminAndOwner {
     serviceFee = _serviceFee;

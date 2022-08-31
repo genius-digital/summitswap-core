@@ -85,7 +85,7 @@ contract SummitKickstarter is Ownable {
   }
 
   function contribute(uint256 amount) external payable {
-    require(msg.value >= kickstarter.minContribution, "Contribution must be greater than or equal to minContribution");
+    require(status == Status.APPROVED, "Kickstarter is not Approved");
     require(
       msg.value >= amount || kickstarter.paymentToken.balanceOf(msg.sender) >= amount,
       "Insufficient contribution amount"
@@ -97,6 +97,7 @@ contract SummitKickstarter is Ownable {
 
     if (address(kickstarter.paymentToken) != address(0)) {
       kickstarter.paymentToken.transferFrom(msg.sender, address(this), amount);
+      refundExcessiveFee(msg.value);
     } else {
       uint256 refundAmount = msg.value - amount;
       refundExcessiveFee(refundAmount);

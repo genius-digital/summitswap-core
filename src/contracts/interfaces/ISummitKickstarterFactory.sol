@@ -4,6 +4,8 @@
 pragma solidity 0.8.6;
 
 interface ISummitKickstarterFactory {
+  function owner() external view returns (address);
+
   function isAdmin(address _address) external view returns (bool);
 
   function projects() external view returns (address memory);

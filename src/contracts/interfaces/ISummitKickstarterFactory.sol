@@ -8,9 +8,9 @@ interface ISummitKickstarterFactory {
 
   function isAdmin(address _address) external view returns (bool);
 
-  function projects() external view returns (address memory);
+  function projects() external view returns (address[] memory);
 
-  function userProjects(address _address) external view returns (address memory);
+  function userProjects(address _address) external view returns (address[] memory);
 
   function serviceFee() external view returns (uint256);
 
@@ -34,8 +34,6 @@ interface ISummitKickstarterFactory {
   function setAdmins(address[] calldata _walletAddress, bool _isAdmin) external;
 
   function withdraw(address _receiver) external;
-
-  function setKickstarterStatus(address _kickstarterAddress, ISummitKickstarter.Status status) external;
 
   function setServiceFee(uint256 _serviceFee) external;
 }

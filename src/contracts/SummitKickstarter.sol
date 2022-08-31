@@ -5,9 +5,11 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/ISummitKickstarter.sol";
+import "./interfaces/ISummitKickstarterFactory.sol";
 
 contract SummitKickstarter is Ownable {
   address public factory;
+  mapping(address => bool) public isAdmin;
 
   mapping(address => uint256) public contributions;
   mapping(address => uint256) public contributorIndexes;
@@ -98,8 +100,22 @@ contract SummitKickstarter is Ownable {
 
   receive() external payable {}
 
-  modifier onlyFactory() {
-    require(msg.sender == factory);
+  modifier onlyFactoryAdmin() {
+    require(
+      ISummitKickstarterFactory(factory).owner() == msg.sender ||
+        ISummitKickstarterFactory(factory).isAdmin(msg.sender),
+      "Only factory admin can call this function"
+    );
+    _;
+  }
+
+  modifier onlyFactoryAdminAndAdmin() {
+    require(
+      ISummitKickstarterFactory(factory).owner() == msg.sender ||
+        ISummitKickstarterFactory(factory).isAdmin(msg.sender) ||
+        isAdmin[msg.sender],
+      "Only admin can call this function"
+    );
     _;
   }
 
@@ -121,77 +137,77 @@ contract SummitKickstarter is Ownable {
     emit Contribute(msg.sender, msg.value, block.timestamp);
   }
 
-  // ** OWNER FUNCTIONS **
+  // ** Factory And Admin FUNCTIONS **
 
-  function setTitle(string memory _title) external onlyOwner {
+  function setTitle(string memory _title) external onlyFactoryAdminAndAdmin {
     require(bytes(_title).length > 0, "Title cannot be empty");
     title = _title;
 
     emit TitleUpdated(_title);
   }
 
-  function setCreator(string memory _creator) external onlyOwner {
+  function setCreator(string memory _creator) external onlyFactoryAdminAndAdmin {
     require(bytes(_creator).length > 0, "Creator cannot be empty");
     creator = _creator;
 
     emit CreatorUpdated(_creator);
   }
 
-  function setImageUrl(string memory _imageUrl) external onlyOwner {
+  function setImageUrl(string memory _imageUrl) external onlyFactoryAdminAndAdmin {
     require(bytes(_imageUrl).length > 0, "Image URL cannot be empty");
     imageUrl = _imageUrl;
 
     emit ImageUrlUpdated(_imageUrl);
   }
 
-  function setProjectDescription(string memory _projectDescription) external onlyOwner {
+  function setProjectDescription(string memory _projectDescription) external onlyFactoryAdminAndAdmin {
     require(bytes(_projectDescription).length > 0, "Project description cannot be empty");
     projectDescription = _projectDescription;
 
     emit ProjectDescriptionUpdated(_projectDescription);
   }
 
-  function setRewardDescription(string memory _rewardDescription) external onlyOwner {
+  function setRewardDescription(string memory _rewardDescription) external onlyFactoryAdminAndAdmin {
     require(bytes(_rewardDescription).length > 0, "Reward description cannot be empty");
     rewardDescription = _rewardDescription;
 
     emit RewardDescriptionUpdated(_rewardDescription);
   }
 
-  function setMinContribution(uint256 _minContribution) external onlyOwner {
+  function setMinContribution(uint256 _minContribution) external onlyFactoryAdminAndAdmin {
     minContribution = _minContribution;
 
     emit MinContributionUpdated(_minContribution);
   }
 
-  function setProjectGoals(uint256 _projectGoals) external onlyOwner {
+  function setProjectGoals(uint256 _projectGoals) external onlyFactoryAdminAndAdmin {
     require(_projectGoals > 0, "Project goals must be greater than 0");
     projectGoals = _projectGoals;
 
     emit ProjectGoalsUpdated(_projectGoals);
   }
 
-  function setRewardDistributionTimestamp(uint256 _rewardDistributionTimestamp) external onlyOwner {
+  function setRewardDistributionTimestamp(uint256 _rewardDistributionTimestamp) external onlyFactoryAdminAndAdmin {
     rewardDistributionTimestamp = _rewardDistributionTimestamp;
 
     emit RewardDistributionTimestampUpdated(_rewardDistributionTimestamp);
   }
 
-  function setStartTimestamp(uint256 _startTimestamp) external onlyOwner {
+  function setStartTimestamp(uint256 _startTimestamp) external onlyFactoryAdminAndAdmin {
     require(_startTimestamp < endTimestamp, "Start timestamp must be before end timestamp");
     startTimestamp = _startTimestamp;
 
     emit StartTimestampUpdated(_startTimestamp);
   }
 
-  function setEndTimestamp(uint256 _endTimestamp) external onlyOwner {
+  function setEndTimestamp(uint256 _endTimestamp) external onlyFactoryAdminAndAdmin {
     require(_endTimestamp > startTimestamp, "End timestamp must be after start timestamp");
     endTimestamp = _endTimestamp;
 
     emit EndTimestampUpdated(_endTimestamp);
   }
 
-  function setHasDistributedRewards(bool _hasDistributedRewards) external onlyOwner {
+  function setHasDistributedRewards(bool _hasDistributedRewards) external onlyFactoryAdminAndAdmin {
     hasDistributedRewards = _hasDistributedRewards;
 
     emit HasDistributedRewardsUpdated(_hasDistributedRewards);
@@ -209,7 +225,7 @@ contract SummitKickstarter is Ownable {
     uint256 _startTimestamp,
     uint256 _endTimestamp,
     bool _hasDistributedRewards
-  ) external onlyOwner {
+  ) external onlyFactoryAdminAndAdmin {
     require(_startTimestamp < endTimestamp, "Start timestamp must be before end timestamp");
 
     title = _title;
@@ -249,10 +265,16 @@ contract SummitKickstarter is Ownable {
     payable(_receiver).transfer(_amount);
   }
 
-  // ** FACTORY FUNCTIONS **
+  // ** FACTORY ADMIN FUNCTIONS **
 
-  function setKickstarterStatus(ISummitKickstarter.Status _status) external onlyFactory {
+  function setKickstarterStatus(ISummitKickstarter.Status _status) external onlyFactoryAdmin {
     status = _status;
     emit StatusUpdated(status);
+  }
+
+  function setAdmins(address[] calldata _walletsAddress, bool _isAdmin) external onlyFactoryAdmin {
+    for (uint256 i = 0; i < _walletsAddress.length; i++) {
+      isAdmin[_walletsAddress[i]] = _isAdmin;
+    }
   }
 }

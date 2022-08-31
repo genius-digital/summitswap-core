@@ -74,6 +74,7 @@ contract SummitKickstarter is Ownable {
     string memory _imageUrl,
     string memory _projectDescription,
     string memory _rewardDescription,
+    ISummitKickstarter.Status _status,
     uint256 _minContribution,
     uint256 _projectGoals,
     uint256 _rewardDistributionTimestamp,
@@ -274,5 +275,14 @@ contract SummitKickstarter is Ownable {
     for (uint256 i = 0; i < _walletsAddress.length; i++) {
       isAdmin[_walletsAddress[i]] = _isAdmin;
     }
+  }
+
+  function setPercentageFeeAmount(uint256 _percentageFeeAmount) external onlyFactoryAdmin {
+    require(_percentageFeeAmount <= FEE_DENOMINATOR, "percentageFeeAmount should be less than FEE_DENOMINATOR");
+    percentageFeeAmount = _percentageFeeAmount;
+  }
+
+  function setFixFeeAmount(uint256 _fixFeeAmount) external onlyFactoryAdmin {
+    fixFeeAmount = _fixFeeAmount;
   }
 }

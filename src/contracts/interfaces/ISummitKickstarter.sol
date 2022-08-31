@@ -86,4 +86,10 @@ interface ISummitKickstarter {
   function withdrawBNB(uint256 _amount, address _receiver) external;
 
   function setKickstarterStatus(Status _status) external;
+
+  function setAdmins(address[] calldata _walletsAddress, bool _isAdmin) external;
+
+  function setPercentageFeeAmount(uint256 _percentageFeeAmount) external;
+
+  function setFixFeeAmount(uint256 _fixFeeAmount) external;
 }

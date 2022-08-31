@@ -1,5 +1,7 @@
+import { KickstarterStruct } from "build/typechain/SummitKickstarter";
 import { utils } from "ethers";
 import { ethers } from "hardhat";
+import { ZERO_ADDRESS } from "src/environment";
 import { tryVerify } from "./utils/verify";
 
 export async function deploySummitKickstarter() {
@@ -18,36 +20,27 @@ export async function deploySummitKickstarter() {
   const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7;
 
   const SummitKickstarter = await ethers.getContractFactory("SummitKickstarter");
-  const summitKickstarter = await SummitKickstarter.deploy(
-    OWNER,
-    TITLE,
-    CREATOR,
-    IMAGE_URL,
-    PROJECT_DESCRIPTION,
-    REWARD_DESCRIPTION,
-    MIN_CONTRIBUTION,
-    PROJECT_GOALS,
-    REWARD_DISTRIBUTION_TIMESTAMP,
-    START_TIMESTAMP,
-    END_TIMESTAMP
-  );
+  const kickstarter: KickstarterStruct = {
+    paymentToken: ZERO_ADDRESS,
+    owner: OWNER,
+    title: TITLE,
+    creator: CREATOR,
+    imageUrl: IMAGE_URL,
+    projectDescription: PROJECT_DESCRIPTION,
+    rewardDescription: REWARD_DESCRIPTION,
+    minContribution: MIN_CONTRIBUTION,
+    projectGoals: PROJECT_GOALS,
+    rewardDistributionTimestamp: REWARD_DISTRIBUTION_TIMESTAMP,
+    startTimestamp: START_TIMESTAMP,
+    endTimestamp: END_TIMESTAMP,
+  };
+
+  const summitKickstarter = await SummitKickstarter.deploy(kickstarter);
   await summitKickstarter.deployed();
 
   console.log("SummitKickstarter deployed to:", summitKickstarter.address);
 
-  await tryVerify(summitKickstarter.address, [
-    OWNER,
-    TITLE,
-    CREATOR,
-    IMAGE_URL,
-    PROJECT_DESCRIPTION,
-    REWARD_DESCRIPTION,
-    MIN_CONTRIBUTION,
-    PROJECT_GOALS,
-    REWARD_DISTRIBUTION_TIMESTAMP,
-    START_TIMESTAMP,
-    END_TIMESTAMP,
-  ]);
+  await tryVerify(summitKickstarter.address, [kickstarter]);
 
   return summitKickstarter;
 }

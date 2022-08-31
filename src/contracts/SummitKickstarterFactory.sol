@@ -8,6 +8,8 @@ import "./SummitKickstarter.sol";
 pragma solidity ^0.8.6;
 
 contract SummitKickstarterFactory is Ownable {
+  mapping(address => bool) public isAdmin;
+
   address[] public projects;
   mapping(address => address[]) public userProjects;
 
@@ -103,6 +105,12 @@ contract SummitKickstarterFactory is Ownable {
   }
 
   // ** OWNER FUNCTIONS **
+
+  function setAdmins(address[] calldata _walletAddress, bool _isAdmin) external onlyOwner {
+    for (uint256 i = 0; i < _walletAddress.length; i++) {
+      isAdmin[_walletAddress[i]] = _isAdmin;
+    }
+  }
 
   function setKickstarterStatus(address _kickstarterAddress, ISummitKickstarter.Status status) external onlyOwner {
     ISummitKickstarter(_kickstarterAddress).setKickstarterStatus(status);

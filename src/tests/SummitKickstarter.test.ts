@@ -70,6 +70,24 @@ describe("summitKickstarter", () => {
     return kickstarter;
   };
 
+  const getNewKickstarter = (paymentToken = ZERO_ADDRESS) => {
+    const kickstarter: KickstarterStruct = {
+      paymentToken: paymentToken,
+      owner: owner.address,
+      title: NEW_TITLE,
+      creator: NEW_CREATOR,
+      imageUrl: NEW_IMAGE_URL,
+      projectDescription: NEW_PROJECT_DESCRIPTION,
+      rewardDescription: NEW_REWARD_DESCRIPTION,
+      minContribution: NEW_MIN_CONTRIBUTION,
+      projectGoals: NEW_PROJECT_GOALS,
+      rewardDistributionTimestamp: NEW_REWARD_DISTRIBUTION_TIMESTAMP,
+      startTimestamp: NEW_START_TIMESTAMP,
+      endTimestamp: NEW_END_TIMESTAMP,
+    };
+    return kickstarter;
+  };
+
   beforeEach(async () => {
     tokenA = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
     summitKickstarterFactory = (await deployContract(owner, SummitKickstarterFactoryArtifact, [
@@ -778,95 +796,46 @@ describe("summitKickstarter", () => {
     });
   });
 
-  // describe("configProjectInfo", async () => {
-  //   it("should not set configProjectInfo when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
-  //     await expect(
-  //       summitKickstarterWithBnbPayment
-  //         .connect(otherWallet)
-  //         ["configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"](getKickstarter())
-  //     ).to.be.revertedWith("Only admin can call this function");
-  //   });
-  //   it("should not set configProjectInfo if start date is greater than end date", async () => {
-  //     await expect(
-  //       summitKickstarter.configProjectInfo(
-  //         NEW_TITLE,
-  //         NEW_CREATOR,
-  //         NEW_IMAGE_URL,
-  //         NEW_PROJECT_DESCRIPTION,
-  //         NEW_REWARD_DESCRIPTION,
-  //         NEW_MIN_CONTRIBUTION,
-  //         NEW_PROJECT_GOALS,
-  //         NEW_REWARD_DISTRIBUTION_TIMESTAMP,
-  //         END_TIMESTAMP,
-  //         START_TIMESTAMP,
-  //         NEW_HAS_DISTRIBUTED_REWARD
-  //       )
-  //     ).to.be.revertedWith("Start timestamp must be before end timestamp");
-  //   });
-  //   it("should set configProjectInfo", async () => {
-  //     let title = await summitKickstarter.title();
-  //     let creator = await summitKickstarter.creator();
-  //     let imageUrl = await summitKickstarter.imageUrl();
-  //     let projectDescription = await summitKickstarter.projectDescription();
-  //     let rewardDescription = await summitKickstarter.rewardDescription();
-  //     let minContribution = await summitKickstarter.minContribution();
-  //     let projectGoals = await summitKickstarter.projectGoals();
-  //     let rewardDistributionTimestamp = await summitKickstarter.rewardDistributionTimestamp();
-  //     let startTimestamp = await summitKickstarter.startTimestamp();
-  //     let endTimestamp = await summitKickstarter.endTimestamp();
-  //     let hasDistributedRewards = await summitKickstarter.hasDistributedRewards();
+  describe("configProjectInfo", async () => {
+    it("should not set configProjectInfo when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment
+          .connect(otherWallet)
+          [
+            "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
+          ](getKickstarter())
+      ).to.be.revertedWith("Only admin can call this function");
+    });
+    it("should not set configProjectInfo if start date is greater than end date", async () => {
+      const kickstarter = getKickstarter();
+      kickstarter.startTimestamp = END_TIMESTAMP;
+      kickstarter.endTimestamp = START_TIMESTAMP;
+      await expect(
+        summitKickstarterWithBnbPayment[
+          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
+        ](kickstarter)
+      ).to.be.revertedWith("Start timestamp must be before end timestamp");
+    });
+    it("should not change paymentToken after approval", async () => {
+      await summitKickstarterWithBnbPayment.setKickstarterStatus(1);
+      await expect(
+        summitKickstarterWithBnbPayment[
+          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
+        ](getKickstarter(tokenA.address))
+      ).to.be.revertedWith("You can't change payment token after Approval");
+    });
+    it("should set configProjectInfo", async () => {
+      let kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
+      assert.equal(kickstarter.toString(), Object.values(getKickstarter()).toString());
 
-  //     assert(title, TITLE);
-  //     assert(creator, CREATOR);
-  //     assert(imageUrl, IMAGE_URL);
-  //     assert(projectDescription, PROJECT_DESCRIPTION);
-  //     assert(rewardDescription, REWARD_DESCRIPTION);
-  //     assert(minContribution.toString(), MIN_CONTRIBUTION.toString());
-  //     assert(projectGoals.toString(), PROJECT_GOALS.toString());
-  //     assert(rewardDistributionTimestamp.toString(), REWARD_DISTRIBUTION_TIMESTAMP.toString());
-  //     assert(startTimestamp.toString(), START_TIMESTAMP.toString());
-  //     assert(endTimestamp.toString(), END_TIMESTAMP.toString());
-  //     assert.isFalse(hasDistributedRewards);
+      await summitKickstarterWithBnbPayment[
+        "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
+      ](getNewKickstarter(tokenA.address));
 
-  //     await summitKickstarter.configProjectInfo(
-  //       NEW_TITLE,
-  //       NEW_CREATOR,
-  //       IMAGE_URL,
-  //       NEW_PROJECT_DESCRIPTION,
-  //       NEW_REWARD_DESCRIPTION,
-  //       NEW_MIN_CONTRIBUTION,
-  //       NEW_PROJECT_GOALS,
-  //       NEW_REWARD_DISTRIBUTION_TIMESTAMP,
-  //       NEW_START_TIMESTAMP,
-  //       NEW_END_TIMESTAMP,
-  //       NEW_HAS_DISTRIBUTED_REWARD
-  //     );
-
-  //     title = await summitKickstarter.title();
-  //     creator = await summitKickstarter.creator();
-  //     imageUrl = await summitKickstarter.imageUrl();
-  //     projectDescription = await summitKickstarter.projectDescription();
-  //     rewardDescription = await summitKickstarter.rewardDescription();
-  //     minContribution = await summitKickstarter.minContribution();
-  //     projectGoals = await summitKickstarter.projectGoals();
-  //     rewardDistributionTimestamp = await summitKickstarter.rewardDistributionTimestamp();
-  //     startTimestamp = await summitKickstarter.startTimestamp();
-  //     endTimestamp = await summitKickstarter.endTimestamp();
-  //     hasDistributedRewards = await summitKickstarter.hasDistributedRewards();
-
-  //     assert(title, NEW_TITLE);
-  //     assert(creator, NEW_CREATOR);
-  //     assert(imageUrl, IMAGE_URL);
-  //     assert(projectDescription, NEW_PROJECT_DESCRIPTION);
-  //     assert(rewardDescription, NEW_REWARD_DESCRIPTION);
-  //     assert(minContribution.toString(), NEW_MIN_CONTRIBUTION.toString());
-  //     assert(projectGoals.toString(), NEW_PROJECT_GOALS.toString());
-  //     assert(rewardDistributionTimestamp.toString(), NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString());
-  //     assert(startTimestamp.toString(), NEW_START_TIMESTAMP.toString());
-  //     assert(endTimestamp.toString(), NEW_END_TIMESTAMP.toString());
-  //     assert.isTrue(hasDistributedRewards);
-  //   });
-  // });
+      kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
+      assert.equal(kickstarter.toString(), Object.values(getNewKickstarter(tokenA.address)).toString());
+    });
+  });
 
   describe("contribute", async () => {
     it("should be reverted if kickstarter is not approved", async () => {

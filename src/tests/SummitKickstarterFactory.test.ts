@@ -1,14 +1,17 @@
 import { ethers, waffle } from "hardhat";
 import { expect, assert } from "chai";
 
+import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import SummitKickstarterFactoryArtifact from "@built-contracts/SummitKickstarterFactory.sol/SummitKickstarterFactory.json";
-import { SummitKickstarterFactory, SummitKickstarter } from "build/typechain";
-import { utils } from "ethers";
+import { DummyToken, SummitKickstarterFactory, SummitKickstarter } from "build/typechain";
+import { KickstarterStruct } from "build/typechain/SummitKickstarter";
+import { BigNumber, utils } from "ethers";
+import { ZERO_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
 describe("summitswapKickstarter", () => {
-  const [owner, otherWallet] = provider.getWallets();
+  const [owner, otherWallet, adminWallet] = provider.getWallets();
   const SERVICE_FEE = utils.parseEther("0.1");
 
   const TITLE = "Lorem Ipsum";
@@ -23,12 +26,35 @@ describe("summitswapKickstarter", () => {
   const END_TIMESTAMP = START_TIMESTAMP + 60 * 60 * 24 * 7; // one week from now
   const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7; // one week after the end date
 
+  let tokenA: DummyToken;
   let summitKickstarterFactory: SummitKickstarterFactory;
 
+  const getKickstarter = (paymentToken = ZERO_ADDRESS) => {
+    const kickstarter: KickstarterStruct = {
+      paymentToken: paymentToken,
+      owner: owner.address,
+      title: TITLE,
+      creator: CREATOR,
+      imageUrl: IMAGE_URL,
+      projectDescription: PROJECT_DESCRIPTION,
+      rewardDescription: REWARD_DESCRIPTION,
+      minContribution: MIN_CONTRIBUTION,
+      projectGoals: PROJECT_GOALS,
+      rewardDistributionTimestamp: REWARD_DISTRIBUTION_TIMESTAMP,
+      startTimestamp: START_TIMESTAMP,
+      endTimestamp: END_TIMESTAMP,
+    };
+    return kickstarter;
+  };
+
   beforeEach(async () => {
+    tokenA = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
+
     summitKickstarterFactory = (await deployContract(owner, SummitKickstarterFactoryArtifact, [
       SERVICE_FEE,
     ])) as SummitKickstarterFactory;
+
+    await summitKickstarterFactory.setAdmins([adminWallet.address], true);
   });
 
   describe("owner", async () => {
@@ -62,13 +88,40 @@ describe("summitswapKickstarter", () => {
     });
   });
 
+  describe("isAdmin", async () => {
+    it("should be false when we check otherWallet", async () => {
+      const isAdmin = await summitKickstarterFactory.isAdmin(otherWallet.address);
+      assert.isFalse(isAdmin);
+    });
+    it("should be able to set otherWallet to be the admin", async () => {
+      let isAdmin = await summitKickstarterFactory.isAdmin(otherWallet.address);
+      assert.isFalse(isAdmin);
+
+      await summitKickstarterFactory.setAdmins([otherWallet.address], true);
+      isAdmin = await summitKickstarterFactory.isAdmin(otherWallet.address);
+      assert.isTrue(isAdmin);
+    });
+    it("should be able to set multiple wallet to be the admin", async () => {
+      let isOwnerAdmin = await summitKickstarterFactory.isAdmin(owner.address);
+      let isOtherWalletAdmin = await summitKickstarterFactory.isAdmin(otherWallet.address);
+      assert.isFalse(isOwnerAdmin);
+      assert.isFalse(isOtherWalletAdmin);
+
+      await summitKickstarterFactory.setAdmins([owner.address, otherWallet.address], true);
+      isOwnerAdmin = await summitKickstarterFactory.isAdmin(owner.address);
+      isOtherWalletAdmin = await summitKickstarterFactory.isAdmin(otherWallet.address);
+      assert.isTrue(isOwnerAdmin);
+      assert.isTrue(isOtherWalletAdmin);
+    });
+  });
+
   describe("setServiceFee", async () => {
-    it("should revert when called by nonOwner", async () => {
+    it("should revert when called by nonOwner or nonAdmin", async () => {
       await expect(summitKickstarterFactory.connect(otherWallet).setServiceFee(1)).to.be.revertedWith(
-        "Ownable: caller is not the owner"
+        "Only admin or owner can call this function"
       );
     });
-    it("should be able to set serviceFee to 100", async () => {
+    it("should be able to set serviceFee to 100 by the owner", async () => {
       let serviceFee = await summitKickstarterFactory.serviceFee();
       assert.equal(serviceFee.toString(), SERVICE_FEE.toString());
 
@@ -78,24 +131,23 @@ describe("summitswapKickstarter", () => {
       serviceFee = await summitKickstarterFactory.serviceFee();
       assert.equal(serviceFee.toString(), newServiceFee.toString());
     });
+    it("should be able to set serviceFee to 100 by the owner", async () => {
+      let serviceFee = await summitKickstarterFactory.serviceFee();
+      assert.equal(serviceFee.toString(), SERVICE_FEE.toString());
+
+      const newServiceFee = 100;
+      await summitKickstarterFactory.connect(adminWallet).setServiceFee(newServiceFee.toString());
+
+      serviceFee = await summitKickstarterFactory.serviceFee();
+      assert.equal(serviceFee.toString(), newServiceFee.toString());
+    });
   });
 
   describe("createProject", async () => {
     it("should not be able to create project if pay less than service fee", async () => {
-      await expect(
-        summitKickstarterFactory.createProject(
-          TITLE,
-          CREATOR,
-          IMAGE_URL,
-          PROJECT_DESCRIPTION,
-          REWARD_DESCRIPTION,
-          MIN_CONTRIBUTION.toString(),
-          PROJECT_GOALS.toString(),
-          REWARD_DISTRIBUTION_TIMESTAMP.toString(),
-          START_TIMESTAMP.toString(),
-          END_TIMESTAMP.toString()
-        )
-      ).to.be.revertedWith("Service Fee is not enough");
+      await expect(summitKickstarterFactory.createProject(getKickstarter())).to.be.revertedWith(
+        "Service Fee is not enough"
+      );
     });
     it("should be able to get refund excessive fee if pay more than service fee", async () => {
       const walletBalance = await provider.getBalance(otherWallet.address);
@@ -103,19 +155,7 @@ describe("summitswapKickstarter", () => {
 
       const tx = await summitKickstarterFactory
         .connect(otherWallet)
-        .createProject(
-          TITLE,
-          CREATOR,
-          IMAGE_URL,
-          PROJECT_DESCRIPTION,
-          REWARD_DESCRIPTION,
-          MIN_CONTRIBUTION.toString(),
-          PROJECT_GOALS.toString(),
-          REWARD_DISTRIBUTION_TIMESTAMP.toString(),
-          START_TIMESTAMP.toString(),
-          END_TIMESTAMP.toString(),
-          { value: SERVICE_FEE.add(1) }
-        );
+        .createProject(getKickstarter(), { value: SERVICE_FEE.add(1) });
 
       const txReceipt = await tx.wait();
       const gasUsed = txReceipt.gasUsed;
@@ -130,22 +170,10 @@ describe("summitswapKickstarter", () => {
         (await provider.getBalance(summitKickstarterFactory.address)).toString()
       );
     });
-    it("should be able to create project", async () => {
+    it("should be able to create project with BNB Payment", async () => {
       await summitKickstarterFactory
         .connect(otherWallet)
-        .createProject(
-          TITLE,
-          CREATOR,
-          IMAGE_URL,
-          PROJECT_DESCRIPTION,
-          REWARD_DESCRIPTION,
-          MIN_CONTRIBUTION.toString(),
-          PROJECT_GOALS.toString(),
-          REWARD_DISTRIBUTION_TIMESTAMP.toString(),
-          START_TIMESTAMP.toString(),
-          END_TIMESTAMP.toString(),
-          { value: SERVICE_FEE.add(1) }
-        );
+        .createProject(getKickstarter(), { value: SERVICE_FEE.add(1) });
 
       const projectAddress = await summitKickstarterFactory.projects(0);
       const projects = await summitKickstarterFactory.getProjects();
@@ -159,27 +187,50 @@ describe("summitswapKickstarter", () => {
       const SummitKickstarterContract = await ethers.getContractFactory("SummitKickstarter");
       const summitKickstarter = SummitKickstarterContract.attach(projectAddress) as SummitKickstarter;
 
-      const owner = await summitKickstarter.owner();
-      const title = await summitKickstarter.title();
-      const creator = await summitKickstarter.creator();
-      const projectDescription = await summitKickstarter.projectDescription();
-      const rewardDescription = await summitKickstarter.rewardDescription();
-      const minContribution = await summitKickstarter.minContribution();
-      const projectGoals = await summitKickstarter.projectGoals();
-      const rewardDistributionTimestamp = await summitKickstarter.rewardDistributionTimestamp();
-      const startTimestamp = await summitKickstarter.startTimestamp();
-      const endTimestamp = await summitKickstarter.endTimestamp();
+      const kickstarter: KickstarterStruct = await summitKickstarter.kickstarter();
+      assert.equal(kickstarter.paymentToken, ZERO_ADDRESS);
+      assert.equal(kickstarter.owner, owner.address);
+      assert.equal(kickstarter.title, TITLE);
+      assert.equal(kickstarter.creator, CREATOR);
+      assert.equal(kickstarter.imageUrl, IMAGE_URL);
+      assert.equal(kickstarter.projectDescription, PROJECT_DESCRIPTION);
+      assert.equal(kickstarter.rewardDescription, REWARD_DESCRIPTION);
+      assert.deepEqual(kickstarter.minContribution, BigNumber.from(MIN_CONTRIBUTION));
+      assert.deepEqual(kickstarter.projectGoals, BigNumber.from(PROJECT_GOALS));
+      assert.deepEqual(kickstarter.rewardDistributionTimestamp, BigNumber.from(REWARD_DISTRIBUTION_TIMESTAMP));
+      assert.deepEqual(kickstarter.startTimestamp, BigNumber.from(START_TIMESTAMP));
+      assert.deepEqual(kickstarter.endTimestamp, BigNumber.from(END_TIMESTAMP));
+    });
+    it("should be able to create project with Token A Payment", async () => {
+      await summitKickstarterFactory
+        .connect(otherWallet)
+        .createProject(getKickstarter(tokenA.address), { value: SERVICE_FEE.add(1) });
 
-      assert(owner, otherWallet.address);
-      assert(title, TITLE);
-      assert(creator, CREATOR);
-      assert(projectDescription, PROJECT_DESCRIPTION);
-      assert(rewardDescription, REWARD_DESCRIPTION);
-      assert(minContribution.toString(), MIN_CONTRIBUTION.toString());
-      assert(projectGoals.toString(), PROJECT_GOALS.toString());
-      assert(rewardDistributionTimestamp.toString(), REWARD_DISTRIBUTION_TIMESTAMP.toString());
-      assert(startTimestamp.toString(), START_TIMESTAMP.toString());
-      assert(endTimestamp.toString(), END_TIMESTAMP.toString());
+      const projectAddress = await summitKickstarterFactory.projects(0);
+      const projects = await summitKickstarterFactory.getProjects();
+      assert.equal(projects.length, 1);
+      assert.equal(projects[0], projectAddress);
+
+      const userProjects = await summitKickstarterFactory.getProjectsOf(otherWallet.address);
+      assert.equal(userProjects.length, 1);
+      assert.equal(userProjects[0], projectAddress);
+
+      const SummitKickstarterContract = await ethers.getContractFactory("SummitKickstarter");
+      const summitKickstarter = SummitKickstarterContract.attach(projectAddress) as SummitKickstarter;
+
+      const kickstarter = await summitKickstarter.kickstarter();
+      assert.equal(kickstarter.paymentToken, tokenA.address);
+      assert.equal(kickstarter.owner, owner.address);
+      assert.equal(kickstarter.title, TITLE);
+      assert.equal(kickstarter.creator, CREATOR);
+      assert.equal(kickstarter.imageUrl, IMAGE_URL);
+      assert.equal(kickstarter.projectDescription, PROJECT_DESCRIPTION);
+      assert.equal(kickstarter.rewardDescription, REWARD_DESCRIPTION);
+      assert.deepEqual(kickstarter.minContribution, BigNumber.from(MIN_CONTRIBUTION));
+      assert.deepEqual(kickstarter.projectGoals, BigNumber.from(PROJECT_GOALS));
+      assert.deepEqual(kickstarter.rewardDistributionTimestamp, BigNumber.from(REWARD_DISTRIBUTION_TIMESTAMP));
+      assert.deepEqual(kickstarter.startTimestamp, BigNumber.from(START_TIMESTAMP));
+      assert.deepEqual(kickstarter.endTimestamp, BigNumber.from(END_TIMESTAMP));
     });
   });
 });

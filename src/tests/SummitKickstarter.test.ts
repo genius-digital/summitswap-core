@@ -89,6 +89,8 @@ describe("summitKickstarter", () => {
 
     await summitKickstarterWithBnbPayment.setAdmins([adminWallet.address], true);
     await summitKickstarterWithTokenAPayment.setAdmins([adminWallet.address], true);
+
+    await tokenA.transfer(otherWallet.address, utils.parseEther("100"));
   });
 
   describe("owner", async () => {
@@ -862,7 +864,7 @@ describe("summitKickstarter", () => {
   //   });
   // });
 
-  describe("contributeBNB", async () => {
+  describe("contribute", async () => {
     it("should be reverted if kickstarter is not approved", async () => {
       const status = await summitKickstarterWithBnbPayment.status();
       await expect(
@@ -875,6 +877,7 @@ describe("summitKickstarter", () => {
     describe("Approved Kickstarter", async () => {
       beforeEach(async () => {
         await summitKickstarterWithBnbPayment.approve(0, 0);
+        await summitKickstarterWithTokenAPayment.approve(0, 0);
       });
 
       it("should be reverted if Insufficient Amount", async () => {
@@ -900,7 +903,7 @@ describe("summitKickstarter", () => {
         ).to.be.revertedWith("You can contribute only before end time");
       });
 
-      it("should be able to contribute", async () => {
+      it("should be able to contribute BNB", async () => {
         const initialTotalContribution = await summitKickstarterWithBnbPayment.totalContribution();
         assert.equal(initialTotalContribution.toString(), "0");
 
@@ -945,12 +948,77 @@ describe("summitKickstarter", () => {
         assert.equal(contributors[0], owner.address);
         assert.equal(contributors[1], otherWallet.address);
       });
+
+      it("should be able to contribute Token", async () => {
+        const initialTotalContribution = await summitKickstarterWithTokenAPayment.totalContribution();
+        assert.equal(initialTotalContribution.toString(), "0");
+
+        const expectedOwnerContribution = MIN_CONTRIBUTION;
+        const expectedOtherWalletContribution = MIN_CONTRIBUTION * 2;
+
+        await tokenA.approve(summitKickstarterWithTokenAPayment.address, utils.parseEther("1"));
+        await tokenA.connect(otherWallet).approve(summitKickstarterWithTokenAPayment.address, utils.parseEther("1"));
+
+        await summitKickstarterWithTokenAPayment.contribute(expectedOwnerContribution);
+        await summitKickstarterWithTokenAPayment.connect(otherWallet).contribute(expectedOtherWalletContribution);
+
+        const totalContribution = await summitKickstarterWithTokenAPayment.totalContribution();
+        assert.equal(
+          totalContribution.toString(),
+          (expectedOwnerContribution + expectedOtherWalletContribution).toString()
+        );
+
+        const ownerContribution = await summitKickstarterWithTokenAPayment.contributions(owner.address);
+        assert.equal(ownerContribution.toString(), expectedOwnerContribution.toString());
+
+        const otherWalletContribution = await summitKickstarterWithTokenAPayment.contributions(otherWallet.address);
+        assert.equal(otherWalletContribution.toString(), expectedOtherWalletContribution.toString());
+
+        const ownerContributionIndex = await summitKickstarterWithTokenAPayment.contributorIndexes(owner.address);
+        assert.equal(ownerContributionIndex.toString(), "0");
+
+        const otherWalletContributionIndex = await summitKickstarterWithTokenAPayment.contributorIndexes(
+          otherWallet.address
+        );
+        assert.equal(otherWalletContributionIndex.toString(), "1");
+
+        const ownerContributor = await summitKickstarterWithTokenAPayment.contributors(ownerContributionIndex);
+        assert.equal(ownerContributor.toString(), owner.address);
+
+        const otherWalletContributor = await summitKickstarterWithTokenAPayment.contributors(
+          otherWalletContributionIndex
+        );
+        assert.equal(otherWalletContributor.toString(), otherWallet.address);
+
+        const contributors = await summitKickstarterWithTokenAPayment.getContributors();
+        assert.equal(contributors.length.toString(), "2");
+
+        assert.equal(contributors[0], owner.address);
+        assert.equal(contributors[1], otherWallet.address);
+      });
     });
   });
 
-  // describe("withdrawBNB", async () => {
+  // describe("withdraw", async () => {
+  //   beforeEach(async () => {
+  //     await summitKickstarterWithBnbPayment.approve(0, 0);
+  //     await summitKickstarterWithTokenAPayment.approve(0, 0);
+
+  //     await summitKickstarterWithBnbPayment.setFixFeeAmount(FIX_FEE_AMOUNT);
+  //     await summitKickstarterWithTokenAPayment.setPercentageFeeAmount(PERCENTAGE_FEE_AMOUNT);
+
+  //     await summitKickstarterWithBnbPayment.contribute(MIN_CONTRIBUTION);
+  //     await summitKickstarterWithTokenAPayment.contribute(MIN_CONTRIBUTION);
+  //   });
+
   //   it("should not withdrawBNB when called by nonOwner", async () => {
-  //     await expect(summitKickstarter.connect(otherWallet).withdrawBNB("1", owner.address)).to.be.revertedWith(
+  //     await expect(summitKickstarterWithBnbPayment.connect(otherWallet).withdraw("1", owner.address)).to.be.revertedWith(
+  //       "Ownable: caller is not the owner"
+  //     );
+  //     await expect(summitKickstarterWithBnbPayment.connect(factoryAdminWallet).withdraw("1", owner.address)).to.be.revertedWith(
+  //       "Ownable: caller is not the owner"
+  //     );
+  //     await expect(summitKickstarterWithBnbPayment.connect(adminWallet).withdraw("1", owner.address)).to.be.revertedWith(
   //       "Ownable: caller is not the owner"
   //     );
   //   });

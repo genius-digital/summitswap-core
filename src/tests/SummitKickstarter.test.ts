@@ -34,11 +34,11 @@ describe("summitKickstarter", () => {
   const NEW_IMAGE_URL = "https://images.com/new-example.png";
   const NEW_PROJECT_DESCRIPTION = "New Project Description";
   const NEW_REWARD_DESCRIPTION = "New Reward Description";
-  const NEW_MIN_CONTRIBUTION = 12345678;
-  const NEW_PROJECT_GOALS = 12345678;
-  const NEW_REWARD_DISTRIBUTION_TIMESTAMP = 12345678;
-  const NEW_START_TIMESTAMP = 12345678;
-  const NEW_END_TIMESTAMP = 12345678;
+  const NEW_MIN_CONTRIBUTION = MIN_CONTRIBUTION * 2;
+  const NEW_PROJECT_GOALS = PROJECT_GOALS * 2;
+  const NEW_REWARD_DISTRIBUTION_TIMESTAMP = REWARD_DISTRIBUTION_TIMESTAMP + 1;
+  const NEW_START_TIMESTAMP = START_TIMESTAMP + 1;
+  const NEW_END_TIMESTAMP = END_TIMESTAMP + 1;
 
   let tokenA: DummyToken;
   let summitKickstarterFactory: SummitKickstarterFactory;
@@ -504,6 +504,11 @@ describe("summitKickstarter", () => {
         summitKickstarterWithBnbPayment.connect(otherWallet).setStartTimestamp(NEW_START_TIMESTAMP.toString())
       ).to.be.revertedWith("Only admin can call this function");
     });
+    it("should not set more than or equal to END_TIMESTAMP", async () => {
+      await expect(summitKickstarterWithBnbPayment.setStartTimestamp(END_TIMESTAMP.toString())).to.be.revertedWith(
+        "Start timestamp must be before end timestamp"
+      );
+    });
     it("should set setStartTimestamp by Factory Owner", async () => {
       assert.equal(
         (await summitKickstarterWithBnbPayment.kickstarter()).startTimestamp.toString(),
@@ -541,55 +546,58 @@ describe("summitKickstarter", () => {
     });
   });
 
-  // describe("setStartTimestamp", async () => {
-  //   it("should not set startTimestamp when called by nonOwner", async () => {
-  //     await expect(
-  //       summitKickstarter.connect(otherWallet).setStartTimestamp(END_TIMESTAMP.toString())
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("should not set more than or equal to END_TIMESTAMP", async () => {
-  //     await expect(summitKickstarter.setStartTimestamp(END_TIMESTAMP.toString())).to.be.revertedWith(
-  //       "Start timestamp must be before end timestamp"
-  //     );
-  //   });
-
-  //   it("should be able to set startTimestamp", async () => {
-  //     const expectedStartTimestamp = (END_TIMESTAMP - 1).toString();
-
-  //     const startTimestamp = await summitKickstarter.startTimestamp();
-  //     assert.equal(startTimestamp.toString(), START_TIMESTAMP.toString());
-
-  //     await summitKickstarter.setStartTimestamp(expectedStartTimestamp);
-
-  //     const newStartTimestamp = await summitKickstarter.startTimestamp();
-  //     assert.equal(newStartTimestamp.toString(), expectedStartTimestamp);
-  //   });
-  // });
+  describe("setEndTimestamp", async () => {
+    it("should not set setEndTimestamp when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment.connect(otherWallet).setEndTimestamp(NEW_END_TIMESTAMP.toString())
+      ).to.be.revertedWith("Only admin can call this function");
+    });
+    it("should set setEndTimestamp by Factory Owner", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).endTimestamp.toString(),
+        END_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment.setEndTimestamp(NEW_END_TIMESTAMP.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).endTimestamp.toString(),
+        NEW_END_TIMESTAMP.toString()
+      );
+    });
+    it("should not set less than or equal to START_TIMESTAMP", async () => {
+      await expect(summitKickstarterWithBnbPayment.setEndTimestamp(START_TIMESTAMP.toString())).to.be.revertedWith(
+        "End timestamp must be after start timestamp"
+      );
+    });
+    it("should set setEndTimestamp by FactoryAdmin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).endTimestamp.toString(),
+        END_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setEndTimestamp(NEW_END_TIMESTAMP.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).endTimestamp.toString(),
+        NEW_END_TIMESTAMP.toString()
+      );
+    });
+    it("should set setEndTimestamp by Admin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).endTimestamp.toString(),
+        END_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment.connect(adminWallet).setEndTimestamp(NEW_END_TIMESTAMP.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).endTimestamp.toString(),
+        NEW_END_TIMESTAMP.toString()
+      );
+    });
+  });
 
   // describe("setEndTimestamp", async () => {
-  //   it("should not set endTimestamp when called by nonOwner", async () => {
-  //     await expect(
-  //       summitKickstarter.connect(otherWallet).setEndTimestamp(START_TIMESTAMP.toString())
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
 
   //   it("should not set less than or equal to START_TIMESTAMP", async () => {
   //     await expect(summitKickstarter.setEndTimestamp(START_TIMESTAMP.toString())).to.be.revertedWith(
   //       "End timestamp must be after start timestamp"
   //     );
-  //   });
-
-  //   it("should be able to set endTimestamp", async () => {
-  //     const expectedEndTimestamp = (START_TIMESTAMP + 1).toString();
-
-  //     const endTimestamp = await summitKickstarter.endTimestamp();
-  //     assert.equal(endTimestamp.toString(), END_TIMESTAMP.toString());
-
-  //     await summitKickstarter.setEndTimestamp(expectedEndTimestamp);
-
-  //     const newStartTimestamp = await summitKickstarter.endTimestamp();
-  //     assert.equal(newStartTimestamp.toString(), expectedEndTimestamp);
   //   });
   // });
 

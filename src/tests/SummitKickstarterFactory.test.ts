@@ -188,18 +188,7 @@ describe("summitswapKickstarter", () => {
       const summitKickstarter = SummitKickstarterContract.attach(projectAddress) as SummitKickstarter;
 
       const kickstarter: KickstarterStruct = await summitKickstarter.kickstarter();
-      assert.equal(kickstarter.paymentToken, ZERO_ADDRESS);
-      assert.equal(kickstarter.owner, owner.address);
-      assert.equal(kickstarter.title, TITLE);
-      assert.equal(kickstarter.creator, CREATOR);
-      assert.equal(kickstarter.imageUrl, IMAGE_URL);
-      assert.equal(kickstarter.projectDescription, PROJECT_DESCRIPTION);
-      assert.equal(kickstarter.rewardDescription, REWARD_DESCRIPTION);
-      assert.deepEqual(kickstarter.minContribution, BigNumber.from(MIN_CONTRIBUTION));
-      assert.deepEqual(kickstarter.projectGoals, BigNumber.from(PROJECT_GOALS));
-      assert.deepEqual(kickstarter.rewardDistributionTimestamp, BigNumber.from(REWARD_DISTRIBUTION_TIMESTAMP));
-      assert.deepEqual(kickstarter.startTimestamp, BigNumber.from(START_TIMESTAMP));
-      assert.deepEqual(kickstarter.endTimestamp, BigNumber.from(END_TIMESTAMP));
+      assert.equal(kickstarter.toString(), Object.values(getKickstarter()).toString());
     });
     it("should be able to create project with Token A Payment", async () => {
       await summitKickstarterFactory
@@ -219,18 +208,7 @@ describe("summitswapKickstarter", () => {
       const summitKickstarter = SummitKickstarterContract.attach(projectAddress) as SummitKickstarter;
 
       const kickstarter = await summitKickstarter.kickstarter();
-      assert.equal(kickstarter.paymentToken, tokenA.address);
-      assert.equal(kickstarter.owner, owner.address);
-      assert.equal(kickstarter.title, TITLE);
-      assert.equal(kickstarter.creator, CREATOR);
-      assert.equal(kickstarter.imageUrl, IMAGE_URL);
-      assert.equal(kickstarter.projectDescription, PROJECT_DESCRIPTION);
-      assert.equal(kickstarter.rewardDescription, REWARD_DESCRIPTION);
-      assert.deepEqual(kickstarter.minContribution, BigNumber.from(MIN_CONTRIBUTION));
-      assert.deepEqual(kickstarter.projectGoals, BigNumber.from(PROJECT_GOALS));
-      assert.deepEqual(kickstarter.rewardDistributionTimestamp, BigNumber.from(REWARD_DISTRIBUTION_TIMESTAMP));
-      assert.deepEqual(kickstarter.startTimestamp, BigNumber.from(START_TIMESTAMP));
-      assert.deepEqual(kickstarter.endTimestamp, BigNumber.from(END_TIMESTAMP));
+      assert.equal(kickstarter.toString(), Object.values(getKickstarter(tokenA.address)).toString());
     });
   });
 });

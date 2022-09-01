@@ -1,9 +1,9 @@
+import { assert, expect } from "chai";
 import { ethers, waffle } from "hardhat";
-import { expect, assert } from "chai";
 
-import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import SummitKickstarterFactoryArtifact from "@built-contracts/SummitKickstarterFactory.sol/SummitKickstarterFactory.json";
-import { DummyToken, SummitKickstarterFactory, SummitKickstarter } from "build/typechain";
+import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
+import { DummyToken, SummitKickstarter, SummitKickstarterFactory } from "build/typechain";
 import { KickstarterStruct } from "build/typechain/SummitKickstarter";
 import { BigNumber, utils } from "ethers";
 import { ZERO_ADDRESS } from "src/environment";

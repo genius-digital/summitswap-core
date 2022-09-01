@@ -11,6 +11,7 @@ contract SummitKickstarter is Ownable {
   mapping(address => bool) public isAdmin;
   mapping(address => uint256) public contributions;
   mapping(address => uint256) public contributorIndexes;
+  mapping(address => string) public emails;
 
   address[] public contributors;
   address public factory;
@@ -25,7 +26,7 @@ contract SummitKickstarter is Ownable {
 
   string public rejectReason;
 
-  event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
+  event Contribute(address indexed contributor, string email, uint256 amount, uint256 timestamp);
   event KickstarterUpdated(Kickstarter kickstarter);
   event KickstarterUpdatedByFactoryAdmin(
     Kickstarter kickstarter,
@@ -84,34 +85,35 @@ contract SummitKickstarter is Ownable {
     return contributors;
   }
 
-  function contribute(uint256 amount) external payable {
+  function contribute(string memory _email, uint256 _amount) external payable {
     require(status == Status.APPROVED, "Kickstarter is not Approved");
     if (address(kickstarter.paymentToken) == address(0)) {
-      require(msg.value >= amount, "Insufficient contribution amount");
+      require(msg.value >= _amount, "Insufficient contribution amount");
     } else {
-      require(kickstarter.paymentToken.balanceOf(msg.sender) >= amount, "Insufficient contribution amount");
+      require(kickstarter.paymentToken.balanceOf(msg.sender) >= _amount, "Insufficient contribution amount");
     }
     require(block.timestamp >= kickstarter.startTimestamp, "You can contribute only after start time");
     require(block.timestamp <= kickstarter.endTimestamp, "You can contribute only before end time");
 
-    totalContribution += amount;
+    totalContribution += _amount;
 
     if (address(kickstarter.paymentToken) != address(0)) {
-      kickstarter.paymentToken.transferFrom(msg.sender, address(this), amount);
+      kickstarter.paymentToken.transferFrom(msg.sender, address(this), _amount);
       refundExcessiveFee(msg.value);
     } else {
-      uint256 refundAmount = msg.value - amount;
+      uint256 refundAmount = msg.value - _amount;
       refundExcessiveFee(refundAmount);
     }
 
-    contributions[msg.sender] += amount;
+    contributions[msg.sender] += _amount;
+    emails[msg.sender] = _email;
 
     if ((contributorIndexes[msg.sender] == 0 && contributors.length > 0) || contributors.length == 0) {
       contributorIndexes[msg.sender] = contributors.length;
       contributors.push(msg.sender);
     }
 
-    emit Contribute(msg.sender, amount, block.timestamp);
+    emit Contribute(msg.sender, _email, _amount, block.timestamp);
   }
 
   function refundExcessiveFee(uint256 _refundAmount) internal virtual {

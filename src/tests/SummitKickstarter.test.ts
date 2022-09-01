@@ -238,8 +238,26 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("setStatus", async () => {
+    it("should not set setStatus when called by nonFactoryOwner or nonFactoryAdmin", async () => {
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setKickstarterStatus(1)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+      await expect(summitKickstarterWithBnbPayment.connect(adminWallet).setKickstarterStatus(1)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+    });
+    it("should be able to set Status by FactoryOwner or FactoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      await summitKickstarterWithBnbPayment.setKickstarterStatus("1");
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "1");
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setKickstarterStatus("2");
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
+    });
+  });
+
   describe("setTitle", async () => {
-    it("should not set setTitle when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setTitle when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setTitle(NEW_TITLE)).to.be.revertedWith(
         "Only admin can call this function"
       );
@@ -262,7 +280,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setCreator", async () => {
-    it("should not set setCreator when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setCreator when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setCreator(NEW_CREATOR)).to.be.revertedWith(
         "Only admin can call this function"
       );
@@ -288,7 +306,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setImageUrl", async () => {
-    it("should not set setImageUrl when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setImageUrl when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setImageUrl(NEW_IMAGE_URL)).to.be.revertedWith(
         "Only admin can call this function"
       );
@@ -317,7 +335,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setProjectDescription", async () => {
-    it("should not set setProjectDescription when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setProjectDescription when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment.connect(otherWallet).setProjectDescription(NEW_PROJECT_DESCRIPTION)
       ).to.be.revertedWith("Only admin can call this function");
@@ -352,7 +370,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setRewardDescription", async () => {
-    it("should not set setRewardDescription when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setRewardDescription when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment.connect(otherWallet).setRewardDescription(NEW_REWARD_DESCRIPTION)
       ).to.be.revertedWith("Only admin can call this function");
@@ -387,7 +405,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setMinContribution", async () => {
-    it("should not set setMinContribution when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setMinContribution when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment.connect(otherWallet).setMinContribution(NEW_MIN_CONTRIBUTION.toString())
       ).to.be.revertedWith("Only admin can call this function");
@@ -430,7 +448,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setProjectGoals", async () => {
-    it("should not set setProjectGoals when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setProjectGoals when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment.connect(otherWallet).setProjectGoals(NEW_PROJECT_GOALS.toString())
       ).to.be.revertedWith("Only admin can call this function");
@@ -471,7 +489,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setRewardDistributionTimestamp", async () => {
-    it("should not set setRewardDistributionTimestamp when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setRewardDistributionTimestamp when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment
           .connect(otherWallet)
@@ -528,7 +546,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setStartTimestamp", async () => {
-    it("should not set setStartTimestamp when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setStartTimestamp when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment.connect(otherWallet).setStartTimestamp(NEW_START_TIMESTAMP.toString())
       ).to.be.revertedWith("Only admin can call this function");
@@ -576,7 +594,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("setEndTimestamp", async () => {
-    it("should not set setEndTimestamp when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+    it("should not set setEndTimestamp when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment.connect(otherWallet).setEndTimestamp(NEW_END_TIMESTAMP.toString())
       ).to.be.revertedWith("Only admin can call this function");
@@ -643,7 +661,7 @@ describe("summitKickstarter", () => {
   });
 
   // describe("configProjectInfo", async () => {
-  //   it("should not set configProjectInfo when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+  //   it("should not set configProjectInfo when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
   //     await expect(
   //       summitKickstarterWithBnbPayment
   //         .connect(otherWallet)

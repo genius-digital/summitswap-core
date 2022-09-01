@@ -256,6 +256,24 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("setPercentageFeeAmount", async () => {
+    it("should not set setPercentageFeeAmount when called by nonFactoryOwner or nonFactoryAdmin", async () => {
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setPercentageFeeAmount(1)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+      await expect(summitKickstarterWithBnbPayment.connect(adminWallet).setPercentageFeeAmount(1)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+    });
+    it("should be able to setPercentageFeeAmount by FactoryOwner or FactoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "0");
+      await summitKickstarterWithBnbPayment.setPercentageFeeAmount("1");
+      assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "1");
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setPercentageFeeAmount("2");
+      assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "2");
+    });
+  });
+
   describe("setTitle", async () => {
     it("should not set setTitle when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setTitle(NEW_TITLE)).to.be.revertedWith(

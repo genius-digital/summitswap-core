@@ -27,6 +27,8 @@ describe("summitKickstarter", () => {
 
   const SERVICE_FEE = utils.parseEther("0.1");
 
+  const REJECT_REASON = "This is Reject Reason";
+
   const FEE_DENOMINATOR = 10000;
   const PERCENTAGE_FEE_AMOUNT = 2000;
   const FIX_FEE_AMOUNT = 100;
@@ -738,6 +740,35 @@ describe("summitKickstarter", () => {
         PERCENTAGE_FEE_AMOUNT.toString()
       );
       assert.equal((await summitKickstarterWithBnbPayment.fixFeeAmount()).toString(), FIX_FEE_AMOUNT.toString());
+    });
+  });
+
+  describe("reject", async () => {
+    it("should not set reject when called by nonFactoryOwner or nonFactoryAdmin", async () => {
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).reject(REJECT_REASON)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+      await expect(summitKickstarterWithBnbPayment.connect(adminWallet).reject(REJECT_REASON)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+    });
+    it("should be able to reject when called by factory owner", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      assert.equal((await summitKickstarterWithBnbPayment.rejectReason()).toString(), "");
+
+      await summitKickstarterWithBnbPayment.reject(REJECT_REASON);
+
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
+      assert.equal((await summitKickstarterWithBnbPayment.rejectReason()).toString(), REJECT_REASON);
+    });
+    it("should be able to approve when called by factory admin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      assert.equal((await summitKickstarterWithBnbPayment.rejectReason()).toString(), "");
+
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).reject(REJECT_REASON);
+
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
+      assert.equal((await summitKickstarterWithBnbPayment.rejectReason()).toString(), REJECT_REASON);
     });
   });
 

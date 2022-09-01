@@ -138,6 +138,13 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("status", async () => {
+    it(`should be 0 (PENDING)`, async () => {
+      const status = await summitKickstarterWithBnbPayment.status();
+      assert.equal(status.toString(), "0");
+    });
+  });
+
   describe("title", async () => {
     it(`should be ${TITLE}`, async () => {
       const title = (await summitKickstarterWithBnbPayment.kickstarter()).title;

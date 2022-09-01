@@ -290,7 +290,7 @@ describe("summitKickstarter", () => {
   describe("setProjectDescription", async () => {
     it("should not set setProjectDescription when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
       await expect(
-        summitKickstarterWithBnbPayment.connect(otherWallet).setProjectDescription(PROJECT_DESCRIPTION)
+        summitKickstarterWithBnbPayment.connect(otherWallet).setProjectDescription(NEW_PROJECT_DESCRIPTION)
       ).to.be.revertedWith("Only admin can call this function");
     });
     it("should set setProjectDescription by Factory Owner", async () => {
@@ -325,7 +325,7 @@ describe("summitKickstarter", () => {
   describe("setRewardDescription", async () => {
     it("should not set setRewardDescription when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
       await expect(
-        summitKickstarterWithBnbPayment.connect(otherWallet).setRewardDescription(REWARD_DESCRIPTION)
+        summitKickstarterWithBnbPayment.connect(otherWallet).setRewardDescription(NEW_REWARD_DESCRIPTION)
       ).to.be.revertedWith("Only admin can call this function");
     });
     it("should set setRewardDescription by Factory Owner", async () => {
@@ -360,7 +360,7 @@ describe("summitKickstarter", () => {
   describe("setMinContribution", async () => {
     it("should not set setMinContribution when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
       await expect(
-        summitKickstarterWithBnbPayment.connect(otherWallet).setMinContribution(MIN_CONTRIBUTION.toString())
+        summitKickstarterWithBnbPayment.connect(otherWallet).setMinContribution(NEW_MIN_CONTRIBUTION.toString())
       ).to.be.revertedWith("Only admin can call this function");
     });
     it("should set setMinContribution by Factory Owner", async () => {
@@ -403,7 +403,7 @@ describe("summitKickstarter", () => {
   describe("setProjectGoals", async () => {
     it("should not set setProjectGoals when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
       await expect(
-        summitKickstarterWithBnbPayment.connect(otherWallet).setProjectGoals(PROJECT_GOALS.toString())
+        summitKickstarterWithBnbPayment.connect(otherWallet).setProjectGoals(NEW_PROJECT_GOALS.toString())
       ).to.be.revertedWith("Only admin can call this function");
     });
     it("should set setProjectGoals by Factory Owner", async () => {
@@ -441,34 +441,62 @@ describe("summitKickstarter", () => {
     });
   });
 
-  // describe("setProjectGoals", async () => {
-  //   it("should not set setProjectGoals when called by nonOwner", async () => {
-  //     await expect(
-  //       summitKickstarter.connect(otherWallet).setProjectGoals(NEW_PROJECT_GOALS.toString())
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-  //   it("should set setProjectGoals", async () => {
-  //     await summitKickstarter.setProjectGoals(NEW_PROJECT_GOALS.toString());
-  //     assert.equal((await summitKickstarter.projectGoals()).toString(), NEW_PROJECT_GOALS.toString());
-  //   });
-  // });
-
-  // describe("setRewardDistributionTimestamp", async () => {
-  //   it("should not set setRewardDistributionTimestamp when called by nonOwner", async () => {
-  //     await expect(
-  //       summitKickstarter
-  //         .connect(otherWallet)
-  //         .setRewardDistributionTimestamp(NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString())
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-  //   it("should set setRewardDistributionTimestamp", async () => {
-  //     await summitKickstarter.setRewardDistributionTimestamp(NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString());
-  //     assert.equal(
-  //       (await summitKickstarter.rewardDistributionTimestamp()).toString(),
-  //       NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString()
-  //     );
-  //   });
-  // });
+  describe("setRewardDistributionTimestamp", async () => {
+    it("should not set setRewardDistributionTimestamp when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment
+          .connect(otherWallet)
+          .setRewardDistributionTimestamp(NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString())
+      ).to.be.revertedWith("Only admin can call this function");
+    });
+    it("should set setRewardDistributionTimestamp by Factory Owner", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).rewardDistributionTimestamp.toString(),
+        REWARD_DISTRIBUTION_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment.setRewardDistributionTimestamp(
+        NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString()
+      );
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).rewardDistributionTimestamp.toString(),
+        NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString()
+      );
+    });
+    it("should set setRewardDistributionTimestamp by FactoryAdmin", async () => {
+      assert.equal(
+        (
+          await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()
+        ).rewardDistributionTimestamp.toString(),
+        REWARD_DISTRIBUTION_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment
+        .connect(factoryAdminWallet)
+        .setRewardDistributionTimestamp(NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString());
+      assert.equal(
+        (
+          await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()
+        ).rewardDistributionTimestamp.toString(),
+        NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString()
+      );
+    });
+    it("should set setRewardDistributionTimestamp by Admin", async () => {
+      assert.equal(
+        (
+          await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()
+        ).rewardDistributionTimestamp.toString(),
+        REWARD_DISTRIBUTION_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment
+        .connect(adminWallet)
+        .setRewardDistributionTimestamp(NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString());
+      assert.equal(
+        (
+          await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()
+        ).rewardDistributionTimestamp.toString(),
+        NEW_REWARD_DISTRIBUTION_TIMESTAMP.toString()
+      );
+    });
+  });
 
   // describe("setStartTimestamp", async () => {
   //   it("should not set startTimestamp when called by nonOwner", async () => {

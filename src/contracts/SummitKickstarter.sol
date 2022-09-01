@@ -86,10 +86,11 @@ contract SummitKickstarter is Ownable {
 
   function contribute(uint256 amount) external payable {
     require(status == Status.APPROVED, "Kickstarter is not Approved");
-    require(
-      msg.value >= amount || kickstarter.paymentToken.balanceOf(msg.sender) >= amount,
-      "Insufficient contribution amount"
-    );
+    if (address(kickstarter.paymentToken) == address(0)) {
+      require(msg.value >= amount, "Insufficient contribution amount");
+    } else {
+      require(kickstarter.paymentToken.balanceOf(msg.sender) >= amount, "Insufficient contribution amount");
+    }
     require(block.timestamp >= kickstarter.startTimestamp, "You can contribute only after start time");
     require(block.timestamp <= kickstarter.endTimestamp, "You can contribute only before end time");
 

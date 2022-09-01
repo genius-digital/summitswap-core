@@ -25,9 +25,10 @@ describe("summitKickstarter", () => {
   const END_TIMESTAMP = START_TIMESTAMP + 60 * 60 * 24 * 7; // one week from now
   const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7; // one week after the end date
 
-  const NEW_HAS_DISTRIBUTED_REWARD = true;
-
   const SERVICE_FEE = utils.parseEther("0.1");
+
+  const PERCENTAGE_FEE_AMOUNT = 2000;
+  const FIX_FEE_AMOUNT = 100;
 
   const NEW_TITLE = "New Title";
   const NEW_CREATOR = "New Creator";
@@ -142,6 +143,13 @@ describe("summitKickstarter", () => {
     it("should be summitFactory address", async () => {
       const factory = await summitKickstarterWithBnbPayment.factory();
       assert.equal(factory, summitKickstarterFactory.address);
+    });
+  });
+
+  describe("percentageFeeAmount", async () => {
+    it("should be 0", async () => {
+      const percentageFeeAmount = await summitKickstarterWithBnbPayment.percentageFeeAmount();
+      assert.equal(percentageFeeAmount.toString(), "0");
     });
   });
 

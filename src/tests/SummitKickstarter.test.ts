@@ -837,6 +837,87 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("configProjectInfo by FactoryAdmin and FactoryOwner", async () => {
+    it("should not set configProjectInfo when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment
+          .connect(otherWallet)
+          [
+            "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+          ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
+      ).to.be.revertedWith("Only factory admin can call this function");
+      await expect(
+        summitKickstarterWithBnbPayment
+          .connect(adminWallet)
+          [
+            "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+          ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
+      ).to.be.revertedWith("Only factory admin can call this function");
+    });
+    it("should not set configProjectInfo if start date is greater than end date", async () => {
+      const kickstarter = getKickstarter();
+      kickstarter.startTimestamp = END_TIMESTAMP;
+      kickstarter.endTimestamp = START_TIMESTAMP;
+      await expect(
+        summitKickstarterWithBnbPayment[
+          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+        ](kickstarter, 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
+      ).to.be.revertedWith("Start timestamp must be before end timestamp");
+    });
+    it("should not change paymentToken after approval", async () => {
+      await summitKickstarterWithBnbPayment.setKickstarterStatus(1);
+      await expect(
+        summitKickstarterWithBnbPayment[
+          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+        ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
+      ).to.be.revertedWith("You can't change payment token after Approval");
+    });
+    it("should set configProjectInfo by FactoryOwner", async () => {
+      let kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
+      let percentageFeeAmount = await summitKickstarterWithBnbPayment.percentageFeeAmount();
+      let fixFeeAmount = await summitKickstarterWithBnbPayment.fixFeeAmount();
+
+      assert.equal(kickstarter.toString(), Object.values(getKickstarter()).toString());
+      assert.equal(percentageFeeAmount.toString(), "0");
+      assert.equal(fixFeeAmount.toString(), "0");
+
+      await summitKickstarterWithBnbPayment[
+        "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+      ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
+
+      kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
+      percentageFeeAmount = await summitKickstarterWithBnbPayment.percentageFeeAmount();
+      fixFeeAmount = await summitKickstarterWithBnbPayment.fixFeeAmount();
+
+      assert.equal(kickstarter.toString(), Object.values(getNewKickstarter(tokenA.address)).toString());
+      assert.equal(percentageFeeAmount.toString(), PERCENTAGE_FEE_AMOUNT.toString());
+      assert.equal(fixFeeAmount.toString(), FIX_FEE_AMOUNT.toString());
+    });
+    it("should set configProjectInfo by FactoryAdmin", async () => {
+      let kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
+      let percentageFeeAmount = await summitKickstarterWithBnbPayment.percentageFeeAmount();
+      let fixFeeAmount = await summitKickstarterWithBnbPayment.fixFeeAmount();
+
+      assert.equal(kickstarter.toString(), Object.values(getKickstarter()).toString());
+      assert.equal(percentageFeeAmount.toString(), "0");
+      assert.equal(fixFeeAmount.toString(), "0");
+
+      await summitKickstarterWithBnbPayment
+        .connect(factoryAdminWallet)
+        [
+          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+        ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
+
+      kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
+      percentageFeeAmount = await summitKickstarterWithBnbPayment.percentageFeeAmount();
+      fixFeeAmount = await summitKickstarterWithBnbPayment.fixFeeAmount();
+
+      assert.equal(kickstarter.toString(), Object.values(getNewKickstarter(tokenA.address)).toString());
+      assert.equal(percentageFeeAmount.toString(), PERCENTAGE_FEE_AMOUNT.toString());
+      assert.equal(fixFeeAmount.toString(), FIX_FEE_AMOUNT.toString());
+    });
+  });
+
   describe("contribute", async () => {
     it("should be reverted if kickstarter is not approved", async () => {
       const status = await summitKickstarterWithBnbPayment.status();

@@ -592,46 +592,34 @@ describe("summitKickstarter", () => {
     });
   });
 
-  // describe("setEndTimestamp", async () => {
-
-  //   it("should not set less than or equal to START_TIMESTAMP", async () => {
-  //     await expect(summitKickstarter.setEndTimestamp(START_TIMESTAMP.toString())).to.be.revertedWith(
-  //       "End timestamp must be after start timestamp"
-  //     );
-  //   });
-  // });
-
-  // describe("setHasDistributedRewards", async () => {
-  //   it("should not set hasDistributedRewards when called by nonOwner", async () => {
-  //     await expect(summitKickstarter.connect(otherWallet).setHasDistributedRewards(true)).to.be.revertedWith(
-  //       "Ownable: caller is not the owner"
-  //     );
-  //   });
-  //   it("should set hasDistributedRewards", async () => {
-  //     await summitKickstarter.setHasDistributedRewards(true);
-  //     assert.equal(await summitKickstarter.hasDistributedRewards(), true);
-  //   });
-  // });
+  describe("setKickstarterStatus", async () => {
+    it("should not set setKickstarterStatus when called by nonFactoryOwner or FactoryAdmin", async () => {
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setKickstarterStatus(1)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+      await expect(summitKickstarterWithBnbPayment.connect(adminWallet).setKickstarterStatus(1)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+    });
+    it("should be able to setKickstarterStatus to 1 when called by FactoryOwner", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      await summitKickstarterWithBnbPayment.setKickstarterStatus(1);
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "1");
+    });
+    it("should be able to setKickstarterStatus to 1 when called by FactoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setKickstarterStatus(2);
+      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
+    });
+  });
 
   // describe("configProjectInfo", async () => {
-  //   it("should not set configProjectInfo when called by nonOwner", async () => {
+  //   it("should not set configProjectInfo when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
   //     await expect(
-  //       summitKickstarter
+  //       summitKickstarterWithBnbPayment
   //         .connect(otherWallet)
-  //         .configProjectInfo(
-  //           NEW_TITLE,
-  //           NEW_CREATOR,
-  //           NEW_IMAGE_URL,
-  //           NEW_PROJECT_DESCRIPTION,
-  //           NEW_REWARD_DESCRIPTION,
-  //           NEW_MIN_CONTRIBUTION,
-  //           NEW_PROJECT_GOALS,
-  //           NEW_REWARD_DISTRIBUTION_TIMESTAMP,
-  //           NEW_START_TIMESTAMP,
-  //           NEW_END_TIMESTAMP,
-  //           NEW_HAS_DISTRIBUTED_REWARD
-  //         )
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
+  //         ["configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"](getKickstarter())
+  //     ).to.be.revertedWith("Only admin can call this function");
   //   });
   //   it("should not set configProjectInfo if start date is greater than end date", async () => {
   //     await expect(
@@ -716,68 +704,80 @@ describe("summitKickstarter", () => {
   // });
 
   // describe("contribute", async () => {
-  //   it("should be reverted if contribute less than minContribution", async () => {
-  //     await expect(summitKickstarter.contribute({ value: (MIN_CONTRIBUTION - 1).toString() })).to.be.revertedWith(
+  //   it("should be reverted if kickstarter is not approved", async () => {
+  //     await expect(
+  //       summitKickstarterWithBnbPayment.contribute(
+  //         utils.parseEther("0.01"),
+  //         { value: utils.parseEther("0.01") }
+  //       )
+  //     ).to.be.revertedWith("Kickstarter is not Approved");
+  //   });
+
+  //   beforeEach(async () => {
+  //     await summitKickstarterWithBnbPayment.approve(0, 0);
+  //   });
+  //   it("should be reverted if Insufficient Amount", async () => {
+  //     await expect(summitKickstarterWithBnbPayment.contribute({ value: (MIN_CONTRIBUTION - 1).toString() })).to.be.revertedWith(
   //       "Contribution must be greater than or equal to minContribution"
   //     );
   //   });
 
-  //   it("should be reverted if contribute before startTimestamp", async () => {
-  //     const currentTime = Math.floor(Date.now() / 1000);
-  //     await summitKickstarter.setStartTimestamp(currentTime + getTimestampFromMinutes(100));
-  //     await expect(summitKickstarter.contribute({ value: MIN_CONTRIBUTION.toString() })).to.be.revertedWith(
-  //       "You can contribute only after start time"
-  //     );
-  //   });
+  // it("should be reverted if contribute before startTimestamp", async () => {
+  //   const currentTime = Math.floor(Date.now() / 1000);
+  //   await summitKickstarter.setStartTimestamp(currentTime + getTimestampFromMinutes(100));
+  //   await expect(summitKickstarter.contribute({ value: MIN_CONTRIBUTION.toString() })).to.be.revertedWith(
+  //     "You can contribute only after start time"
+  //   );
+  // });
 
-  //   it("should be reverted if contribute after endTimestamp", async () => {
-  //     const currentTime = Math.floor(Date.now() / 1000);
-  //     await summitKickstarter.setStartTimestamp(currentTime - getTimestampFromMinutes(6));
-  //     await summitKickstarter.setEndTimestamp(currentTime - getTimestampFromMinutes(5));
-  //     await expect(summitKickstarter.contribute({ value: MIN_CONTRIBUTION.toString() })).to.be.revertedWith(
-  //       "You can contribute only before end time"
-  //     );
-  //   });
+  // it("should be reverted if contribute after endTimestamp", async () => {
+  //   const currentTime = Math.floor(Date.now() / 1000);
+  //   await summitKickstarter.setStartTimestamp(currentTime - getTimestampFromMinutes(6));
+  //   await summitKickstarter.setEndTimestamp(currentTime - getTimestampFromMinutes(5));
+  //   await expect(summitKickstarter.contribute({ value: MIN_CONTRIBUTION.toString() })).to.be.revertedWith(
+  //     "You can contribute only before end time"
+  //   );
+  // });
 
-  //   it("should be able to contribute", async () => {
-  //     const initialTotalContribution = await summitKickstarter.totalContribution();
-  //     assert.equal(initialTotalContribution.toString(), "0");
+  // it("should be able to contribute", async () => {
+  //   const initialTotalContribution = await summitKickstarter.totalContribution();
+  //   assert.equal(initialTotalContribution.toString(), "0");
 
-  //     const expectedOwnerContribution = MIN_CONTRIBUTION;
-  //     const expectedOtherWalletContribution = MIN_CONTRIBUTION * 2;
-  //     await summitKickstarter.contribute({ value: expectedOwnerContribution.toString() });
-  //     await summitKickstarter.connect(otherWallet).contribute({ value: expectedOtherWalletContribution.toString() });
+  //   const expectedOwnerContribution = MIN_CONTRIBUTION;
+  //   const expectedOtherWalletContribution = MIN_CONTRIBUTION * 2;
+  //   await summitKickstarter.contribute({ value: expectedOwnerContribution.toString() });
+  //   await summitKickstarter.connect(otherWallet).contribute({ value: expectedOtherWalletContribution.toString() });
 
-  //     const totalContribution = await summitKickstarter.totalContribution();
-  //     assert.equal(
-  //       totalContribution.toString(),
-  //       (expectedOwnerContribution + expectedOtherWalletContribution).toString()
-  //     );
+  //   const totalContribution = await summitKickstarter.totalContribution();
+  //   assert.equal(
+  //     totalContribution.toString(),
+  //     (expectedOwnerContribution + expectedOtherWalletContribution).toString()
+  //   );
 
-  //     const ownerContribution = await summitKickstarter.contributions(owner.address);
-  //     assert.equal(ownerContribution.toString(), expectedOwnerContribution.toString());
+  //   const ownerContribution = await summitKickstarter.contributions(owner.address);
+  //   assert.equal(ownerContribution.toString(), expectedOwnerContribution.toString());
 
-  //     const otherWalletContribution = await summitKickstarter.contributions(otherWallet.address);
-  //     assert.equal(otherWalletContribution.toString(), expectedOtherWalletContribution.toString());
+  //   const otherWalletContribution = await summitKickstarter.contributions(otherWallet.address);
+  //   assert.equal(otherWalletContribution.toString(), expectedOtherWalletContribution.toString());
 
-  //     const ownerContributionIndex = await summitKickstarter.contributorIndexes(owner.address);
-  //     assert.equal(ownerContributionIndex.toString(), "0");
+  //   const ownerContributionIndex = await summitKickstarter.contributorIndexes(owner.address);
+  //   assert.equal(ownerContributionIndex.toString(), "0");
 
-  //     const otherWalletContributionIndex = await summitKickstarter.contributorIndexes(otherWallet.address);
-  //     assert.equal(otherWalletContributionIndex.toString(), "1");
+  //   const otherWalletContributionIndex = await summitKickstarter.contributorIndexes(otherWallet.address);
+  //   assert.equal(otherWalletContributionIndex.toString(), "1");
 
-  //     const ownerContributor = await summitKickstarter.contributors(ownerContributionIndex);
-  //     assert.equal(ownerContributor.toString(), owner.address);
+  //   const ownerContributor = await summitKickstarter.contributors(ownerContributionIndex);
+  //   assert.equal(ownerContributor.toString(), owner.address);
 
-  //     const otherWalletContributor = await summitKickstarter.contributors(otherWalletContributionIndex);
-  //     assert.equal(otherWalletContributor.toString(), otherWallet.address);
+  //   const otherWalletContributor = await summitKickstarter.contributors(otherWalletContributionIndex);
+  //   assert.equal(otherWalletContributor.toString(), otherWallet.address);
 
-  //     const contributors = await summitKickstarter.getContributors();
-  //     assert.equal(contributors.length.toString(), "2");
+  //   const contributors = await summitKickstarter.getContributors();
+  //   assert.equal(contributors.length.toString(), "2");
 
-  //     assert.equal(contributors[0], owner.address);
-  //     assert.equal(contributors[1], otherWallet.address);
-  //   });
+  //   assert.equal(contributors[0], owner.address);
+  //   assert.equal(contributors[1], otherWallet.address);
+  // });
   // });
 
   // describe("withdrawBNB", async () => {

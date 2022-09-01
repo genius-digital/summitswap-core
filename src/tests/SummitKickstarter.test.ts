@@ -400,6 +400,47 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("setProjectGoals", async () => {
+    it("should not set setProjectGoals when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment.connect(otherWallet).setProjectGoals(PROJECT_GOALS.toString())
+      ).to.be.revertedWith("Only admin can call this function");
+    });
+    it("should set setProjectGoals by Factory Owner", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).projectGoals.toString(),
+        PROJECT_GOALS.toString()
+      );
+      await summitKickstarterWithBnbPayment.setProjectGoals(NEW_PROJECT_GOALS.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).projectGoals.toString(),
+        NEW_PROJECT_GOALS.toString()
+      );
+    });
+    it("should set setProjectGoals by FactoryAdmin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).projectGoals.toString(),
+        PROJECT_GOALS.toString()
+      );
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setProjectGoals(NEW_PROJECT_GOALS.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).projectGoals.toString(),
+        NEW_PROJECT_GOALS.toString()
+      );
+    });
+    it("should set setProjectGoals by Admin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).projectGoals.toString(),
+        PROJECT_GOALS.toString()
+      );
+      await summitKickstarterWithBnbPayment.connect(adminWallet).setProjectGoals(NEW_PROJECT_GOALS.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).projectGoals.toString(),
+        NEW_PROJECT_GOALS.toString()
+      );
+    });
+  });
+
   // describe("setProjectGoals", async () => {
   //   it("should not set setProjectGoals when called by nonOwner", async () => {
   //     await expect(

@@ -498,6 +498,49 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("setStartTimestamp", async () => {
+    it("should not set setStartTimestamp when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment.connect(otherWallet).setStartTimestamp(NEW_START_TIMESTAMP.toString())
+      ).to.be.revertedWith("Only admin can call this function");
+    });
+    it("should set setStartTimestamp by Factory Owner", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).startTimestamp.toString(),
+        START_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment.setStartTimestamp(NEW_START_TIMESTAMP.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).startTimestamp.toString(),
+        NEW_START_TIMESTAMP.toString()
+      );
+    });
+    it("should set setStartTimestamp by FactoryAdmin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).startTimestamp.toString(),
+        START_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment
+        .connect(factoryAdminWallet)
+        .setStartTimestamp(NEW_START_TIMESTAMP.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).startTimestamp.toString(),
+        NEW_START_TIMESTAMP.toString()
+      );
+    });
+    it("should set setStartTimestamp by Admin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).startTimestamp.toString(),
+        START_TIMESTAMP.toString()
+      );
+      await summitKickstarterWithBnbPayment.connect(adminWallet).setStartTimestamp(NEW_START_TIMESTAMP.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).startTimestamp.toString(),
+        NEW_START_TIMESTAMP.toString()
+      );
+    });
+  });
+
   // describe("setStartTimestamp", async () => {
   //   it("should not set startTimestamp when called by nonOwner", async () => {
   //     await expect(

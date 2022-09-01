@@ -357,25 +357,48 @@ describe("summitKickstarter", () => {
     });
   });
 
-  // describe("setMinContribution", async () => {
-  //   it("should not set minContribution when called by nonOwner", async () => {
-  //     await expect(
-  //       summitKickstarter.connect(otherWallet).setMinContribution((MIN_CONTRIBUTION * 2).toString())
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("should set minContribution when called by owner", async () => {
-  //     const doubleMinContribution = (MIN_CONTRIBUTION * 2).toString();
-
-  //     const minContribution = await summitKickstarter.minContribution();
-  //     assert.equal(minContribution.toString(), MIN_CONTRIBUTION.toString());
-
-  //     await summitKickstarter.setMinContribution(doubleMinContribution);
-
-  //     const newMinContribution = await summitKickstarter.minContribution();
-  //     assert.equal(newMinContribution.toString(), doubleMinContribution);
-  //   });
-  // });
+  describe("setMinContribution", async () => {
+    it("should not set setMinContribution when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment.connect(otherWallet).setMinContribution(MIN_CONTRIBUTION.toString())
+      ).to.be.revertedWith("Only admin can call this function");
+    });
+    it("should set setMinContribution by Factory Owner", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).minContribution.toString(),
+        MIN_CONTRIBUTION.toString()
+      );
+      await summitKickstarterWithBnbPayment.setMinContribution(NEW_MIN_CONTRIBUTION.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.kickstarter()).minContribution.toString(),
+        NEW_MIN_CONTRIBUTION.toString()
+      );
+    });
+    it("should set setMinContribution by FactoryAdmin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).minContribution.toString(),
+        MIN_CONTRIBUTION.toString()
+      );
+      await summitKickstarterWithBnbPayment
+        .connect(factoryAdminWallet)
+        .setMinContribution(NEW_MIN_CONTRIBUTION.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).minContribution.toString(),
+        NEW_MIN_CONTRIBUTION.toString()
+      );
+    });
+    it("should set setMinContribution by Admin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).minContribution.toString(),
+        MIN_CONTRIBUTION.toString()
+      );
+      await summitKickstarterWithBnbPayment.connect(adminWallet).setMinContribution(NEW_MIN_CONTRIBUTION.toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).minContribution.toString(),
+        NEW_MIN_CONTRIBUTION.toString()
+      );
+    });
+  });
 
   // describe("setProjectGoals", async () => {
   //   it("should not set setProjectGoals when called by nonOwner", async () => {

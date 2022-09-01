@@ -27,6 +27,7 @@ describe("summitKickstarter", () => {
 
   const SERVICE_FEE = utils.parseEther("0.1");
 
+  const FEE_DENOMINATOR = 10000;
   const PERCENTAGE_FEE_AMOUNT = 2000;
   const FIX_FEE_AMOUNT = 100;
 
@@ -265,12 +266,35 @@ describe("summitKickstarter", () => {
         "Only factory admin can call this function"
       );
     });
+    it("should be reverted if set more than FEE_DENOMINATOR", async () => {
+      await expect(summitKickstarterWithBnbPayment.setPercentageFeeAmount(FEE_DENOMINATOR + 1)).to.be.revertedWith(
+        "percentageFeeAmount should be less than FEE_DENOMINATOR"
+      );
+    });
     it("should be able to setPercentageFeeAmount by FactoryOwner or FactoryAdmin", async () => {
       assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "0");
       await summitKickstarterWithBnbPayment.setPercentageFeeAmount("1");
       assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "1");
       await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setPercentageFeeAmount("2");
       assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "2");
+    });
+  });
+
+  describe("setFixFeeAmount", async () => {
+    it("should not set setFixFeeAmount when called by nonFactoryOwner or nonFactoryAdmin", async () => {
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setFixFeeAmount(1)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+      await expect(summitKickstarterWithBnbPayment.connect(adminWallet).setFixFeeAmount(1)).to.be.revertedWith(
+        "Only factory admin can call this function"
+      );
+    });
+    it("should be able to setFixFeeAmount by FactoryOwner or FactoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.fixFeeAmount()).toString(), "0");
+      await summitKickstarterWithBnbPayment.setFixFeeAmount("1");
+      assert.equal((await summitKickstarterWithBnbPayment.fixFeeAmount()).toString(), "1");
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setFixFeeAmount("2");
+      assert.equal((await summitKickstarterWithBnbPayment.fixFeeAmount()).toString(), "2");
     });
   });
 

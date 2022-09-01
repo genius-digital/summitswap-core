@@ -260,26 +260,48 @@ describe("summitKickstarter", () => {
   });
 
   describe("setImageUrl", async () => {
-    it("should not set setImageUrl when called by nonOwner", async () => {
-      await expect(summitKickstarter.connect(otherWallet).setImageUrl(NEW_IMAGE_URL)).to.be.revertedWith(
+    it("should not set setImageUrl when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setImageUrl(NEW_IMAGE_URL)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
     });
-    it("should set setImageUrl", async () => {
-      await summitKickstarter.setImageUrl(NEW_IMAGE_URL);
-      assert.equal(await summitKickstarter.imageUrl(), NEW_IMAGE_URL);
+    it("should set setImageUrl by Factory Owner", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.kickstarter()).imageUrl, IMAGE_URL);
+      await summitKickstarterWithBnbPayment.setImageUrl(NEW_IMAGE_URL);
+      assert.equal((await summitKickstarterWithBnbPayment.kickstarter()).imageUrl, NEW_IMAGE_URL);
+    });
+    it("should set setImageUrl by FactoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).imageUrl, IMAGE_URL);
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setImageUrl(NEW_IMAGE_URL);
+      assert.equal((await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).imageUrl, NEW_IMAGE_URL);
+    });
+    it("should set setImageUrl by Admin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).imageUrl, IMAGE_URL);
+      await summitKickstarterWithBnbPayment.connect(adminWallet).setImageUrl(NEW_IMAGE_URL);
+      assert.equal((await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).imageUrl, NEW_IMAGE_URL);
     });
   });
 
   describe("setProjectDescription", async () => {
-    it("should not set setProjectDescription when called by nonOwner", async () => {
-      await expect(
-        summitKickstarter.connect(otherWallet).setProjectDescription(NEW_PROJECT_DESCRIPTION)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+    it("should not set setProjectDescription when called by nonFactoryOwner or FactoryAdmin or Admin", async () => {
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setProjectDescription(PROJECT_DESCRIPTION)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
     });
-    it("should set setProjectDescription", async () => {
-      await summitKickstarter.setProjectDescription(NEW_PROJECT_DESCRIPTION);
-      assert.equal(await summitKickstarter.projectDescription(), NEW_PROJECT_DESCRIPTION);
+    it("should set setProjectDescription by Factory Owner", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.kickstarter()).projectDescription, PROJECT_DESCRIPTION);
+      await summitKickstarterWithBnbPayment.setProjectDescription(NEW_PROJECT_DESCRIPTION);
+      assert.equal((await summitKickstarterWithBnbPayment.kickstarter()).projectDescription, NEW_PROJECT_DESCRIPTION);
+    });
+    it("should set setProjectDescription by FactoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).projectDescription, PROJECT_DESCRIPTION);
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setProjectDescription(NEW_PROJECT_DESCRIPTION);
+      assert.equal((await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).kickstarter()).projectDescription, NEW_PROJECT_DESCRIPTION);
+    });
+    it("should set setProjectDescription by Admin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).projectDescription, PROJECT_DESCRIPTION);
+      await summitKickstarterWithBnbPayment.connect(adminWallet).setProjectDescription(NEW_PROJECT_DESCRIPTION);
+      assert.equal((await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).projectDescription, NEW_PROJECT_DESCRIPTION);
     });
   });
 

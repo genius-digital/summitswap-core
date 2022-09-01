@@ -138,6 +138,13 @@ describe("summitKickstarter", () => {
     });
   });
 
+  describe("factory", async () => {
+    it("should be summitFactory address", async () => {
+      const factory = await summitKickstarterWithBnbPayment.factory();
+      assert.equal(factory, summitKickstarterFactory.address);
+    });
+  });
+
   describe("status", async () => {
     it(`should be 0 (PENDING)`, async () => {
       const status = await summitKickstarterWithBnbPayment.status();

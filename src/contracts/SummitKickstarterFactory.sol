@@ -32,7 +32,7 @@ contract SummitKickstarterFactory is Ownable {
     require(msg.value >= serviceFee, "Service Fee is not enough");
     refundExcessiveFee();
 
-    SummitKickstarter project = new SummitKickstarter(kickstarter);
+    SummitKickstarter project = new SummitKickstarter(msg.sender, kickstarter);
 
     address projectAddress = address(project);
 

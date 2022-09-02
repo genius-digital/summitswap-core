@@ -13,7 +13,6 @@ enum Status {
 
 struct Kickstarter {
   IERC20 paymentToken;
-  address owner;
   string title;
   string creator;
   string imageUrl;

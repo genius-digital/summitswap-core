@@ -53,8 +53,8 @@ contract SummitKickstarter is Ownable {
   event Approved(uint256 percentageFeeAmount, uint256 fixFeeAmount);
   event Rejected(string rejectedReason);
 
-  constructor(Kickstarter memory _kickstarter) {
-    transferOwnership(_kickstarter.owner);
+  constructor(address _owner, Kickstarter memory _kickstarter) {
+    transferOwnership(_owner);
 
     factory = msg.sender;
     kickstarter = _kickstarter;

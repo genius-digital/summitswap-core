@@ -776,21 +776,21 @@ describe("summitKickstarter", () => {
     });
     it("should be able to reject when called by factory owner", async () => {
       assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
-      assert.equal((await summitKickstarterWithBnbPayment.rejectReason()).toString(), "");
+      assert.equal((await summitKickstarterWithBnbPayment.rejectedReason()).toString(), "");
 
       await summitKickstarterWithBnbPayment.reject(REJECT_REASON);
 
       assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
-      assert.equal((await summitKickstarterWithBnbPayment.rejectReason()).toString(), REJECT_REASON);
+      assert.equal((await summitKickstarterWithBnbPayment.rejectedReason()).toString(), REJECT_REASON);
     });
     it("should be able to approve when called by factory admin", async () => {
       assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
-      assert.equal((await summitKickstarterWithBnbPayment.rejectReason()).toString(), "");
+      assert.equal((await summitKickstarterWithBnbPayment.rejectedReason()).toString(), "");
 
       await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).reject(REJECT_REASON);
 
       assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
-      assert.equal((await summitKickstarterWithBnbPayment.rejectReason()).toString(), REJECT_REASON);
+      assert.equal((await summitKickstarterWithBnbPayment.rejectedReason()).toString(), REJECT_REASON);
     });
   });
 

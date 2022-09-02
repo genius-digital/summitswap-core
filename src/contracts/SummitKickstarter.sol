@@ -24,31 +24,31 @@ contract SummitKickstarter is Ownable {
   uint256 public percentageFeeAmount = 0;
   uint256 public fixFeeAmount = 0;
 
-  string public rejectReason;
+  string public rejectedReason;
 
   event Contribute(address indexed contributor, string email, uint256 amount, uint256 timestamp);
   event KickstarterUpdated(Kickstarter kickstarter);
   event KickstarterUpdatedByFactoryAdmin(
     Kickstarter kickstarter,
-    Status newStatus,
-    uint256 newPercentageFeeAmount,
-    uint256 newFixFeeAmount
+    Status status,
+    uint256 percentageFeeAmount,
+    uint256 fixFeeAmount
   );
 
-  event TitleUpdated(string newTitle);
-  event CreatorUpdated(string newCreator);
-  event ImageUrlUpdated(string newImageUrl);
-  event ProjectDescriptionUpdated(string newProjectDescription);
-  event RewardDescriptionUpdated(string newRewardDescription);
-  event MinContributionUpdated(uint256 newMinContribution);
-  event ProjectGoalsUpdated(uint256 newProjectGoals);
-  event RewardDistributionTimestampUpdated(uint256 newRewardDistributionTimestamp);
-  event StartTimestampUpdated(uint256 newStartTimestamp);
-  event EndTimestampUpdated(uint256 newEndTimestamp);
+  event TitleUpdated(string title);
+  event CreatorUpdated(string creator);
+  event ImageUrlUpdated(string imageUrl);
+  event ProjectDescriptionUpdated(string projectDescription);
+  event RewardDescriptionUpdated(string rewardDescription);
+  event MinContributionUpdated(uint256 minContribution);
+  event ProjectGoalsUpdated(uint256 projectGoals);
+  event RewardDistributionTimestampUpdated(uint256 rewardDistributionTimestamp);
+  event StartTimestampUpdated(uint256 startTimestamp);
+  event EndTimestampUpdated(uint256 endTimestamp);
 
   event StatusUpdated(Status status);
-  event PercentageFeeAmountUpdated(uint256 newPercentageFeeAmount);
-  event FixFeeAmountUpdated(uint256 newFixFeeAmount);
+  event PercentageFeeAmountUpdated(uint256 percentageFeeAmount);
+  event FixFeeAmountUpdated(uint256 fixFeeAmount);
 
   event Approved(uint256 percentageFeeAmount, uint256 fixFeeAmount);
   event Rejected(string rejectedReason);
@@ -270,16 +270,16 @@ contract SummitKickstarter is Ownable {
     fixFeeAmount = _fixFeeAmount;
 
     status = Status.APPROVED;
-    rejectReason = "";
+    rejectedReason = "";
 
     emit Approved(_percentageFeeAmount, _fixFeeAmount);
   }
 
-  function reject(string memory _rejectReason) external onlyFactoryAdmin {
-    rejectReason = _rejectReason;
+  function reject(string memory _rejectedReason) external onlyFactoryAdmin {
+    rejectedReason = _rejectedReason;
     status = Status.REJECTED;
 
-    emit Rejected(_rejectReason);
+    emit Rejected(_rejectedReason);
   }
 
   function setKickstarterStatus(Status _status) external onlyFactoryAdmin {

@@ -22,7 +22,6 @@ export async function deploySummitKickstarter() {
   const SummitKickstarter = await ethers.getContractFactory("SummitKickstarter");
   const kickstarter: KickstarterStruct = {
     paymentToken: ZERO_ADDRESS,
-    owner: OWNER,
     title: TITLE,
     creator: CREATOR,
     imageUrl: IMAGE_URL,
@@ -35,12 +34,12 @@ export async function deploySummitKickstarter() {
     endTimestamp: END_TIMESTAMP,
   };
 
-  const summitKickstarter = await SummitKickstarter.deploy(kickstarter);
+  const summitKickstarter = await SummitKickstarter.deploy(OWNER, kickstarter);
   await summitKickstarter.deployed();
 
   console.log("SummitKickstarter deployed to:", summitKickstarter.address);
 
-  await tryVerify(summitKickstarter.address, [kickstarter]);
+  await tryVerify(summitKickstarter.address, [OWNER, kickstarter]);
 
   return summitKickstarter;
 }

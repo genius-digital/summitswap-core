@@ -15,7 +15,7 @@ contract SummitKickstarterFactory is Ownable {
 
   uint256 public serviceFee;
 
-  event ProjectCreated(Kickstarter kickstarter);
+  event ProjectCreated(address kickstarterAddress, Kickstarter kickstarter);
 
   constructor(uint256 _serviceFee) {
     serviceFee = _serviceFee;
@@ -39,7 +39,7 @@ contract SummitKickstarterFactory is Ownable {
     projects.push(projectAddress);
     userProjects[_msgSender()].push(projectAddress);
 
-    emit ProjectCreated(kickstarter);
+    emit ProjectCreated(projectAddress, kickstarter);
   }
 
   function getProjects() external view returns (address[] memory) {

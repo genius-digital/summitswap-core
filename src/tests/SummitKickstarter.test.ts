@@ -55,7 +55,6 @@ describe("summitKickstarter", () => {
   const getKickstarter = (paymentToken = ZERO_ADDRESS) => {
     const kickstarter: KickstarterStruct = {
       paymentToken: paymentToken,
-      owner: owner.address,
       title: TITLE,
       creator: CREATOR,
       imageUrl: IMAGE_URL,
@@ -73,7 +72,6 @@ describe("summitKickstarter", () => {
   const getNewKickstarter = (paymentToken = ZERO_ADDRESS) => {
     const kickstarter: KickstarterStruct = {
       paymentToken: paymentToken,
-      owner: owner.address,
       title: NEW_TITLE,
       creator: NEW_CREATOR,
       imageUrl: NEW_IMAGE_URL,
@@ -801,9 +799,9 @@ describe("summitKickstarter", () => {
       await expect(
         summitKickstarterWithBnbPayment
           .connect(otherWallet)
-          [
-            "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
-          ](getKickstarter())
+          ["configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"](
+            getKickstarter()
+          )
       ).to.be.revertedWith("Only admin can call this function");
     });
     it("should not set configProjectInfo if start date is greater than end date", async () => {
@@ -812,7 +810,7 @@ describe("summitKickstarter", () => {
       kickstarter.endTimestamp = START_TIMESTAMP;
       await expect(
         summitKickstarterWithBnbPayment[
-          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
+          "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
         ](kickstarter)
       ).to.be.revertedWith("Start timestamp must be before end timestamp");
     });
@@ -820,7 +818,7 @@ describe("summitKickstarter", () => {
       await summitKickstarterWithBnbPayment.setKickstarterStatus(1);
       await expect(
         summitKickstarterWithBnbPayment[
-          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
+          "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
         ](getKickstarter(tokenA.address))
       ).to.be.revertedWith("You can't change payment token after Approval");
     });
@@ -829,7 +827,7 @@ describe("summitKickstarter", () => {
       assert.equal(kickstarter.toString(), Object.values(getKickstarter()).toString());
 
       await summitKickstarterWithBnbPayment[
-        "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
+        "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
       ](getNewKickstarter(tokenA.address));
 
       kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
@@ -843,14 +841,14 @@ describe("summitKickstarter", () => {
         summitKickstarterWithBnbPayment
           .connect(otherWallet)
           [
-            "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+            "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
           ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
       ).to.be.revertedWith("Only factory admin can call this function");
       await expect(
         summitKickstarterWithBnbPayment
           .connect(adminWallet)
           [
-            "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+            "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
           ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
       ).to.be.revertedWith("Only factory admin can call this function");
     });
@@ -860,7 +858,7 @@ describe("summitKickstarter", () => {
       kickstarter.endTimestamp = START_TIMESTAMP;
       await expect(
         summitKickstarterWithBnbPayment[
-          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+          "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
         ](kickstarter, 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
       ).to.be.revertedWith("Start timestamp must be before end timestamp");
     });
@@ -868,7 +866,7 @@ describe("summitKickstarter", () => {
       await summitKickstarterWithBnbPayment.setKickstarterStatus(1);
       await expect(
         summitKickstarterWithBnbPayment[
-          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+          "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
         ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
       ).to.be.revertedWith("You can't change payment token after Approval");
     });
@@ -882,7 +880,7 @@ describe("summitKickstarter", () => {
       assert.equal(fixFeeAmount.toString(), "0");
 
       await summitKickstarterWithBnbPayment[
-        "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+        "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
       ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
 
       kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
@@ -905,7 +903,7 @@ describe("summitKickstarter", () => {
       await summitKickstarterWithBnbPayment
         .connect(factoryAdminWallet)
         [
-          "configProjectInfo((address,address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+          "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
         ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
 
       kickstarter = await summitKickstarterWithBnbPayment.kickstarter();

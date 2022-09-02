@@ -32,7 +32,6 @@ describe("summitswapKickstarter", () => {
   const getKickstarter = (paymentToken = ZERO_ADDRESS) => {
     const kickstarter: KickstarterStruct = {
       paymentToken: paymentToken,
-      owner: owner.address,
       title: TITLE,
       creator: CREATOR,
       imageUrl: IMAGE_URL,

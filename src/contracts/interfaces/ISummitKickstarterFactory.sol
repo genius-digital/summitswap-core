@@ -3,6 +3,8 @@
 
 pragma solidity 0.8.6;
 
+import "../../structs/KickstarterInfo.sol";
+
 interface ISummitKickstarterFactory {
   function owner() external view returns (address);
 
@@ -14,18 +16,7 @@ interface ISummitKickstarterFactory {
 
   function serviceFee() external view returns (uint256);
 
-  function createProject(
-    string memory _title,
-    string memory _creator,
-    string memory _imageUrl,
-    string memory _projectDescription,
-    string memory _rewardDescription,
-    uint256 _minContribution,
-    uint256 _projectGoals,
-    uint256 _rewardDistributionTimestamp,
-    uint256 _startTimestamp,
-    uint256 _endTimestamp
-  ) external payable;
+  function createProject(Kickstarter calldata kickstarter) external payable;
 
   function getProjects() external view returns (address[] memory);
 

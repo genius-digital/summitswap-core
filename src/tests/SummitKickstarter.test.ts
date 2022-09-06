@@ -8,6 +8,7 @@ import SummitKickstarterFactoryArtifact from "@built-contracts/SummitKickstarter
 import { DummyToken, SummitKickstarter, SummitKickstarterFactory } from "build/typechain";
 import { KickstarterStruct } from "build/typechain/SummitKickstarter";
 import { ZERO_ADDRESS } from "src/environment";
+import { getGasCostByTx } from "./utils";
 
 const { deployContract, provider } = waffle;
 
@@ -983,6 +984,12 @@ describe("summitKickstarter", () => {
           .connect(otherWallet)
           .contribute(EMAIL, expectedOtherWalletContribution, { value: expectedOtherWalletContribution.toString() });
 
+        const currentContractBalance = await provider.getBalance(summitKickstarterWithBnbPayment.address);
+        assert.equal(
+          currentContractBalance.toString(),
+          (expectedOwnerContribution + expectedOtherWalletContribution).toString()
+        );
+
         assert.equal(await summitKickstarterWithBnbPayment.emails(owner.address), EMAIL);
         assert.equal(await summitKickstarterWithBnbPayment.emails(otherWallet.address), EMAIL);
 
@@ -1030,6 +1037,12 @@ describe("summitKickstarter", () => {
         await summitKickstarterWithTokenAPayment
           .connect(otherWallet)
           .contribute(EMAIL, expectedOtherWalletContribution);
+
+        const currentContractBalance = await tokenA.balanceOf(summitKickstarterWithTokenAPayment.address);
+        assert.equal(
+          currentContractBalance.toString(),
+          (expectedOwnerContribution + expectedOtherWalletContribution).toString()
+        );
 
         const totalContribution = await summitKickstarterWithTokenAPayment.totalContribution();
         assert.equal(
@@ -1099,20 +1112,49 @@ describe("summitKickstarter", () => {
     });
 
     it("should be able to withdraw BNB", async () => {
+      const walletBalance = await provider.getBalance(owner.address);
+
       const currentContractBalance = await provider.getBalance(summitKickstarterWithBnbPayment.address);
       assert.equal(currentContractBalance.toString(), MIN_CONTRIBUTION.toString());
 
-      await summitKickstarterWithBnbPayment.withdraw(MIN_CONTRIBUTION.toString(), owner.address);
+      const fixFeeAmount = await summitKickstarterWithBnbPayment.fixFeeAmount();
+      const percentageFeeAmount = await summitKickstarterWithBnbPayment.percentageFeeAmount();
+      const withdrawalFee = fixFeeAmount.add(percentageFeeAmount.mul(MIN_CONTRIBUTION).div(FEE_DENOMINATOR));
+
+      const withdrawAmount = MIN_CONTRIBUTION - withdrawalFee.toNumber();
+
+      const tx = await summitKickstarterWithBnbPayment.withdraw(MIN_CONTRIBUTION.toString(), owner.address);
+      const gasCost = await getGasCostByTx(tx);
+
+      assert.equal(
+        walletBalance.add(withdrawAmount).sub(gasCost).toString(),
+        (await provider.getBalance(owner.address)).toString()
+      );
 
       const newContractBalance = await provider.getBalance(summitKickstarterWithBnbPayment.address);
       assert.equal(newContractBalance.toString(), "0");
     });
 
     it("should be able to withdraw Token", async () => {
+      const summitFactoryBalance = await tokenA.balanceOf(summitKickstarterFactory.address);
+      const walletBalance = await tokenA.balanceOf(owner.address);
+
       const currentContractBalance = await tokenA.balanceOf(summitKickstarterWithTokenAPayment.address);
       assert.equal(currentContractBalance.toString(), MIN_CONTRIBUTION.toString());
 
       await summitKickstarterWithTokenAPayment.withdraw(MIN_CONTRIBUTION.toString(), owner.address);
+
+      const fixFeeAmount = await summitKickstarterWithTokenAPayment.fixFeeAmount();
+      const percentageFeeAmount = await summitKickstarterWithTokenAPayment.percentageFeeAmount();
+      const withdrawalFee = fixFeeAmount.add(percentageFeeAmount.mul(MIN_CONTRIBUTION).div(FEE_DENOMINATOR));
+
+      const withdrawAmount = MIN_CONTRIBUTION - withdrawalFee.toNumber();
+
+      assert.equal(walletBalance.add(withdrawAmount).toString(), (await tokenA.balanceOf(owner.address)).toString());
+      assert.equal(
+        summitFactoryBalance.add(withdrawalFee).toString(),
+        (await tokenA.balanceOf(summitKickstarterFactory.address)).toString()
+      );
 
       const newContractBalance = await tokenA.balanceOf(summitKickstarterWithTokenAPayment.address);
       assert.equal(newContractBalance.toString(), "0");

@@ -4,7 +4,6 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/ISummitKickstarter.sol";
 import "./interfaces/ISummitKickstarterFactory.sol";
 
 contract SummitKickstarter is Ownable {

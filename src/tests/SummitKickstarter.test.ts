@@ -837,7 +837,7 @@ describe("summitKickstarter", () => {
     });
   });
 
-  describe("configProjectInfo by FactoryAdmin and FactoryOwner", async () => {
+  describe("configProjectInfo by FactoryAdmin or FactoryOwner", async () => {
     it("should not set configProjectInfo when called by nonFactoryOwner or nonFactoryAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment

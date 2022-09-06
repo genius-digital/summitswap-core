@@ -719,7 +719,9 @@ describe("summitKickstarter", () => {
         (await summitKickstarterWithBnbPayment.approvalStatus()).toString(),
         ApprovalStatus.PENDING.toString()
       );
-      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setApprovalStatus(2);
+      await summitKickstarterWithBnbPayment
+        .connect(factoryAdminWallet)
+        .setApprovalStatus(ApprovalStatus.REJECTED.toString());
       assert.equal(
         (await summitKickstarterWithBnbPayment.approvalStatus()).toString(),
         ApprovalStatus.REJECTED.toString()
@@ -919,6 +921,10 @@ describe("summitKickstarter", () => {
 
   describe("contribute", async () => {
     it("should be reverted if kickstarter is not approved", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.approvalStatus()).toString(),
+        ApprovalStatus.PENDING.toString()
+      );
       await expect(
         summitKickstarterWithBnbPayment.contribute(EMAIL, parseEther("0.01").toString(), {
           value: parseEther("0.01").toString(),

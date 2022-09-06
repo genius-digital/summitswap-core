@@ -95,6 +95,7 @@ contract SummitFactoryPresale is Ownable {
     presaleRequestTime[presaleClone] = block.timestamp;
     tokenPresales[presale.presaleToken].push(address(presaleClone));
     accountPresales[msg.sender].push(address(presaleClone));
+    pendingIndex[address(presaleClone)] = pendingPresales.length;
     pendingPresales.push(address(presaleClone));
     if (serviceFeeReceiver != address(this)) {
       address payable feeReceiver = payable(serviceFeeReceiver);

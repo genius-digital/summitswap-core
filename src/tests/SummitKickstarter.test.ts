@@ -270,24 +270,6 @@ describe("summitKickstarter", () => {
     });
   });
 
-  describe("setApprovalStatus", async () => {
-    it("should not set setStatus when called by nonFactoryOwner or nonFactoryAdmin", async () => {
-      await expect(
-        summitKickstarterWithBnbPayment.connect(otherWallet).setApprovalStatus(ApprovalStatus.APPROVED.toString())
-      ).to.be.revertedWith("Only factory admin can call this function");
-      await expect(
-        summitKickstarterWithBnbPayment.connect(adminWallet).setApprovalStatus(ApprovalStatus.APPROVED.toString())
-      ).to.be.revertedWith("Only factory admin can call this function");
-    });
-    it("should be able to set ApprovalStatus by FactoryOwner or FactoryAdmin", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
-      await summitKickstarterWithBnbPayment.setApprovalStatus(ApprovalStatus.APPROVED.toString());
-      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "1");
-      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setApprovalStatus("2");
-      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "2");
-    });
-  });
-
   describe("setPercentageFeeAmount", async () => {
     it("should not set setPercentageFeeAmount when called by nonFactoryOwner or nonFactoryAdmin", async () => {
       await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setPercentageFeeAmount(1)).to.be.revertedWith(
@@ -722,14 +704,26 @@ describe("summitKickstarter", () => {
       ).to.be.revertedWith("Only factory admin can call this function");
     });
     it("should be able to setApprovalStatus to 1 when called by FactoryOwner", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.approvalStatus()).toString(),
+        ApprovalStatus.PENDING.toString()
+      );
       await summitKickstarterWithBnbPayment.setApprovalStatus(ApprovalStatus.APPROVED.toString());
-      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "1");
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.approvalStatus()).toString(),
+        ApprovalStatus.APPROVED.toString()
+      );
     });
     it("should be able to setApprovalStatus to 1 when called by FactoryAdmin", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.approvalStatus()).toString(),
+        ApprovalStatus.PENDING.toString()
+      );
       await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setApprovalStatus(2);
-      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "2");
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.approvalStatus()).toString(),
+        ApprovalStatus.REJECTED.toString()
+      );
     });
   });
 

@@ -979,7 +979,6 @@ describe("summitKickstarter", () => {
       });
 
       it("should be reverted if contribute before startTimestamp", async () => {
-        const currentTime = Math.floor(Date.now() / 1000);
         await summitKickstarterWithBnbPayment.setStartTimestamp(dayjs().add(100, "minute").unix());
         await expect(
           summitKickstarterWithBnbPayment.contribute(EMAIL, MIN_CONTRIBUTION, { value: MIN_CONTRIBUTION.toString() })
@@ -987,7 +986,6 @@ describe("summitKickstarter", () => {
       });
 
       it("should be reverted if contribute after endTimestamp", async () => {
-        const currentTime = Math.floor(Date.now() / 1000);
         await summitKickstarterWithBnbPayment.setStartTimestamp(dayjs().subtract(6, "minute").unix());
         await summitKickstarterWithBnbPayment.setEndTimestamp(dayjs().subtract(5, "minute").unix());
         await expect(

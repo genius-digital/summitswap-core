@@ -1,5 +1,5 @@
 import { assert, expect } from "chai";
-import { utils } from "ethers";
+import { parseEther } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
 
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
@@ -13,6 +13,12 @@ const { deployContract, provider } = waffle;
 describe("summitKickstarter", () => {
   const [owner, otherWallet, factoryAdminWallet, adminWallet] = provider.getWallets();
 
+  enum ApprovalStatus {
+    PENDING = 0,
+    APPROVED = 1,
+    REJECTED = 2,
+  }
+
   const TITLE = "Lorem Ipsum";
   const CREATOR = "John Doe";
   const IMAGE_URL = "https://images.com/example.png";
@@ -25,7 +31,7 @@ describe("summitKickstarter", () => {
   const END_TIMESTAMP = START_TIMESTAMP + 60 * 60 * 24 * 7; // one week from now
   const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7; // one week after the end date
 
-  const SERVICE_FEE = utils.parseEther("0.1");
+  const SERVICE_FEE = parseEther("0.1");
 
   const EMAIL = "john.doe@example.com";
   const REJECT_REASON = "This is Reject Reason";
@@ -107,10 +113,10 @@ describe("summitKickstarter", () => {
     await summitKickstarterWithBnbPayment.setAdmins([adminWallet.address], true);
     await summitKickstarterWithTokenAPayment.setAdmins([adminWallet.address], true);
 
-    await tokenA.transfer(otherWallet.address, utils.parseEther("100"));
+    await tokenA.transfer(otherWallet.address, parseEther("100"));
 
-    await tokenA.approve(summitKickstarterWithTokenAPayment.address, utils.parseEther("1"));
-    await tokenA.connect(otherWallet).approve(summitKickstarterWithTokenAPayment.address, utils.parseEther("1"));
+    await tokenA.approve(summitKickstarterWithTokenAPayment.address, parseEther("1"));
+    await tokenA.connect(otherWallet).approve(summitKickstarterWithTokenAPayment.address, parseEther("1"));
   });
 
   describe("owner", async () => {
@@ -185,10 +191,10 @@ describe("summitKickstarter", () => {
     });
   });
 
-  describe("status", async () => {
-    it(`should be 0 (PENDING)`, async () => {
-      const status = await summitKickstarterWithBnbPayment.status();
-      assert.equal(status.toString(), "0");
+  describe("approvalStatus", async () => {
+    it(`should be pending`, async () => {
+      const approvalStatus = await summitKickstarterWithBnbPayment.approvalStatus();
+      assert.equal(approvalStatus.toString(), ApprovalStatus.PENDING.toString());
     });
   });
 
@@ -263,21 +269,21 @@ describe("summitKickstarter", () => {
     });
   });
 
-  describe("setStatus", async () => {
+  describe("setApprovalStatus", async () => {
     it("should not set setStatus when called by nonFactoryOwner or nonFactoryAdmin", async () => {
-      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setKickstarterStatus(1)).to.be.revertedWith(
-        "Only factory admin can call this function"
-      );
-      await expect(summitKickstarterWithBnbPayment.connect(adminWallet).setKickstarterStatus(1)).to.be.revertedWith(
-        "Only factory admin can call this function"
-      );
+      await expect(
+        summitKickstarterWithBnbPayment.connect(otherWallet).setApprovalStatus(ApprovalStatus.APPROVED.toString())
+      ).to.be.revertedWith("Only factory admin can call this function");
+      await expect(
+        summitKickstarterWithBnbPayment.connect(adminWallet).setApprovalStatus(ApprovalStatus.APPROVED.toString())
+      ).to.be.revertedWith("Only factory admin can call this function");
     });
-    it("should be able to set Status by FactoryOwner or FactoryAdmin", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
-      await summitKickstarterWithBnbPayment.setKickstarterStatus("1");
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "1");
-      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setKickstarterStatus("2");
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
+    it("should be able to set ApprovalStatus by FactoryOwner or FactoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
+      await summitKickstarterWithBnbPayment.setApprovalStatus(ApprovalStatus.APPROVED.toString());
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "1");
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setApprovalStatus("2");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "2");
     });
   });
 
@@ -705,24 +711,24 @@ describe("summitKickstarter", () => {
     });
   });
 
-  describe("setKickstarterStatus", async () => {
-    it("should not set setKickstarterStatus when called by nonFactoryOwner or nonFactoryAdmin", async () => {
-      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).setKickstarterStatus(1)).to.be.revertedWith(
-        "Only factory admin can call this function"
-      );
-      await expect(summitKickstarterWithBnbPayment.connect(adminWallet).setKickstarterStatus(1)).to.be.revertedWith(
-        "Only factory admin can call this function"
-      );
+  describe("setApprovalStatus", async () => {
+    it("should not set setApprovalStatus when called by nonFactoryOwner or nonFactoryAdmin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment.connect(otherWallet).setApprovalStatus(ApprovalStatus.APPROVED.toString())
+      ).to.be.revertedWith("Only factory admin can call this function");
+      await expect(
+        summitKickstarterWithBnbPayment.connect(adminWallet).setApprovalStatus(ApprovalStatus.APPROVED.toString())
+      ).to.be.revertedWith("Only factory admin can call this function");
     });
-    it("should be able to setKickstarterStatus to 1 when called by FactoryOwner", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
-      await summitKickstarterWithBnbPayment.setKickstarterStatus(1);
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "1");
+    it("should be able to setApprovalStatus to 1 when called by FactoryOwner", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
+      await summitKickstarterWithBnbPayment.setApprovalStatus(ApprovalStatus.APPROVED.toString());
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "1");
     });
-    it("should be able to setKickstarterStatus to 1 when called by FactoryAdmin", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
-      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setKickstarterStatus(2);
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
+    it("should be able to setApprovalStatus to 1 when called by FactoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
+      await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).setApprovalStatus(2);
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "2");
     });
   });
 
@@ -736,13 +742,13 @@ describe("summitKickstarter", () => {
       );
     });
     it("should be able to approve when called by factory owner", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
       assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "0");
       assert.equal((await summitKickstarterWithBnbPayment.fixFeeAmount()).toString(), "0");
 
       await summitKickstarterWithBnbPayment.approve(PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
 
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "1");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "1");
       assert.equal(
         (await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(),
         PERCENTAGE_FEE_AMOUNT.toString()
@@ -750,13 +756,13 @@ describe("summitKickstarter", () => {
       assert.equal((await summitKickstarterWithBnbPayment.fixFeeAmount()).toString(), FIX_FEE_AMOUNT.toString());
     });
     it("should be able to approve when called by factory admin", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
       assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "0");
       assert.equal((await summitKickstarterWithBnbPayment.fixFeeAmount()).toString(), "0");
 
       await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).approve(PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
 
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "1");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "1");
       assert.equal(
         (await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(),
         PERCENTAGE_FEE_AMOUNT.toString()
@@ -775,21 +781,21 @@ describe("summitKickstarter", () => {
       );
     });
     it("should be able to reject when called by factory owner", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
       assert.equal((await summitKickstarterWithBnbPayment.rejectedReason()).toString(), "");
 
       await summitKickstarterWithBnbPayment.reject(REJECT_REASON);
 
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "2");
       assert.equal((await summitKickstarterWithBnbPayment.rejectedReason()).toString(), REJECT_REASON);
     });
     it("should be able to approve when called by factory admin", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "0");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "0");
       assert.equal((await summitKickstarterWithBnbPayment.rejectedReason()).toString(), "");
 
       await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).reject(REJECT_REASON);
 
-      assert.equal((await summitKickstarterWithBnbPayment.status()).toString(), "2");
+      assert.equal((await summitKickstarterWithBnbPayment.approvalStatus()).toString(), "2");
       assert.equal((await summitKickstarterWithBnbPayment.rejectedReason()).toString(), REJECT_REASON);
     });
   });
@@ -815,7 +821,7 @@ describe("summitKickstarter", () => {
       ).to.be.revertedWith("Start timestamp must be before end timestamp");
     });
     it("should not change paymentToken after approval", async () => {
-      await summitKickstarterWithBnbPayment.setKickstarterStatus(1);
+      await summitKickstarterWithBnbPayment.setApprovalStatus(ApprovalStatus.APPROVED.toString());
       await expect(
         summitKickstarterWithBnbPayment[
           "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256))"
@@ -863,7 +869,7 @@ describe("summitKickstarter", () => {
       ).to.be.revertedWith("Start timestamp must be before end timestamp");
     });
     it("should not change paymentToken after approval", async () => {
-      await summitKickstarterWithBnbPayment.setKickstarterStatus(1);
+      await summitKickstarterWithBnbPayment.setApprovalStatus(ApprovalStatus.APPROVED.toString());
       await expect(
         summitKickstarterWithBnbPayment[
           "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
@@ -918,10 +924,9 @@ describe("summitKickstarter", () => {
 
   describe("contribute", async () => {
     it("should be reverted if kickstarter is not approved", async () => {
-      const status = await summitKickstarterWithBnbPayment.status();
       await expect(
-        summitKickstarterWithBnbPayment.contribute(EMAIL, utils.parseEther("0.01").toString(), {
-          value: utils.parseEther("0.01").toString(),
+        summitKickstarterWithBnbPayment.contribute(EMAIL, parseEther("0.01").toString(), {
+          value: parseEther("0.01").toString(),
         })
       ).to.be.revertedWith("Kickstarter is not Approved");
     });
@@ -938,6 +943,15 @@ describe("summitKickstarter", () => {
             value: MIN_CONTRIBUTION.toString(),
           })
         ).to.be.revertedWith("Insufficient contribution amount");
+      });
+
+      it("should be reverted if contribute less than minimum contribution", async () => {
+        const contributionAmount = MIN_CONTRIBUTION - 1;
+        await expect(
+          summitKickstarterWithBnbPayment.contribute(EMAIL, contributionAmount, {
+            value: contributionAmount.toString(),
+          })
+        ).to.be.revertedWith("Amount should be greater than minimum contribution");
       });
 
       it("should be reverted if contribute before startTimestamp", async () => {

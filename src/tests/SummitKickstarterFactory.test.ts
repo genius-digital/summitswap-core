@@ -5,14 +5,14 @@ import SummitKickstarterFactoryArtifact from "@built-contracts/SummitKickstarter
 import TokenArtifact from "@built-contracts/utils/DummyToken.sol/DummyToken.json";
 import { DummyToken, SummitKickstarter, SummitKickstarterFactory } from "build/typechain";
 import { KickstarterStruct } from "build/typechain/SummitKickstarter";
-import { BigNumber, utils } from "ethers";
+import { parseEther } from "ethers/lib/utils";
 import { ZERO_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
 describe("summitswapKickstarter", () => {
   const [owner, otherWallet, adminWallet] = provider.getWallets();
-  const SERVICE_FEE = utils.parseEther("0.1");
+  const SERVICE_FEE = parseEther("0.1");
 
   const TITLE = "Lorem Ipsum";
   const CREATOR = "John Doe";

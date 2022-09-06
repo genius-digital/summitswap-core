@@ -11,7 +11,7 @@ import { ZERO_ADDRESS } from "src/environment";
 
 const { deployContract, provider } = waffle;
 
-describe("summitswapKickstarter", () => {
+describe("summitswapKickstarterFactory", () => {
   const [owner, otherWallet, adminWallet] = provider.getWallets();
   const SERVICE_FEE = parseEther("0.1");
 
@@ -171,9 +171,7 @@ describe("summitswapKickstarter", () => {
       );
     });
     it("should be able to create project with BNB Payment", async () => {
-      await summitKickstarterFactory
-        .connect(otherWallet)
-        .createProject(getKickstarter(), { value: SERVICE_FEE.add(1) });
+      await summitKickstarterFactory.connect(otherWallet).createProject(getKickstarter(), { value: SERVICE_FEE });
 
       const projectAddress = await summitKickstarterFactory.projects(0);
       const projects = await summitKickstarterFactory.getProjects();
@@ -193,7 +191,7 @@ describe("summitswapKickstarter", () => {
     it("should be able to create project with Token A Payment", async () => {
       await summitKickstarterFactory
         .connect(otherWallet)
-        .createProject(getKickstarter(tokenA.address), { value: SERVICE_FEE.add(1) });
+        .createProject(getKickstarter(tokenA.address), { value: SERVICE_FEE });
 
       const projectAddress = await summitKickstarterFactory.projects(0);
       const projects = await summitKickstarterFactory.getProjects();
@@ -209,6 +207,37 @@ describe("summitswapKickstarter", () => {
 
       const kickstarter = await summitKickstarter.kickstarter();
       assert.equal(kickstarter.toString(), Object.values(getKickstarter(tokenA.address)).toString());
+    });
+  });
+
+  describe("withdraw", async () => {
+    it("should revert when called by nonOwner", async () => {
+      await expect(summitKickstarterFactory.connect(otherWallet).withdraw(otherWallet.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to withdraw as a owner", async () => {
+      await summitKickstarterFactory
+        .connect(otherWallet)
+        .createProject(getKickstarter(tokenA.address), { value: SERVICE_FEE });
+
+      const walletBalance = await provider.getBalance(owner.address);
+      let contractBalance = await provider.getBalance(summitKickstarterFactory.address);
+      assert.equal(contractBalance.toString(), SERVICE_FEE.toString());
+
+      const tx = await summitKickstarterFactory.withdraw(owner.address);
+      const txReceipt = await tx.wait();
+      const gasUsed = txReceipt.gasUsed;
+      const gasPrice = txReceipt.effectiveGasPrice;
+      const gasCost = gasUsed.mul(gasPrice);
+
+      contractBalance = await provider.getBalance(summitKickstarterFactory.address);
+      assert.equal(contractBalance.toString(), "0");
+
+      assert.equal(
+        walletBalance.add(SERVICE_FEE).sub(gasCost).toString(),
+        (await provider.getBalance(owner.address)).toString()
+      );
     });
   });
 });

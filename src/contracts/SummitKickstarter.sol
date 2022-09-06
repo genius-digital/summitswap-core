@@ -91,6 +91,7 @@ contract SummitKickstarter is Ownable {
     } else {
       require(kickstarter.paymentToken.balanceOf(msg.sender) >= _amount, "Insufficient contribution amount");
     }
+    require(_amount >= kickstarter.minContribution, "Amount should be greater than minimum contribution");
     require(block.timestamp >= kickstarter.startTimestamp, "You can contribute only after start time");
     require(block.timestamp <= kickstarter.endTimestamp, "You can contribute only before end time");
 

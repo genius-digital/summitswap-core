@@ -8,6 +8,7 @@ import { DummyToken, SummitKickstarter, SummitKickstarterFactory } from "build/t
 import { KickstarterStruct } from "build/typechain/SummitKickstarter";
 import { parseEther } from "ethers/lib/utils";
 import { ZERO_ADDRESS } from "src/environment";
+import { getGasCostByTx } from "./utils";
 
 const { deployContract, provider } = waffle;
 
@@ -157,10 +158,7 @@ describe("summitswapKickstarterFactory", () => {
         .connect(otherWallet)
         .createProject(getKickstarter(), { value: SERVICE_FEE.add(1) });
 
-      const txReceipt = await tx.wait();
-      const gasUsed = txReceipt.gasUsed;
-      const gasPrice = txReceipt.effectiveGasPrice;
-      const gasCost = gasUsed.mul(gasPrice);
+      const gasCost = await getGasCostByTx(tx);
       assert.equal(
         walletBalance.sub(SERVICE_FEE).sub(gasCost).toString(),
         (await provider.getBalance(otherWallet.address)).toString()
@@ -226,10 +224,7 @@ describe("summitswapKickstarterFactory", () => {
       assert.equal(contractBalance.toString(), SERVICE_FEE.toString());
 
       const tx = await summitKickstarterFactory.withdraw(owner.address);
-      const txReceipt = await tx.wait();
-      const gasUsed = txReceipt.gasUsed;
-      const gasPrice = txReceipt.effectiveGasPrice;
-      const gasCost = gasUsed.mul(gasPrice);
+      const gasCost = await getGasCostByTx(tx);
 
       contractBalance = await provider.getBalance(summitKickstarterFactory.address);
       assert.equal(contractBalance.toString(), "0");

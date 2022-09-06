@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { assert, expect } from "chai";
 import { parseEther } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
@@ -27,9 +28,9 @@ describe("summitKickstarter", () => {
 
   const MIN_CONTRIBUTION = 1000;
   const PROJECT_GOALS = 1000000;
-  const START_TIMESTAMP = Math.floor(Date.now() / 1000);
-  const END_TIMESTAMP = START_TIMESTAMP + 60 * 60 * 24 * 7; // one week from now
-  const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7; // one week after the end date
+  const START_TIMESTAMP = dayjs().unix();
+  const END_TIMESTAMP = dayjs().add(1, "week").unix();
+  const REWARD_DISTRIBUTION_TIMESTAMP = dayjs().add(2, "week").unix();
 
   const SERVICE_FEE = parseEther("0.1");
 

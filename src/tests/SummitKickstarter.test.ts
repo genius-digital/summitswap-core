@@ -57,8 +57,6 @@ describe("summitKickstarter", () => {
   let summitKickstarterWithBnbPayment: SummitKickstarter;
   let summitKickstarterWithTokenAPayment: SummitKickstarter;
 
-  const getTimestampFromMinutes = (minutes: number) => minutes * 60;
-
   const getKickstarter = (paymentToken = ZERO_ADDRESS) => {
     const kickstarter: KickstarterStruct = {
       paymentToken: paymentToken,
@@ -839,7 +837,7 @@ describe("summitKickstarter", () => {
   });
 
   describe("configProjectInfo by FactoryAdmin and FactoryOwner", async () => {
-    it("should not set configProjectInfo when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
+    it("should not set configProjectInfo when called by nonFactoryOwner or nonFactoryAdmin", async () => {
       await expect(
         summitKickstarterWithBnbPayment
           .connect(otherWallet)
@@ -957,7 +955,7 @@ describe("summitKickstarter", () => {
 
       it("should be reverted if contribute before startTimestamp", async () => {
         const currentTime = Math.floor(Date.now() / 1000);
-        await summitKickstarterWithBnbPayment.setStartTimestamp(currentTime + getTimestampFromMinutes(100));
+        await summitKickstarterWithBnbPayment.setStartTimestamp(dayjs().add(100, "minute").unix());
         await expect(
           summitKickstarterWithBnbPayment.contribute(EMAIL, MIN_CONTRIBUTION, { value: MIN_CONTRIBUTION.toString() })
         ).to.be.revertedWith("You can contribute only after start time");
@@ -965,8 +963,8 @@ describe("summitKickstarter", () => {
 
       it("should be reverted if contribute after endTimestamp", async () => {
         const currentTime = Math.floor(Date.now() / 1000);
-        await summitKickstarterWithBnbPayment.setStartTimestamp(currentTime - getTimestampFromMinutes(6));
-        await summitKickstarterWithBnbPayment.setEndTimestamp(currentTime - getTimestampFromMinutes(5));
+        await summitKickstarterWithBnbPayment.setStartTimestamp(dayjs().subtract(6, "minute").unix());
+        await summitKickstarterWithBnbPayment.setEndTimestamp(dayjs().subtract(5, "minute").unix());
         await expect(
           summitKickstarterWithBnbPayment.contribute(EMAIL, MIN_CONTRIBUTION, { value: MIN_CONTRIBUTION.toString() })
         ).to.be.revertedWith("You can contribute only before end time");

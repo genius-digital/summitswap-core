@@ -18,6 +18,7 @@ contract SummitFactoryPresale is Ownable {
   mapping(address => address[]) public tokenPresales; // token => presale
   mapping(address => uint256) private approvedIndex;
   mapping(address => uint256) private pendingIndex;
+  mapping(address => uint256) public presaleRequestTime;
 
   address[] public approvedPresales;
   address[] public pendingPresales;
@@ -91,6 +92,7 @@ contract SummitFactoryPresale is Ownable {
 
     ISummitCustomPresale(presaleClone).initialize(projectDetails, presale, feeInfo, serviceFeeReceiver, msg.sender);
 
+    presaleRequestTime[presaleClone] = block.timestamp;
     tokenPresales[presale.presaleToken].push(address(presaleClone));
     accountPresales[msg.sender].push(address(presaleClone));
     pendingPresales.push(address(presaleClone));
@@ -144,6 +146,7 @@ contract SummitFactoryPresale is Ownable {
   function updatePresaleAndApprove(
     PresaleInfo memory _presale,
     PresaleFeeInfo memory _feeInfo,
+    string[8] memory _projectDetails,
     address _presaleAddress
   ) external isAdminOrOwner presalePending(_presaleAddress) {
     PresaleInfo memory presale = ISummitCustomPresale(_presaleAddress).getPresaleInfo();
@@ -185,7 +188,7 @@ contract SummitFactoryPresale is Ownable {
     require(_presale.refundType <= 1, "refundType should be between 0 or 1");
     require(_presale.listingChoice <= 3, "listingChoice should be between 0 & 3");
 
-    ISummitCustomPresale(_presaleAddress).updatePresaleAndApprove(_presale, _feeInfo);
+    ISummitCustomPresale(_presaleAddress).updatePresaleAndApprove(_presale, _feeInfo, _projectDetails);
     removeFromPending(_presaleAddress);
   }
 

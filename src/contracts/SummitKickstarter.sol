@@ -217,7 +217,7 @@ contract SummitKickstarter is Ownable {
   function withdrawBNB(uint256 _amount, address _receiver) private onlyOwner {
     require(address(this).balance >= _amount, "You cannot withdraw more than you have");
 
-    uint256 withdrawalFee = fixFeeAmount + ((_amount * percentageFeeAmount) / FEE_DENOMINATOR);
+    uint256 withdrawalFee = getWithdrawalFee(_amount, fixFeeAmount, percentageFeeAmount);
     require(address(this).balance > withdrawalFee, "You cannot withraw less than widrawal fee");
 
     uint256 receiverAmount = _amount - withdrawalFee;
@@ -229,7 +229,7 @@ contract SummitKickstarter is Ownable {
   function withdrawToken(uint256 _amount, address _receiver) private onlyOwner {
     require(kickstarter.paymentToken.balanceOf(address(this)) >= _amount, "You cannot withdraw more than you have");
 
-    uint256 withdrawalFee = fixFeeAmount + ((_amount * percentageFeeAmount) / FEE_DENOMINATOR);
+    uint256 withdrawalFee = getWithdrawalFee(_amount, fixFeeAmount, percentageFeeAmount);
     require(
       kickstarter.paymentToken.balanceOf(address(this)) > withdrawalFee,
       "You cannot withraw less than widrawal fee"
@@ -239,6 +239,14 @@ contract SummitKickstarter is Ownable {
 
     kickstarter.paymentToken.transfer(_receiver, receiverAmount);
     kickstarter.paymentToken.transfer(factory, withdrawalFee);
+  }
+
+  function getWithdrawalFee(
+    uint256 _amount,
+    uint256 _fixFeeAmount,
+    uint256 _percentageFeeAmount
+  ) private view returns (uint256) {
+    return _fixFeeAmount + ((_amount * _percentageFeeAmount) / FEE_DENOMINATOR);
   }
 
   // ** FACTORY ADMIN FUNCTIONS **
@@ -255,6 +263,10 @@ contract SummitKickstarter is Ownable {
       approvalStatus == ApprovalStatus.PENDING || _kickstarter.paymentToken == kickstarter.paymentToken,
       "You can't change payment token after Approval"
     );
+    require(
+      getWithdrawalFee(kickstarter.projectGoals, _fixFeeAmount, _percentageFeeAmount) <= kickstarter.projectGoals,
+      "Withdrawal fee should not more than project goals"
+    );
 
     kickstarter = _kickstarter;
     approvalStatus = _approvalStatus;
@@ -266,6 +278,10 @@ contract SummitKickstarter is Ownable {
 
   function approve(uint256 _percentageFeeAmount, uint256 _fixFeeAmount) external onlyFactoryAdmin {
     require(_percentageFeeAmount <= FEE_DENOMINATOR, "percentageFeeAmount should be less than FEE_DENOMINATOR");
+    require(
+      getWithdrawalFee(kickstarter.projectGoals, _fixFeeAmount, _percentageFeeAmount) <= kickstarter.projectGoals,
+      "Withdrawal fee should not more than project goals"
+    );
 
     percentageFeeAmount = _percentageFeeAmount;
     fixFeeAmount = _fixFeeAmount;
@@ -296,12 +312,22 @@ contract SummitKickstarter is Ownable {
 
   function setPercentageFeeAmount(uint256 _percentageFeeAmount) external onlyFactoryAdmin {
     require(_percentageFeeAmount <= FEE_DENOMINATOR, "percentageFeeAmount should be less than FEE_DENOMINATOR");
+    require(
+      getWithdrawalFee(kickstarter.projectGoals, fixFeeAmount, _percentageFeeAmount) <= kickstarter.projectGoals,
+      "Withdrawal fee should not more than project goals"
+    );
+
     percentageFeeAmount = _percentageFeeAmount;
 
     emit PercentageFeeAmountUpdated(_percentageFeeAmount);
   }
 
   function setFixFeeAmount(uint256 _fixFeeAmount) external onlyFactoryAdmin {
+    require(
+      getWithdrawalFee(kickstarter.projectGoals, _fixFeeAmount, percentageFeeAmount) <= kickstarter.projectGoals,
+      "Withdrawal fee should not more than project goals"
+    );
+
     fixFeeAmount = _fixFeeAmount;
 
     emit FixFeeAmountUpdated(_fixFeeAmount);

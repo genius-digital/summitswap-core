@@ -5,6 +5,7 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/ISummitKickstarterFactory.sol";
+import "../structs/KickstarterInfo.sol";
 
 contract SummitKickstarter is Ownable {
   mapping(address => bool) public isAdmin;
@@ -16,7 +17,7 @@ contract SummitKickstarter is Ownable {
   address public factory;
 
   Kickstarter public kickstarter;
-  Status public status = Status.PENDING;
+  ApprovalStatus public approvalStatus = ApprovalStatus.PENDING;
 
   uint256 public constant FEE_DENOMINATOR = 10000;
   uint256 public totalContribution;
@@ -29,7 +30,7 @@ contract SummitKickstarter is Ownable {
   event KickstarterUpdated(Kickstarter kickstarter);
   event KickstarterUpdatedByFactoryAdmin(
     Kickstarter kickstarter,
-    Status status,
+    ApprovalStatus approvalStatus,
     uint256 percentageFeeAmount,
     uint256 fixFeeAmount
   );
@@ -45,7 +46,7 @@ contract SummitKickstarter is Ownable {
   event StartTimestampUpdated(uint256 startTimestamp);
   event EndTimestampUpdated(uint256 endTimestamp);
 
-  event StatusUpdated(Status status);
+  event ApprovalStatusUpdated(ApprovalStatus approvalStatus);
   event PercentageFeeAmountUpdated(uint256 percentageFeeAmount);
   event FixFeeAmountUpdated(uint256 fixFeeAmount);
 
@@ -85,7 +86,7 @@ contract SummitKickstarter is Ownable {
   }
 
   function contribute(string memory _email, uint256 _amount) external payable {
-    require(status == Status.APPROVED, "Kickstarter is not Approved");
+    require(approvalStatus == ApprovalStatus.APPROVED, "Kickstarter is not Approved");
     if (address(kickstarter.paymentToken) == address(0)) {
       require(msg.value >= _amount, "Insufficient contribution amount");
     } else {
@@ -196,7 +197,7 @@ contract SummitKickstarter is Ownable {
   function configProjectInfo(Kickstarter calldata _kickstarter) external onlyFactoryAdminAndAdmin {
     require(_kickstarter.startTimestamp < _kickstarter.endTimestamp, "Start timestamp must be before end timestamp");
     require(
-      status == Status.PENDING || _kickstarter.paymentToken == kickstarter.paymentToken,
+      approvalStatus == ApprovalStatus.PENDING || _kickstarter.paymentToken == kickstarter.paymentToken,
       "You can't change payment token after Approval"
     );
 
@@ -244,23 +245,23 @@ contract SummitKickstarter is Ownable {
 
   function configProjectInfo(
     Kickstarter calldata _kickstarter,
-    Status _status,
+    ApprovalStatus _approvalStatus,
     uint256 _percentageFeeAmount,
     uint256 _fixFeeAmount
   ) external onlyFactoryAdmin {
     require(_kickstarter.startTimestamp < _kickstarter.endTimestamp, "Start timestamp must be before end timestamp");
     require(_percentageFeeAmount <= FEE_DENOMINATOR, "percentageFeeAmount should be less than FEE_DENOMINATOR");
     require(
-      status == Status.PENDING || _kickstarter.paymentToken == kickstarter.paymentToken,
+      approvalStatus == ApprovalStatus.PENDING || _kickstarter.paymentToken == kickstarter.paymentToken,
       "You can't change payment token after Approval"
     );
 
     kickstarter = _kickstarter;
-    status = _status;
+    approvalStatus = _approvalStatus;
     percentageFeeAmount = _percentageFeeAmount;
     fixFeeAmount = _fixFeeAmount;
 
-    emit KickstarterUpdatedByFactoryAdmin(_kickstarter, _status, _percentageFeeAmount, _fixFeeAmount);
+    emit KickstarterUpdatedByFactoryAdmin(_kickstarter, _approvalStatus, _percentageFeeAmount, _fixFeeAmount);
   }
 
   function approve(uint256 _percentageFeeAmount, uint256 _fixFeeAmount) external onlyFactoryAdmin {
@@ -269,7 +270,7 @@ contract SummitKickstarter is Ownable {
     percentageFeeAmount = _percentageFeeAmount;
     fixFeeAmount = _fixFeeAmount;
 
-    status = Status.APPROVED;
+    approvalStatus = ApprovalStatus.APPROVED;
     rejectedReason = "";
 
     emit Approved(_percentageFeeAmount, _fixFeeAmount);
@@ -277,14 +278,14 @@ contract SummitKickstarter is Ownable {
 
   function reject(string memory _rejectedReason) external onlyFactoryAdmin {
     rejectedReason = _rejectedReason;
-    status = Status.REJECTED;
+    approvalStatus = ApprovalStatus.REJECTED;
 
     emit Rejected(_rejectedReason);
   }
 
-  function setKickstarterStatus(Status _status) external onlyFactoryAdmin {
-    status = _status;
-    emit StatusUpdated(_status);
+  function setApprovalStatus(ApprovalStatus _approvalStatus) external onlyFactoryAdmin {
+    approvalStatus = _approvalStatus;
+    emit ApprovalStatusUpdated(_approvalStatus);
   }
 
   function setAdmins(address[] calldata _walletsAddress, bool _isAdmin) external onlyFactoryAdmin {

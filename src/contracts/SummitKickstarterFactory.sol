@@ -2,7 +2,7 @@
 // Developed by: dxsoftware.net
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {Kickstarter} from "./interfaces/ISummitKickstarter.sol";
+import "../structs/KickstarterInfo.sol";
 import "./SummitKickstarter.sol";
 
 pragma solidity ^0.8.6;

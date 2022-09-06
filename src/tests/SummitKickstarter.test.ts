@@ -283,6 +283,12 @@ describe("summitKickstarter", () => {
         "percentageFeeAmount should be less than FEE_DENOMINATOR"
       );
     });
+    it("should be reverted if set fee more than projectGoals", async () => {
+      await summitKickstarterWithBnbPayment.setFixFeeAmount(1);
+      await expect(summitKickstarterWithBnbPayment.setPercentageFeeAmount(FEE_DENOMINATOR)).to.be.revertedWith(
+        "Withdrawal fee should not more than project goals"
+      );
+    });
     it("should be able to setPercentageFeeAmount by FactoryOwner or FactoryAdmin", async () => {
       assert.equal((await summitKickstarterWithBnbPayment.percentageFeeAmount()).toString(), "0");
       await summitKickstarterWithBnbPayment.setPercentageFeeAmount("1");
@@ -299,6 +305,11 @@ describe("summitKickstarter", () => {
       );
       await expect(summitKickstarterWithBnbPayment.connect(adminWallet).setFixFeeAmount(1)).to.be.revertedWith(
         "Only factory admin can call this function"
+      );
+    });
+    it("should be reverted if set fee more than projectGoals", async () => {
+      await expect(summitKickstarterWithBnbPayment.setFixFeeAmount(PROJECT_GOALS + 1)).to.be.revertedWith(
+        "Withdrawal fee should not more than project goals"
       );
     });
     it("should be able to setFixFeeAmount by FactoryOwner or FactoryAdmin", async () => {
@@ -844,14 +855,14 @@ describe("summitKickstarter", () => {
           .connect(otherWallet)
           [
             "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
-          ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
+          ](getNewKickstarter(tokenA.address), ApprovalStatus.APPROVED, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
       ).to.be.revertedWith("Only factory admin can call this function");
       await expect(
         summitKickstarterWithBnbPayment
           .connect(adminWallet)
           [
             "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
-          ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
+          ](getNewKickstarter(tokenA.address), ApprovalStatus.APPROVED, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
       ).to.be.revertedWith("Only factory admin can call this function");
     });
     it("should not set configProjectInfo if start date is greater than end date", async () => {
@@ -861,7 +872,7 @@ describe("summitKickstarter", () => {
       await expect(
         summitKickstarterWithBnbPayment[
           "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
-        ](kickstarter, 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
+        ](kickstarter, ApprovalStatus.APPROVED, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
       ).to.be.revertedWith("Start timestamp must be before end timestamp");
     });
     it("should not change paymentToken after approval", async () => {
@@ -869,8 +880,21 @@ describe("summitKickstarter", () => {
       await expect(
         summitKickstarterWithBnbPayment[
           "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
-        ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
+        ](getNewKickstarter(tokenA.address), ApprovalStatus.APPROVED, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT)
       ).to.be.revertedWith("You can't change payment token after Approval");
+    });
+    it("should not set fee more than project goals", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment[
+          "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+        ](getNewKickstarter(tokenA.address), ApprovalStatus.APPROVED, FEE_DENOMINATOR, 1)
+      ).to.be.revertedWith("Withdrawal fee should not more than project goals");
+
+      await expect(
+        summitKickstarterWithBnbPayment[
+          "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
+        ](getNewKickstarter(tokenA.address), ApprovalStatus.APPROVED, 0, PROJECT_GOALS + 1)
+      ).to.be.revertedWith("Withdrawal fee should not more than project goals");
     });
     it("should set configProjectInfo by FactoryOwner", async () => {
       let kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
@@ -883,7 +907,7 @@ describe("summitKickstarter", () => {
 
       await summitKickstarterWithBnbPayment[
         "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
-      ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
+      ](getNewKickstarter(tokenA.address), ApprovalStatus.APPROVED, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
 
       kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
       percentageFeeAmount = await summitKickstarterWithBnbPayment.percentageFeeAmount();
@@ -906,7 +930,7 @@ describe("summitKickstarter", () => {
         .connect(factoryAdminWallet)
         [
           "configProjectInfo((address,string,string,string,string,string,uint256,uint256,uint256,uint256,uint256),uint8,uint256,uint256)"
-        ](getNewKickstarter(tokenA.address), 1, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
+        ](getNewKickstarter(tokenA.address), ApprovalStatus.APPROVED, PERCENTAGE_FEE_AMOUNT, FIX_FEE_AMOUNT);
 
       kickstarter = await summitKickstarterWithBnbPayment.kickstarter();
       percentageFeeAmount = await summitKickstarterWithBnbPayment.percentageFeeAmount();

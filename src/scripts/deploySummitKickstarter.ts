@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { KickstarterStruct } from "build/typechain/SummitKickstarter";
 import { utils } from "ethers";
 import { ethers } from "hardhat";
@@ -15,9 +16,9 @@ export async function deploySummitKickstarter() {
   const REWARD_DESCRIPTION = "SummitSwap Kickstarter";
   const MIN_CONTRIBUTION = utils.parseEther("0.01");
   const PROJECT_GOALS = utils.parseEther("0.1");
-  const START_TIMESTAMP = Math.floor(Date.now() / 1000);
-  const END_TIMESTAMP = START_TIMESTAMP + 60 * 60 * 24 * 7;
-  const REWARD_DISTRIBUTION_TIMESTAMP = END_TIMESTAMP + 60 * 60 * 24 * 7;
+  const START_TIMESTAMP = dayjs().unix();
+  const END_TIMESTAMP = dayjs().add(1, "week").unix();
+  const REWARD_DISTRIBUTION_TIMESTAMP = dayjs().add(2, "week").unix();
 
   const SummitKickstarter = await ethers.getContractFactory("SummitKickstarter");
   const kickstarter: KickstarterStruct = {

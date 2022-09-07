@@ -21,8 +21,6 @@ describe("summitswapKickstarterFactory", () => {
   const IMAGE_URL = "https://images.com/example.png";
   const PROJECT_DESCRIPTION = "This is a project description";
   const REWARD_DESCRIPTION = "This is a reward description";
-  const CONTACT_METHOD = "email";
-  const CONTACT_VALUE = "john.doe@example.com";
 
   const MIN_CONTRIBUTION = 1000;
   const PROJECT_GOALS = 1000000;
@@ -148,9 +146,9 @@ describe("summitswapKickstarterFactory", () => {
 
   describe("createProject", async () => {
     it("should not be able to create project if pay less than service fee", async () => {
-      await expect(
-        summitKickstarterFactory.createProject(getKickstarter(), CONTACT_METHOD, CONTACT_VALUE)
-      ).to.be.revertedWith("Service Fee is not enough");
+      await expect(summitKickstarterFactory.createProject(getKickstarter())).to.be.revertedWith(
+        "Service Fee is not enough"
+      );
     });
     it("should be able to get refund excessive fee if pay more than service fee", async () => {
       const walletBalance = await provider.getBalance(otherWallet.address);
@@ -158,7 +156,7 @@ describe("summitswapKickstarterFactory", () => {
 
       const tx = await summitKickstarterFactory
         .connect(otherWallet)
-        .createProject(getKickstarter(), CONTACT_METHOD, CONTACT_VALUE, { value: SERVICE_FEE.add(1) });
+        .createProject(getKickstarter(), { value: SERVICE_FEE.add(1) });
 
       const gasCost = await getGasCostByTx(tx);
       assert.equal(
@@ -171,9 +169,7 @@ describe("summitswapKickstarterFactory", () => {
       );
     });
     it("should be able to create project with BNB Payment", async () => {
-      await summitKickstarterFactory
-        .connect(otherWallet)
-        .createProject(getKickstarter(), CONTACT_METHOD, CONTACT_VALUE, { value: SERVICE_FEE });
+      await summitKickstarterFactory.connect(otherWallet).createProject(getKickstarter(), { value: SERVICE_FEE });
 
       const projectAddress = await summitKickstarterFactory.projects(0);
       const projects = await summitKickstarterFactory.getProjects();
@@ -193,7 +189,7 @@ describe("summitswapKickstarterFactory", () => {
     it("should be able to create project with Token A Payment", async () => {
       await summitKickstarterFactory
         .connect(otherWallet)
-        .createProject(getKickstarter(tokenA.address), CONTACT_METHOD, CONTACT_VALUE, { value: SERVICE_FEE });
+        .createProject(getKickstarter(tokenA.address), { value: SERVICE_FEE });
 
       const projectAddress = await summitKickstarterFactory.projects(0);
       const projects = await summitKickstarterFactory.getProjects();
@@ -221,7 +217,7 @@ describe("summitswapKickstarterFactory", () => {
     it("should be able to withdraw as a owner", async () => {
       await summitKickstarterFactory
         .connect(otherWallet)
-        .createProject(getKickstarter(tokenA.address), CONTACT_METHOD, CONTACT_VALUE, { value: SERVICE_FEE });
+        .createProject(getKickstarter(tokenA.address), { value: SERVICE_FEE });
 
       const walletBalance = await provider.getBalance(owner.address);
       let contractBalance = await provider.getBalance(summitKickstarterFactory.address);

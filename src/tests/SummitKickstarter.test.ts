@@ -208,32 +208,32 @@ describe("summitKickstarter", () => {
     });
   });
 
-  describe("getContact", async () => {
+  describe("getContactDetails", async () => {
     it("should be reverted when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin or nonOwner", async () => {
-      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).getContact()).to.be.revertedWith(
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).getContactDetails()).to.be.revertedWith(
         "Only admin or owner can call this function"
       );
     });
-    it("should be able to getContact if called by factoryOwner", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), CONTACT.toString());
+    it("should be able to getContactDetails if called by factoryOwner", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.getContactDetails()).toString(), CONTACT.toString());
     });
-    it("should be able to getContact if called by factoryAdmin", async () => {
+    it("should be able to getContactDetails if called by factoryAdmin", async () => {
       assert.equal(
-        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).getContact()).toString(),
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).getContactDetails()).toString(),
         CONTACT.toString()
       );
     });
-    it("should be able to getContact if called by admin", async () => {
+    it("should be able to getContactDetails if called by admin", async () => {
       assert.equal(
-        (await summitKickstarterWithBnbPayment.connect(adminWallet).getContact()).toString(),
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).getContactDetails()).toString(),
         CONTACT.toString()
       );
     });
-    it("should be able to getContact if called by owner", async () => {
+    it("should be able to getContactDetails if called by owner", async () => {
       await summitKickstarterWithBnbPayment.transferOwnership(otherWallet.address);
       assert.equal(otherWallet.address, (await summitKickstarterWithBnbPayment.owner()).toString());
       assert.equal(
-        (await summitKickstarterWithBnbPayment.connect(otherWallet).getContact()).toString(),
+        (await summitKickstarterWithBnbPayment.connect(otherWallet).getContactDetails()).toString(),
         CONTACT.toString()
       );
     });
@@ -475,26 +475,26 @@ describe("summitKickstarter", () => {
     });
   });
 
-  describe("setContact", async () => {
+  describe("setContactDetails", async () => {
     it("should be reverted if called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
       await expect(
-        summitKickstarterWithBnbPayment.connect(otherWallet).setContact(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE)
+        summitKickstarterWithBnbPayment.connect(otherWallet).setContactDetails(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE)
       ).to.be.revertedWith("Only admin can call this function");
     });
     it("should be set by factoryOwner", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), CONTACT.toString());
-      await summitKickstarterWithBnbPayment.setContact(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
-      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), NEW_CONTACT.toString());
+      assert.equal((await summitKickstarterWithBnbPayment.getContactDetails()).toString(), CONTACT.toString());
+      await summitKickstarterWithBnbPayment.setContactDetails(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
+      assert.equal((await summitKickstarterWithBnbPayment.getContactDetails()).toString(), NEW_CONTACT.toString());
     });
     it("should be set by factoryAdmin", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), CONTACT.toString());
-      await summitKickstarterWithBnbPayment.setContact(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
-      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), NEW_CONTACT.toString());
+      assert.equal((await summitKickstarterWithBnbPayment.getContactDetails()).toString(), CONTACT.toString());
+      await summitKickstarterWithBnbPayment.setContactDetails(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
+      assert.equal((await summitKickstarterWithBnbPayment.getContactDetails()).toString(), NEW_CONTACT.toString());
     });
     it("should be set by admin", async () => {
-      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), CONTACT.toString());
-      await summitKickstarterWithBnbPayment.setContact(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
-      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), NEW_CONTACT.toString());
+      assert.equal((await summitKickstarterWithBnbPayment.getContactDetails()).toString(), CONTACT.toString());
+      await summitKickstarterWithBnbPayment.setContactDetails(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
+      assert.equal((await summitKickstarterWithBnbPayment.getContactDetails()).toString(), NEW_CONTACT.toString());
     });
   });
 

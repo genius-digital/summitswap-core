@@ -106,7 +106,7 @@ contract SummitKickstarter is Ownable {
     return contributors;
   }
 
-  function getContact() external view onlyFactoryAdminOrAdminOrOwner returns (string[2] memory) {
+  function getContactDetails() external view onlyFactoryAdminOrAdminOrOwner returns (string[2] memory) {
     return [contactMethod, contactValue];
   }
 
@@ -186,7 +186,10 @@ contract SummitKickstarter is Ownable {
     emit RewardDescriptionUpdated(_rewardDescription);
   }
 
-  function setContact(string memory _contactMethod, string memory _contactValue) external onlyFactoryAdminOrAdmin {
+  function setContactDetails(string memory _contactMethod, string memory _contactValue)
+    external
+    onlyFactoryAdminOrAdmin
+  {
     require(bytes(_contactMethod).length > 0, "Contact method cannot be empty");
     require(bytes(_contactValue).length > 0, "Contact value cannot be empty");
     contactMethod = _contactMethod;

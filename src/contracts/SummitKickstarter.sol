@@ -26,6 +26,9 @@ contract SummitKickstarter is Ownable {
 
   string public rejectedReason;
 
+  string private contactMethod;
+  string private contactValue;
+
   event Contribute(address indexed contributor, string email, uint256 amount, uint256 timestamp);
   event KickstarterUpdated(Kickstarter kickstarter);
   event KickstarterUpdatedByFactoryAdmin(
@@ -53,11 +56,18 @@ contract SummitKickstarter is Ownable {
   event Approved(uint256 percentageFeeAmount, uint256 fixFeeAmount);
   event Rejected(string rejectedReason);
 
-  constructor(address _owner, Kickstarter memory _kickstarter) {
+  constructor(
+    address _owner,
+    Kickstarter memory _kickstarter,
+    string memory _contactMethod,
+    string memory _contactValue
+  ) {
     transferOwnership(_owner);
 
     factory = msg.sender;
     kickstarter = _kickstarter;
+    contactMethod = _contactMethod;
+    contactValue = _contactValue;
   }
 
   receive() external payable {}
@@ -71,7 +81,7 @@ contract SummitKickstarter is Ownable {
     _;
   }
 
-  modifier onlyFactoryAdminAndAdmin() {
+  modifier onlyFactoryAdminOrAdmin() {
     require(
       ISummitKickstarterFactory(factory).owner() == msg.sender ||
         ISummitKickstarterFactory(factory).isAdmin(msg.sender) ||
@@ -81,8 +91,23 @@ contract SummitKickstarter is Ownable {
     _;
   }
 
+  modifier onlyFactoryAdminOrAdminOrOwner() {
+    require(
+      ISummitKickstarterFactory(factory).owner() == msg.sender ||
+        ISummitKickstarterFactory(factory).isAdmin(msg.sender) ||
+        isAdmin[msg.sender] ||
+        owner() == msg.sender,
+      "Only admin or owner can call this function"
+    );
+    _;
+  }
+
   function getContributors() external view returns (address[] memory) {
     return contributors;
+  }
+
+  function getContact() external view onlyFactoryAdminOrAdminOrOwner returns (string[2] memory) {
+    return [contactMethod, contactValue];
   }
 
   function contribute(string memory _email, uint256 _amount) external payable {
@@ -126,75 +151,82 @@ contract SummitKickstarter is Ownable {
 
   // ** Factory And Admin FUNCTIONS **
 
-  function setTitle(string memory _title) external onlyFactoryAdminAndAdmin {
+  function setTitle(string memory _title) external onlyFactoryAdminOrAdmin {
     require(bytes(_title).length > 0, "Title cannot be empty");
     kickstarter.title = _title;
 
     emit TitleUpdated(_title);
   }
 
-  function setCreator(string memory _creator) external onlyFactoryAdminAndAdmin {
+  function setCreator(string memory _creator) external onlyFactoryAdminOrAdmin {
     require(bytes(_creator).length > 0, "Creator cannot be empty");
     kickstarter.creator = _creator;
 
     emit CreatorUpdated(_creator);
   }
 
-  function setImageUrl(string memory _imageUrl) external onlyFactoryAdminAndAdmin {
+  function setImageUrl(string memory _imageUrl) external onlyFactoryAdminOrAdmin {
     require(bytes(_imageUrl).length > 0, "Image URL cannot be empty");
     kickstarter.imageUrl = _imageUrl;
 
     emit ImageUrlUpdated(_imageUrl);
   }
 
-  function setProjectDescription(string memory _projectDescription) external onlyFactoryAdminAndAdmin {
+  function setProjectDescription(string memory _projectDescription) external onlyFactoryAdminOrAdmin {
     require(bytes(_projectDescription).length > 0, "Project description cannot be empty");
     kickstarter.projectDescription = _projectDescription;
 
     emit ProjectDescriptionUpdated(_projectDescription);
   }
 
-  function setRewardDescription(string memory _rewardDescription) external onlyFactoryAdminAndAdmin {
+  function setRewardDescription(string memory _rewardDescription) external onlyFactoryAdminOrAdmin {
     require(bytes(_rewardDescription).length > 0, "Reward description cannot be empty");
     kickstarter.rewardDescription = _rewardDescription;
 
     emit RewardDescriptionUpdated(_rewardDescription);
   }
 
-  function setMinContribution(uint256 _minContribution) external onlyFactoryAdminAndAdmin {
+  function setContact(string memory _contactMethod, string memory _contactValue) external onlyFactoryAdminOrAdmin {
+    require(bytes(_contactMethod).length > 0, "Contact method cannot be empty");
+    require(bytes(_contactValue).length > 0, "Contact value cannot be empty");
+    contactMethod = _contactMethod;
+    contactValue = _contactValue;
+  }
+
+  function setMinContribution(uint256 _minContribution) external onlyFactoryAdminOrAdmin {
     kickstarter.minContribution = _minContribution;
 
     emit MinContributionUpdated(_minContribution);
   }
 
-  function setProjectGoals(uint256 _projectGoals) external onlyFactoryAdminAndAdmin {
+  function setProjectGoals(uint256 _projectGoals) external onlyFactoryAdminOrAdmin {
     require(_projectGoals > 0, "Project goals must be greater than 0");
     kickstarter.projectGoals = _projectGoals;
 
     emit ProjectGoalsUpdated(_projectGoals);
   }
 
-  function setRewardDistributionTimestamp(uint256 _rewardDistributionTimestamp) external onlyFactoryAdminAndAdmin {
+  function setRewardDistributionTimestamp(uint256 _rewardDistributionTimestamp) external onlyFactoryAdminOrAdmin {
     kickstarter.rewardDistributionTimestamp = _rewardDistributionTimestamp;
 
     emit RewardDistributionTimestampUpdated(_rewardDistributionTimestamp);
   }
 
-  function setStartTimestamp(uint256 _startTimestamp) external onlyFactoryAdminAndAdmin {
+  function setStartTimestamp(uint256 _startTimestamp) external onlyFactoryAdminOrAdmin {
     require(_startTimestamp < kickstarter.endTimestamp, "Start timestamp must be before end timestamp");
     kickstarter.startTimestamp = _startTimestamp;
 
     emit StartTimestampUpdated(_startTimestamp);
   }
 
-  function setEndTimestamp(uint256 _endTimestamp) external onlyFactoryAdminAndAdmin {
+  function setEndTimestamp(uint256 _endTimestamp) external onlyFactoryAdminOrAdmin {
     require(_endTimestamp > kickstarter.startTimestamp, "End timestamp must be after start timestamp");
     kickstarter.endTimestamp = _endTimestamp;
 
     emit EndTimestampUpdated(_endTimestamp);
   }
 
-  function configProjectInfo(Kickstarter calldata _kickstarter) external onlyFactoryAdminAndAdmin {
+  function configProjectInfo(Kickstarter calldata _kickstarter) external onlyFactoryAdminOrAdmin {
     require(_kickstarter.startTimestamp < _kickstarter.endTimestamp, "Start timestamp must be before end timestamp");
     require(
       approvalStatus == ApprovalStatus.PENDING || _kickstarter.paymentToken == kickstarter.paymentToken,

@@ -28,18 +28,22 @@ contract SummitKickstarterFactory is Ownable {
     _;
   }
 
-  function createProject(Kickstarter calldata kickstarter) external payable {
+  function createProject(
+    Kickstarter calldata _kickstarter,
+    string memory _contactMethod,
+    string memory _contactValue
+  ) external payable {
     require(msg.value >= serviceFee, "Service Fee is not enough");
     refundExcessiveFee();
 
-    SummitKickstarter project = new SummitKickstarter(msg.sender, kickstarter);
+    SummitKickstarter project = new SummitKickstarter(msg.sender, _kickstarter, _contactMethod, _contactValue);
 
     address projectAddress = address(project);
 
     projects.push(projectAddress);
     userProjects[_msgSender()].push(projectAddress);
 
-    emit ProjectCreated(projectAddress, kickstarter);
+    emit ProjectCreated(projectAddress, _kickstarter);
   }
 
   function getProjects() external view returns (address[] memory) {

@@ -26,6 +26,9 @@ describe("summitKickstarter", () => {
   const IMAGE_URL = "https://images.com/example.png";
   const PROJECT_DESCRIPTION = "This is a project description";
   const REWARD_DESCRIPTION = "This is a reward description";
+  const CONTACT_METHOD = "email";
+  const CONTACT_VALUE = "john.doe@example.com";
+  const CONTACT = [CONTACT_METHOD, CONTACT_VALUE];
 
   const MIN_CONTRIBUTION = 1000;
   const PROJECT_GOALS = 1000000;
@@ -52,6 +55,9 @@ describe("summitKickstarter", () => {
   const NEW_REWARD_DISTRIBUTION_TIMESTAMP = REWARD_DISTRIBUTION_TIMESTAMP + 1;
   const NEW_START_TIMESTAMP = START_TIMESTAMP + 1;
   const NEW_END_TIMESTAMP = END_TIMESTAMP + 1;
+  const NEW_CONTACT_METHOD = "instagram";
+  const NEW_CONTACT_VALUE = "john.doe";
+  const NEW_CONTACT = [NEW_CONTACT_METHOD, NEW_CONTACT_VALUE];
 
   let tokenA: DummyToken;
   let summitKickstarterFactory: SummitKickstarterFactory;
@@ -100,8 +106,12 @@ describe("summitKickstarter", () => {
 
     await summitKickstarterFactory.setAdmins([factoryAdminWallet.address], true);
 
-    await summitKickstarterFactory.createProject(getKickstarter(), { value: SERVICE_FEE });
-    await summitKickstarterFactory.createProject(getKickstarter(tokenA.address), { value: SERVICE_FEE });
+    await summitKickstarterFactory.createProject(getKickstarter(), CONTACT_METHOD, CONTACT_VALUE, {
+      value: SERVICE_FEE,
+    });
+    await summitKickstarterFactory.createProject(getKickstarter(tokenA.address), CONTACT_METHOD, CONTACT_VALUE, {
+      value: SERVICE_FEE,
+    });
 
     const projectWithBnbPaymentAddress = await summitKickstarterFactory.projects(0);
     const projectWithTokenAPaymentAddress = await summitKickstarterFactory.projects(1);
@@ -195,6 +205,37 @@ describe("summitKickstarter", () => {
     it(`should be pending`, async () => {
       const approvalStatus = await summitKickstarterWithBnbPayment.approvalStatus();
       assert.equal(approvalStatus.toString(), ApprovalStatus.PENDING.toString());
+    });
+  });
+
+  describe("getContact", async () => {
+    it("should be reverted when called by nonFactoryOwner or nonFactoryAdmin or nonAdmin or nonOwner", async () => {
+      await expect(summitKickstarterWithBnbPayment.connect(otherWallet).getContact()).to.be.revertedWith(
+        "Only admin or owner can call this function"
+      );
+    });
+    it("should be able to getContact if called by factoryOwner", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), CONTACT.toString());
+    });
+    it("should be able to getContact if called by factoryAdmin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(factoryAdminWallet).getContact()).toString(),
+        CONTACT.toString()
+      );
+    });
+    it("should be able to getContact if called by admin", async () => {
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(adminWallet).getContact()).toString(),
+        CONTACT.toString()
+      );
+    });
+    it("should be able to getContact if called by owner", async () => {
+      await summitKickstarterWithBnbPayment.transferOwnership(otherWallet.address);
+      assert.equal(otherWallet.address, (await summitKickstarterWithBnbPayment.owner()).toString());
+      assert.equal(
+        (await summitKickstarterWithBnbPayment.connect(otherWallet).getContact()).toString(),
+        CONTACT.toString()
+      );
     });
   });
 
@@ -431,6 +472,29 @@ describe("summitKickstarter", () => {
         (await summitKickstarterWithBnbPayment.connect(adminWallet).kickstarter()).projectDescription,
         NEW_PROJECT_DESCRIPTION
       );
+    });
+  });
+
+  describe("setContact", async () => {
+    it("should be reverted if called by nonFactoryOwner or nonFactoryAdmin or nonAdmin", async () => {
+      await expect(
+        summitKickstarterWithBnbPayment.connect(otherWallet).setContact(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE)
+      ).to.be.revertedWith("Only admin can call this function");
+    });
+    it("should be set by factoryOwner", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), CONTACT.toString());
+      await summitKickstarterWithBnbPayment.setContact(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
+      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), NEW_CONTACT.toString());
+    });
+    it("should be set by factoryAdmin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), CONTACT.toString());
+      await summitKickstarterWithBnbPayment.setContact(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
+      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), NEW_CONTACT.toString());
+    });
+    it("should be set by admin", async () => {
+      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), CONTACT.toString());
+      await summitKickstarterWithBnbPayment.setContact(NEW_CONTACT_METHOD, NEW_CONTACT_VALUE);
+      assert.equal((await summitKickstarterWithBnbPayment.getContact()).toString(), NEW_CONTACT.toString());
     });
   });
 

@@ -14,6 +14,8 @@ export async function deploySummitKickstarter() {
   const IMAGE_URL = "https://images.com/example.png";
   const PROJECT_DESCRIPTION = "SummitSwap Kickstarter";
   const REWARD_DESCRIPTION = "SummitSwap Kickstarter";
+  const CONTACT_METHOD = "email";
+  const CONTACT_VALUE = "john.doe@example.com";
   const MIN_CONTRIBUTION = utils.parseEther("0.01");
   const PROJECT_GOALS = utils.parseEther("0.1");
   const START_TIMESTAMP = dayjs().unix();
@@ -35,12 +37,12 @@ export async function deploySummitKickstarter() {
     endTimestamp: END_TIMESTAMP,
   };
 
-  const summitKickstarter = await SummitKickstarter.deploy(OWNER, kickstarter);
+  const summitKickstarter = await SummitKickstarter.deploy(OWNER, kickstarter, CONTACT_METHOD, CONTACT_VALUE);
   await summitKickstarter.deployed();
 
   console.log("SummitKickstarter deployed to:", summitKickstarter.address);
 
-  await tryVerify(summitKickstarter.address, [OWNER, kickstarter]);
+  await tryVerify(summitKickstarter.address, [OWNER, kickstarter, CONTACT_METHOD, CONTACT_VALUE]);
 
   return summitKickstarter;
 }

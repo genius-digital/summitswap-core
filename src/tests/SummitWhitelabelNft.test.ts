@@ -28,6 +28,7 @@ describe("SummitWhitelabelNft", () => {
   const tokenInfo: TokenInfoStruct = {
     name: "Test Token",
     symbol: "TST",
+    previewImageUrl: "https://w3s.link/ipfs/bafybeigyx3a574k6m3anlfd7ymis4nkcj6tfyuawy7einf73kzeijcuoiu/1662652834917",
     maxSupply: 100,
     whitelistMintPrice: parseEther("0.001"),
     publicMintPrice: parseEther("0.02"),
@@ -316,6 +317,20 @@ describe("SummitWhitelabelNft", () => {
       await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).phase, Phase.Public);
+    });
+  });
+
+  describe("setPreviewImageUrl", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNft.connect(minter).setPreviewImageUrl("")).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to enter public phase", async () => {
+      const newUrl = "google.com";
+      await summitWhitelabelNft.connect(nftOwner).setPreviewImageUrl(newUrl);
+
+      assert.equal((await summitWhitelabelNft.tokenInfo()).previewImageUrl, newUrl);
     });
   });
 

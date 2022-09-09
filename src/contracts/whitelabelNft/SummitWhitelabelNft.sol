@@ -16,6 +16,7 @@ enum Phase {
 struct TokenInfo {
   string name;
   string symbol;
+  string previewImageUrl;
   uint256 maxSupply;
   uint256 whitelistMintPrice;
   uint256 publicMintPrice;
@@ -36,6 +37,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   event WhitelistMintPriceUpdated(uint256 price);
   event PublicMintPriceUpdated(uint256 price);
   event Reveal(bool isReveal);
+  event PreviewImageUrlUpdated(string previewImageUrl);
 
   constructor(
     TokenInfo memory _tokenInfo,
@@ -120,6 +122,11 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   function enterPublicPhase() external onlyOwner {
     tokenInfo.phase = Phase.Public;
     emit PhaseUpdated(tokenInfo.phase);
+  }
+
+  function setPreviewImageUrl(string memory _previewImageUrl) external onlyOwner {
+    tokenInfo.previewImageUrl = _previewImageUrl;
+    emit PreviewImageUrlUpdated(tokenInfo.previewImageUrl);
   }
 
   function setWhitelistMintPrice(uint256 _whitelistMintPrice) external onlyOwner {

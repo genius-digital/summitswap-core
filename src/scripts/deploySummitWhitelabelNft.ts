@@ -23,12 +23,14 @@ async function main() {
   const tokenInfo: TokenInfoStruct = {
     name: "Summit Whitelabel NFT",
     symbol: "SWNFT",
+    previewImageUrl: "",
     maxSupply: 999,
     whitelistMintPrice: parseEther("0.001"),
     publicMintPrice: parseEther("0.002"),
     phase: 0,
+    isReveal: false,
   };
-  const initialUri = "ipfs://QmSAo4kt2N9mdgwTF5MREgSWHoF3CxwwmbhZV5M3u83SVg/";
+  const initialUri = "";
   const owner = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
 
   await deploySummitWhitelabelNft(tokenInfo, initialUri, owner);

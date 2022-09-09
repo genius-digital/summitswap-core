@@ -3,31 +3,26 @@ import { parseEther } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { tryVerify } from "./utils/verify";
 
-export async function deploySummitWhitelabelNftFactory(serviceFee: BigNumber, serviceFeeReceiver: string) {
+export async function deploySummitWhitelabelNftFactory(serviceFee: BigNumber) {
   console.log("Starting to deploy SummitWhitelabelNftFactory");
 
   const signerAddress = "0x3D2d8991370e34dd34b69B4CA09981d69146dFC1";
 
   const SummitWhitelabelNftFactory = await ethers.getContractFactory("SummitWhitelabelNftFactory");
-  const summitWhitelabelNftFactory = await SummitWhitelabelNftFactory.deploy(
-    serviceFee,
-    serviceFeeReceiver,
-    signerAddress
-  );
+  const summitWhitelabelNftFactory = await SummitWhitelabelNftFactory.deploy(serviceFee, signerAddress);
   await summitWhitelabelNftFactory.deployed();
 
   console.log("SummitWhitelabelNftFactory deployed to:", summitWhitelabelNftFactory.address);
 
-  await tryVerify(summitWhitelabelNftFactory.address, [serviceFee, serviceFeeReceiver, signerAddress]);
+  await tryVerify(summitWhitelabelNftFactory.address, [serviceFee, signerAddress]);
 
   return summitWhitelabelNftFactory;
 }
 
 async function main() {
   const serviceFee = parseEther("0.001");
-  const serviceFeeReceiver = "0x5f8397444c02c02BD1F20dAbAB42AFCdf396dacA";
 
-  await deploySummitWhitelabelNftFactory(serviceFee, serviceFeeReceiver);
+  await deploySummitWhitelabelNftFactory(serviceFee);
 }
 
 if (require.main === module) {

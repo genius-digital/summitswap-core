@@ -32,6 +32,7 @@ describe("SummitWhitelabelNft", () => {
     whitelistMintPrice: parseEther("0.001"),
     publicMintPrice: parseEther("0.02"),
     phase: Phase.Paused,
+    isReveal: false,
   };
   const mintAmount = 1;
 
@@ -68,17 +69,7 @@ describe("SummitWhitelabelNft", () => {
   describe("constructor", () => {
     it("should match with deployed values", async () => {
       const contractTokenInfo = await summitWhitelabelNft.tokenInfo();
-
-      assert.equal(await summitWhitelabelNft.name(), tokenInfo.name);
-      assert.equal(await summitWhitelabelNft.symbol(), tokenInfo.symbol);
-      assert.equal(await summitWhitelabelNft.baseTokenURI(), baseUri);
-      assert.equal(contractTokenInfo.name, tokenInfo.name);
-      assert.equal(contractTokenInfo.symbol, tokenInfo.symbol);
-      assert.equal(contractTokenInfo.maxSupply, tokenInfo.maxSupply);
-      assert.equal(contractTokenInfo.whitelistMintPrice.toString(), tokenInfo.whitelistMintPrice.toString());
-      assert.equal(contractTokenInfo.publicMintPrice.toString(), tokenInfo.publicMintPrice.toString());
-      assert.equal(contractTokenInfo.phase, tokenInfo.phase);
-      assert.equal(await summitWhitelabelNft.owner(), nftOwner.address);
+      assert.equal(contractTokenInfo.toString(), Object.values(tokenInfo).toString());
     });
   });
 
@@ -258,8 +249,11 @@ describe("SummitWhitelabelNft", () => {
         value: mintPrice.mul(mintAmount),
       });
 
+      const isReveal = (await summitWhitelabelNft.tokenInfo()).isReveal;
+
       const tokenId = (await summitWhitelabelNft.tokensOfOwner(minter.address))[0];
-      const tokenUri = `${baseUri + tokenId.toString()}.json`;
+      const filename = isReveal ? tokenId.toString() : "concealed";
+      const tokenUri = `${baseUri}${filename}.json`;
 
       assert.equal(await summitWhitelabelNft.tokenURI(tokenId), tokenUri);
     });
@@ -352,6 +346,19 @@ describe("SummitWhitelabelNft", () => {
       await summitWhitelabelNft.connect(nftOwner).setPublicMintPrice(newMintPrice);
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).publicMintPrice.toString(), newMintPrice.toString());
+    });
+  });
+
+  describe("toggleReveal", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNft.connect(minter).toggleIsReveal()).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to toggle isReveal", async () => {
+      assert.equal((await summitWhitelabelNft.tokenInfo()).isReveal, tokenInfo.isReveal);
+      await summitWhitelabelNft.connect(nftOwner).toggleIsReveal();
+      assert.equal((await summitWhitelabelNft.tokenInfo()).isReveal, !tokenInfo.isReveal);
     });
   });
 

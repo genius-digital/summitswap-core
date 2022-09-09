@@ -292,6 +292,11 @@ describe("SummitWhitelabelNft", () => {
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).phase, Phase.Paused);
     });
+    it("should emit event", async () => {
+      await expect(summitWhitelabelNft.connect(nftOwner).enterPausePhase())
+        .to.emit(summitWhitelabelNft, "PhaseUpdated")
+        .withArgs(Phase.Paused);
+    });
   });
 
   describe("enterWhitelistPhase", () => {
@@ -304,6 +309,11 @@ describe("SummitWhitelabelNft", () => {
       await summitWhitelabelNft.connect(nftOwner).enterWhitelistPhase();
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).phase, Phase.Whitelisted);
+    });
+    it("should emit event", async () => {
+      await expect(summitWhitelabelNft.connect(nftOwner).enterWhitelistPhase())
+        .to.emit(summitWhitelabelNft, "PhaseUpdated")
+        .withArgs(Phase.Whitelisted);
     });
   });
 
@@ -318,6 +328,11 @@ describe("SummitWhitelabelNft", () => {
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).phase, Phase.Public);
     });
+    it("should emit event", async () => {
+      await expect(summitWhitelabelNft.connect(nftOwner).enterPublicPhase())
+        .to.emit(summitWhitelabelNft, "PhaseUpdated")
+        .withArgs(Phase.Public);
+    });
   });
 
   describe("setPreviewImageUrl", () => {
@@ -331,6 +346,12 @@ describe("SummitWhitelabelNft", () => {
       await summitWhitelabelNft.connect(nftOwner).setPreviewImageUrl(newUrl);
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).previewImageUrl, newUrl);
+    });
+    it("should emit event", async () => {
+      const newUrl = "google.com";
+      await expect(summitWhitelabelNft.connect(nftOwner).setPreviewImageUrl(newUrl))
+        .to.emit(summitWhitelabelNft, "PreviewImageUrlUpdated")
+        .withArgs(newUrl);
     });
   });
 
@@ -347,6 +368,11 @@ describe("SummitWhitelabelNft", () => {
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).whitelistMintPrice.toString(), newMintPrice.toString());
     });
+    it("should emit event", async () => {
+      await expect(summitWhitelabelNft.connect(nftOwner).setWhitelistMintPrice(newMintPrice))
+        .to.emit(summitWhitelabelNft, "WhitelistMintPriceUpdated")
+        .withArgs(newMintPrice);
+    });
   });
 
   describe("setPublicMintPrice", () => {
@@ -362,6 +388,11 @@ describe("SummitWhitelabelNft", () => {
 
       assert.equal((await summitWhitelabelNft.tokenInfo()).publicMintPrice.toString(), newMintPrice.toString());
     });
+    it("should emit event", async () => {
+      await expect(summitWhitelabelNft.connect(nftOwner).setPublicMintPrice(newMintPrice))
+        .to.emit(summitWhitelabelNft, "PublicMintPriceUpdated")
+        .withArgs(newMintPrice);
+    });
   });
 
   describe("toggleReveal", () => {
@@ -374,6 +405,12 @@ describe("SummitWhitelabelNft", () => {
       assert.equal((await summitWhitelabelNft.tokenInfo()).isReveal, tokenInfo.isReveal);
       await summitWhitelabelNft.connect(nftOwner).toggleIsReveal();
       assert.equal((await summitWhitelabelNft.tokenInfo()).isReveal, !tokenInfo.isReveal);
+    });
+    it("should emit event", async () => {
+      const isReveal = (await summitWhitelabelNft.tokenInfo()).isReveal;
+      await expect(summitWhitelabelNft.connect(nftOwner).toggleIsReveal())
+        .to.emit(summitWhitelabelNft, "IsRevealUpdated")
+        .withArgs(!isReveal);
     });
   });
 

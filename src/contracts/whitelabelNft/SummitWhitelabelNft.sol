@@ -36,7 +36,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   event PhaseUpdated(Phase phase);
   event WhitelistMintPriceUpdated(uint256 price);
   event PublicMintPriceUpdated(uint256 price);
-  event Reveal(bool isReveal);
+  event IsRevealUpdated(bool isReveal);
   event PreviewImageUrlUpdated(string previewImageUrl);
 
   constructor(
@@ -141,7 +141,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
   function toggleIsReveal() external onlyOwner {
     tokenInfo.isReveal = !tokenInfo.isReveal;
-    emit Reveal(tokenInfo.isReveal);
+    emit IsRevealUpdated(tokenInfo.isReveal);
   }
 
   function withdraw(address _receipient) external onlyOwner {

@@ -32,7 +32,6 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
   address public immutable signer;
 
-  event Mint(address indexed recipient, uint256 mintCount, uint256 price, Phase phase, uint256 timestamp);
   event PhaseUpdated(Phase phase);
   event WhitelistMintPriceUpdated(uint256 price);
   event PublicMintPriceUpdated(uint256 price);
@@ -85,8 +84,6 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
       }
     }
     _safeMint(_to, _mintAmount);
-
-    emit Mint(_to, _mintAmount, price, tokenInfo.phase, block.timestamp);
   }
 
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {

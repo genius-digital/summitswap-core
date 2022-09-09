@@ -20,6 +20,7 @@ struct TokenInfo {
   uint256 whitelistMintPrice;
   uint256 publicMintPrice;
   Phase phase;
+  bool isReveal;
 }
 
 contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
@@ -34,6 +35,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   event PhaseUpdated(Phase phase);
   event WhitelistMintPriceUpdated(uint256 price);
   event PublicMintPriceUpdated(uint256 price);
+  event Reveal(bool isReveal);
 
   constructor(
     TokenInfo memory _tokenInfo,
@@ -88,8 +90,8 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
     require(_exists(tokenId), "tokenId not exists");
     string memory currentBaseURI = _baseURI();
-    return
-      bytes(currentBaseURI).length > 0 ? string(abi.encodePacked(currentBaseURI, tokenId.toString(), ".json")) : "";
+    string memory filename = tokenInfo.isReveal ? tokenId.toString() : "concealed";
+    return bytes(currentBaseURI).length > 0 ? string(abi.encodePacked(currentBaseURI, filename, ".json")) : "";
   }
 
   function isSignatureValid(address _whitelistAddress, bytes memory signature) private view returns (bool) {
@@ -128,6 +130,11 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   function setPublicMintPrice(uint256 _publicMintPrice) external onlyOwner {
     tokenInfo.publicMintPrice = _publicMintPrice;
     emit PublicMintPriceUpdated(_publicMintPrice);
+  }
+
+  function toggleIsReveal() external onlyOwner {
+    tokenInfo.isReveal = !tokenInfo.isReveal;
+    emit Reveal(tokenInfo.isReveal);
   }
 
   function withdraw(address _receipient) external onlyOwner {

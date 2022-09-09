@@ -18,10 +18,12 @@ describe("SummitWhitelabelNftFactory", () => {
   const tokenInfo: TokenInfoStruct = {
     name: "Test Token",
     symbol: "TST",
+    previewImageUrl: "https://w3s.link/ipfs/bafybeigyx3a574k6m3anlfd7ymis4nkcj6tfyuawy7einf73kzeijcuoiu/1662652834917",
     maxSupply: 100,
     whitelistMintPrice: parseEther("0.001"),
     publicMintPrice: parseEther("0.02"),
     phase: 0, // 0 = paused, 1 = whitelisted, 2 = public
+    isReveal: false,
   };
 
   beforeEach(async () => {
@@ -74,19 +76,6 @@ describe("SummitWhitelabelNftFactory", () => {
       const diffWallet1Balance = finalWallet1Balance.sub(initialWallet1Balance).add(gasCost).abs();
 
       assert.equal(diffWallet1Balance.toString(), serviceFee.toString());
-    });
-    it("should be able to send fee to serviceFeeReceiver", async () => {
-      const initialServiceFeeBalance = await provider.getBalance(serviceFeeReceiver.address);
-
-      await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
-        value: serviceFee,
-      });
-
-      const finalServiceFeeBalance = await provider.getBalance(serviceFeeReceiver.address);
-
-      const diffServiceFeeBalance = finalServiceFeeBalance.sub(initialServiceFeeBalance).abs();
-
-      assert.equal(diffServiceFeeBalance.toString(), serviceFee.toString());
     });
     it("should emit CreateNft event", async () => {
       await expect(
@@ -153,8 +142,7 @@ describe("SummitWhitelabelNftFactory", () => {
 
   describe("withdraw", () => {
     beforeEach(async () => {
-      await wallet1.sendTransaction({
-        to: summitWhitelabelNftFactory.address,
+      await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
         value: serviceFee,
       });
       await summitWhitelabelNftFactory.connect(owner).addWithdrawOperators([withdrawOperator.address]);

@@ -41,7 +41,6 @@ contract SummitWhitelabelNftFactory is Ownable {
     userNfts[_collectionOwner].push(nftAddress);
 
     refundExcessiveFee();
-    sendFee();
 
     emit CreateNft(_collectionOwner, nftAddress, _tokenInfo);
   }
@@ -52,13 +51,6 @@ contract SummitWhitelabelNftFactory is Ownable {
 
   function nftsOf(address _collectionOwner) external view returns (address[] memory) {
     return userNfts[_collectionOwner];
-  }
-
-  function sendFee() internal virtual {
-    if (serviceFeeReceiver != address(this) && serviceFeeReceiver != address(0)) {
-      (bool success, ) = address(serviceFeeReceiver).call{value: serviceFee}("");
-      require(success, "Unable to send fee Ether");
-    }
   }
 
   function refundExcessiveFee() internal virtual {

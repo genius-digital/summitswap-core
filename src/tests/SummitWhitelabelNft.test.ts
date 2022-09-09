@@ -15,8 +15,7 @@ enum Phase {
 }
 
 describe("SummitWhitelabelNft", () => {
-  const [owner, nftOwner, signer, serviceFeeReceiver, whitelistMinter1, whitelistMinter2, minter] =
-    provider.getWallets();
+  const [owner, nftOwner, signer, whitelistMinter1, whitelistMinter2, minter] = provider.getWallets();
 
   let summitWhitelabelNftFactory: SummitWhitelabelNftFactory;
   let summitWhitelabelNft: SummitWhitelabelNft;
@@ -40,7 +39,6 @@ describe("SummitWhitelabelNft", () => {
   beforeEach(async () => {
     summitWhitelabelNftFactory = (await deployContract(owner, SummitWhitelabelNftFactoryArtifact, [
       serviceFee,
-      serviceFeeReceiver.address,
       signer.address,
     ])) as SummitWhitelabelNftFactory;
 

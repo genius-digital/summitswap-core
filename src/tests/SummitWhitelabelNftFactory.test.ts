@@ -8,8 +8,7 @@ import { waffle } from "hardhat";
 const { deployContract, provider } = waffle;
 
 describe("SummitWhitelabelNftFactory", () => {
-  const [owner, signer, serviceFeeReceiver, wallet1, wallet2, withdrawReceiver, withdrawOperator] =
-    provider.getWallets();
+  const [owner, signer, wallet1, wallet2, withdrawReceiver, withdrawOperator] = provider.getWallets();
 
   let summitWhitelabelNftFactory: SummitWhitelabelNftFactory;
 
@@ -29,7 +28,6 @@ describe("SummitWhitelabelNftFactory", () => {
   beforeEach(async () => {
     summitWhitelabelNftFactory = (await deployContract(owner, SummitWhitelabelNftFactoryArtifact, [
       serviceFee,
-      serviceFeeReceiver.address,
       signer.address,
     ])) as SummitWhitelabelNftFactory;
   });
@@ -37,7 +35,6 @@ describe("SummitWhitelabelNftFactory", () => {
   describe("constructor", () => {
     it("should match with deployed values", async () => {
       assert.equal((await summitWhitelabelNftFactory.serviceFee()).toString(), serviceFee.toString());
-      assert.equal(await summitWhitelabelNftFactory.serviceFeeReceiver(), serviceFeeReceiver.address);
     });
   });
 
@@ -125,18 +122,6 @@ describe("SummitWhitelabelNftFactory", () => {
       const newServiceFee = parseEther("1");
       await summitWhitelabelNftFactory.connect(owner).setServiceFee(newServiceFee);
       assert((await summitWhitelabelNftFactory.serviceFee()).toString(), newServiceFee.toString());
-    });
-  });
-
-  describe("setServiceFeeReceiver", () => {
-    it("should be reverted if called by non-owner", async () => {
-      await expect(
-        summitWhitelabelNftFactory.connect(wallet1).setServiceFeeReceiver(wallet2.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-    });
-    it("should be able to set a new serviceFeeReceiver", async () => {
-      await summitWhitelabelNftFactory.connect(owner).setServiceFeeReceiver(wallet2.address);
-      assert(await summitWhitelabelNftFactory.serviceFeeReceiver(), wallet2.address);
     });
   });
 

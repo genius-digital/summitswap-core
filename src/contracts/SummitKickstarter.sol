@@ -11,7 +11,6 @@ contract SummitKickstarter is Ownable {
   mapping(address => bool) public isAdmin;
   mapping(address => uint256) public contributions;
   mapping(address => uint256) public contributorIndexes;
-  mapping(address => string) public emails;
 
   address[] public contributors;
   address public factory;
@@ -26,10 +25,7 @@ contract SummitKickstarter is Ownable {
 
   string public rejectedReason;
 
-  string private contactMethod;
-  string private contactValue;
-
-  event Contribute(address indexed contributor, string email, uint256 amount, uint256 timestamp);
+  event Contribute(address indexed contributor, uint256 amount, uint256 timestamp);
   event KickstarterUpdated(Kickstarter kickstarter);
   event KickstarterUpdatedByFactoryAdmin(
     Kickstarter kickstarter,
@@ -56,18 +52,11 @@ contract SummitKickstarter is Ownable {
   event Approved(uint256 percentageFeeAmount, uint256 fixFeeAmount);
   event Rejected(string rejectedReason);
 
-  constructor(
-    address _owner,
-    Kickstarter memory _kickstarter,
-    string memory _contactMethod,
-    string memory _contactValue
-  ) {
+  constructor(address _owner, Kickstarter memory _kickstarter) {
     transferOwnership(_owner);
 
     factory = msg.sender;
     kickstarter = _kickstarter;
-    contactMethod = _contactMethod;
-    contactValue = _contactValue;
   }
 
   receive() external payable {}
@@ -106,11 +95,7 @@ contract SummitKickstarter is Ownable {
     return contributors;
   }
 
-  function getContactDetails() external view onlyFactoryAdminOrAdminOrOwner returns (string[2] memory) {
-    return [contactMethod, contactValue];
-  }
-
-  function contribute(string memory _email, uint256 _amount) external payable {
+  function contribute(uint256 _amount) external payable {
     require(approvalStatus == ApprovalStatus.APPROVED, "Kickstarter is not Approved");
     if (address(kickstarter.paymentToken) == address(0)) {
       require(msg.value >= _amount, "Insufficient contribution amount");
@@ -132,14 +117,13 @@ contract SummitKickstarter is Ownable {
     }
 
     contributions[msg.sender] += _amount;
-    emails[msg.sender] = _email;
 
     if ((contributorIndexes[msg.sender] == 0 && contributors.length > 0) || contributors.length == 0) {
       contributorIndexes[msg.sender] = contributors.length;
       contributors.push(msg.sender);
     }
 
-    emit Contribute(msg.sender, _email, _amount, block.timestamp);
+    emit Contribute(msg.sender, _amount, block.timestamp);
   }
 
   function refundExcessiveFee(uint256 _refundAmount) internal virtual {
@@ -184,16 +168,6 @@ contract SummitKickstarter is Ownable {
     kickstarter.rewardDescription = _rewardDescription;
 
     emit RewardDescriptionUpdated(_rewardDescription);
-  }
-
-  function setContactDetails(string memory _contactMethod, string memory _contactValue)
-    external
-    onlyFactoryAdminOrAdmin
-  {
-    require(bytes(_contactMethod).length > 0, "Contact method cannot be empty");
-    require(bytes(_contactValue).length > 0, "Contact value cannot be empty");
-    contactMethod = _contactMethod;
-    contactValue = _contactValue;
   }
 
   function setMinContribution(uint256 _minContribution) external onlyFactoryAdminOrAdmin {

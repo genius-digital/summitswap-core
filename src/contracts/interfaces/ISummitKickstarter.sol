@@ -12,8 +12,6 @@ interface ISummitKickstarter {
 
   function contributorIndexes(address _walletAddress) external view returns (uint256);
 
-  function emails(address _walletAddress) external view returns (string memory);
-
   function contributors() external view returns (address[] memory);
 
   function factory() external view returns (address);
@@ -32,7 +30,7 @@ interface ISummitKickstarter {
 
   function getContributors() external view returns (address[] memory);
 
-  function contribute(string memory _email, uint256 _amount) external payable;
+  function contribute(uint256 _amount) external payable;
 
   function setTitle(string memory _title) external;
 

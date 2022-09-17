@@ -2749,12 +2749,6 @@ describe("SummitCustomPresale", () => {
       await expect(
         customPresale.connect(owner).withdrawLpTokens([pairAddressSummit, presaleToken.address], otherWallet1.address)
       ).to.be.revertedWith("address is presale token");
-      await expect(
-        customPresale.connect(owner).withdrawLpTokens([ZERO_ADDRESS, pairAddressPancake], otherWallet1.address)
-      ).to.be.revertedWith("address is paymentToken");
-      await expect(
-        customPresale.connect(owner).withdrawLpTokens([pairAddressSummit, ZERO_ADDRESS], otherWallet1.address)
-      ).to.be.revertedWith("address is paymentToken");
     });
 
     it("should owner be able to withdraw lpTokens and send lpTokens to otherWallet", async () => {

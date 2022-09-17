@@ -487,11 +487,16 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     require(startDateClaim != 0, "Claim phase has not started");
     require(startDateClaim + presale.liquidityLockTime < block.timestamp, "Lp Tokens are locked");
     require(addresses[0] != presale.presaleToken && addresses[1] != presale.presaleToken, "address is presale token");
-    require(addresses[0] != feeInfo.paymentToken && addresses[1] != feeInfo.paymentToken, "address is paymentToken");
-    uint256 lpBal0 = IERC20(addresses[0]).balanceOf(address(this));
-    uint256 lpBal1 = IERC20(addresses[1]).balanceOf(address(this));
-    if (lpBal0 > 0) IERC20(addresses[0]).transfer(_receiver, lpBal0);
-    if (lpBal1 > 0) IERC20(addresses[1]).transfer(_receiver, lpBal1);
+    if (addresses[0] != address(0)) {
+      require(feeInfo.paymentToken == address(0) || addresses[0] != feeInfo.paymentToken, "address0 is paymentToken");
+      uint256 lpBal0 = IERC20(addresses[0]).balanceOf(address(this));
+      if (lpBal0 > 0) IERC20(addresses[0]).transfer(_receiver, lpBal0);
+    }
+    if (addresses[1] != address(0)) {
+      require(feeInfo.paymentToken == address(0) || addresses[1] != feeInfo.paymentToken, "address1 is paymentToken");
+      uint256 lpBal1 = IERC20(addresses[1]).balanceOf(address(this));
+      if (lpBal1 > 0) IERC20(addresses[1]).transfer(_receiver, lpBal1);
+    }
   }
 
   function toggleWhitelistPhase() external onlyOwner {

@@ -33,7 +33,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
   address public immutable signer;
 
-  event PhaseUpdated(Phase phase);
+  event PhaseUpdated(Phase previousPhase, Phase updatedPhase);
   event WhitelistMintPriceUpdated(uint256 price);
   event PublicMintPriceUpdated(uint256 price);
   event IsRevealUpdated(bool isReveal);
@@ -108,18 +108,21 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   }
 
   function enterPausePhase() external onlyOwner {
+    Phase previousPhase = tokenInfo.phase;
     tokenInfo.phase = Phase.Pause;
-    emit PhaseUpdated(tokenInfo.phase);
+    emit PhaseUpdated(previousPhase, tokenInfo.phase);
   }
 
   function enterWhitelistPhase() external onlyOwner {
+    Phase previousPhase = tokenInfo.phase;
     tokenInfo.phase = Phase.Whitelist;
-    emit PhaseUpdated(tokenInfo.phase);
+    emit PhaseUpdated(previousPhase, tokenInfo.phase);
   }
 
   function enterPublicPhase() external onlyOwner {
+    Phase previousPhase = tokenInfo.phase;
     tokenInfo.phase = Phase.Public;
-    emit PhaseUpdated(tokenInfo.phase);
+    emit PhaseUpdated(previousPhase, tokenInfo.phase);
   }
 
   function setPreviewImageUrl(string memory _previewImageUrl) external onlyOwner {

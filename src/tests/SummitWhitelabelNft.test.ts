@@ -294,7 +294,7 @@ describe("SummitWhitelabelNft", () => {
     it("should emit event", async () => {
       await expect(summitWhitelabelNft.connect(nftOwner).enterPausePhase())
         .to.emit(summitWhitelabelNft, "PhaseUpdated")
-        .withArgs(Phase.Paused);
+        .withArgs(Phase.Paused, Phase.Paused);
     });
   });
 
@@ -312,7 +312,7 @@ describe("SummitWhitelabelNft", () => {
     it("should emit event", async () => {
       await expect(summitWhitelabelNft.connect(nftOwner).enterWhitelistPhase())
         .to.emit(summitWhitelabelNft, "PhaseUpdated")
-        .withArgs(Phase.Whitelisted);
+        .withArgs(Phase.Paused, Phase.Whitelisted);
     });
   });
 
@@ -330,7 +330,7 @@ describe("SummitWhitelabelNft", () => {
     it("should emit event", async () => {
       await expect(summitWhitelabelNft.connect(nftOwner).enterPublicPhase())
         .to.emit(summitWhitelabelNft, "PhaseUpdated")
-        .withArgs(Phase.Public);
+        .withArgs(Phase.Paused, Phase.Public);
     });
   });
 

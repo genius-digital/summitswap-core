@@ -23,6 +23,7 @@ async function main() {
   const tokenInfo: TokenInfoStruct = {
     name: "Summit Whitelabel NFT",
     symbol: "SWNFT",
+    description: "",
     previewImageUrl: "",
     maxSupply: 999,
     whitelistMintPrice: parseEther("0.001"),

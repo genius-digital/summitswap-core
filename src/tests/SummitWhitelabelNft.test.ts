@@ -27,6 +27,7 @@ describe("SummitWhitelabelNft", () => {
   const tokenInfo: TokenInfoStruct = {
     name: "Test Token",
     symbol: "TST",
+    description: "lorem",
     previewImageUrl: "https://w3s.link/ipfs/bafybeigyx3a574k6m3anlfd7ymis4nkcj6tfyuawy7einf73kzeijcuoiu/1662652834917",
     maxSupply: 100,
     whitelistMintPrice: parseEther("0.001"),

@@ -16,6 +16,7 @@ enum Phase {
 struct TokenInfo {
   string name;
   string symbol;
+  string description;
   string previewImageUrl;
   uint256 maxSupply;
   uint256 whitelistMintPrice;

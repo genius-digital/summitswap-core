@@ -13,6 +13,7 @@ describe("SummitWhitelabelNftFactory", () => {
   let summitWhitelabelNftFactory: SummitWhitelabelNftFactory;
 
   const serviceFee = parseEther("0.001");
+  const withdrawFee = parseEther("0.001");
   const baseUri = "ipfs://QmSAo4kt2N9mdgwTF5MREgSWHoF3CxwwmbhZV5M3u83SVg/";
   const tokenInfo: TokenInfoStruct = {
     name: "Test Token",
@@ -30,6 +31,7 @@ describe("SummitWhitelabelNftFactory", () => {
   beforeEach(async () => {
     summitWhitelabelNftFactory = (await deployContract(owner, SummitWhitelabelNftFactoryArtifact, [
       serviceFee,
+      withdrawFee,
       signer.address,
     ])) as SummitWhitelabelNftFactory;
   });
@@ -37,6 +39,8 @@ describe("SummitWhitelabelNftFactory", () => {
   describe("constructor", () => {
     it("should match with deployed values", async () => {
       assert.equal((await summitWhitelabelNftFactory.serviceFee()).toString(), serviceFee.toString());
+      assert.equal((await summitWhitelabelNftFactory.withdrawFee()).toString(), withdrawFee.toString());
+      assert.equal(await summitWhitelabelNftFactory.callStatic.signer(), signer.address);
     });
   });
 
@@ -124,6 +128,20 @@ describe("SummitWhitelabelNftFactory", () => {
       const newServiceFee = parseEther("1");
       await summitWhitelabelNftFactory.connect(owner).setServiceFee(newServiceFee);
       assert((await summitWhitelabelNftFactory.serviceFee()).toString(), newServiceFee.toString());
+    });
+  });
+
+  describe("setWithdrawFee", () => {
+    it("should be reverted if called by non-owner", async () => {
+      const newWithdrawFee = parseEther("1");
+      await expect(summitWhitelabelNftFactory.connect(wallet1).setWithdrawFee(newWithdrawFee)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to set a new withdrawFee", async () => {
+      const newWithdrawFee = parseEther("1");
+      await summitWhitelabelNftFactory.connect(owner).setWithdrawFee(newWithdrawFee);
+      assert((await summitWhitelabelNftFactory.withdrawFee()).toString(), newWithdrawFee.toString());
     });
   });
 

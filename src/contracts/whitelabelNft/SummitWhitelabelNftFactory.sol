@@ -12,12 +12,18 @@ contract SummitWhitelabelNftFactory is Ownable {
   mapping(address => bool) public isWithdrawOperator;
 
   uint256 public serviceFee;
+  uint256 public withdrawFee;
   address public signer;
 
   event CreateNft(address indexed owner, address indexed nftAddress, TokenInfo tokenInfo);
 
-  constructor(uint256 _serviceFee, address _signer) {
+  constructor(
+    uint256 _serviceFee,
+    uint256 _withdrawFee,
+    address _signer
+  ) {
     serviceFee = _serviceFee;
+    withdrawFee = _withdrawFee;
     signer = _signer;
   }
 
@@ -62,6 +68,10 @@ contract SummitWhitelabelNftFactory is Ownable {
 
   function setServiceFee(uint256 _serviceFee) external onlyOwner {
     serviceFee = _serviceFee;
+  }
+
+  function setWithdrawFee(uint256 _withdrawFee) external onlyOwner {
+    withdrawFee = _withdrawFee;
   }
 
   function addWithdrawOperators(address[] calldata _operators) external onlyOwner {

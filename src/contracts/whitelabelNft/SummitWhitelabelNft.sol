@@ -45,14 +45,15 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     TokenInfo memory _tokenInfo,
     string memory _initialURI,
     address _owner,
-    address _signer
+    address _signer,
+    address _factory
   ) ERC721A(_tokenInfo.name, _tokenInfo.symbol) BaseTokenURI(_initialURI) {
     tokenInfo = _tokenInfo;
 
     signer = _signer;
 
     transferOwnership(_owner);
-    factory = ISummitWhitelabelNftFactory(_msgSender());
+    factory = ISummitWhitelabelNftFactory(_factory);
   }
 
   function _baseURI() internal view override(BaseTokenURI, ERC721A) returns (string memory) {

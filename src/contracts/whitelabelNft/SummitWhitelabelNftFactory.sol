@@ -34,7 +34,7 @@ contract SummitWhitelabelNftFactory is Ownable {
 
     address _collectionOwner = _msgSender();
 
-    SummitWhitelabelNft nft = new SummitWhitelabelNft(_tokenInfo, _initialURI, _collectionOwner, signer);
+    SummitWhitelabelNft nft = new SummitWhitelabelNft(_tokenInfo, _initialURI, _collectionOwner, signer, address(this));
     address nftAddress = address(nft);
 
     nfts.push(nftAddress);

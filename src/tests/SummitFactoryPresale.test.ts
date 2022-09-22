@@ -584,6 +584,7 @@ describe("SummitFactoryPresale", () => {
           .updatePresaleAndApprove(
             { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken.address },
             feeInfo,
+            projectDetails,
             tokenPresales[0]
           )
       ).to.be.revertedWith("Presale not in pending presales.");
@@ -599,6 +600,7 @@ describe("SummitFactoryPresale", () => {
           .updatePresaleAndApprove(
             { ...presaleInfo, router0: summitRouter.address, presaleToken: presaleToken2.address },
             feeInfo,
+            projectDetails,
             tokenPresales[0]
           )
       ).to.be.revertedWith("Presale token should be same");
@@ -615,6 +617,7 @@ describe("SummitFactoryPresale", () => {
             presalePrice: parseEther(presalePrice).add(1),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("Presale price should be same");
@@ -631,6 +634,7 @@ describe("SummitFactoryPresale", () => {
             listingPrice: parseEther(listingPrice).add(1),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("listingPrice should be same");
@@ -647,6 +651,7 @@ describe("SummitFactoryPresale", () => {
             hardCap: parseEther(hardCap).add(1),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("hardCap should be same");
@@ -663,6 +668,7 @@ describe("SummitFactoryPresale", () => {
             liquidityPercentage: ((liquidityPercentage + 1) * FEE_DENOMINATOR) / 100,
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("liquidityPercentage should be same");
@@ -679,6 +685,7 @@ describe("SummitFactoryPresale", () => {
             startPresaleTime: dayjs().unix(),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("startPresaleTime >= set startPresaleTime");
@@ -695,6 +702,7 @@ describe("SummitFactoryPresale", () => {
             endPresaleTime: dayjs().unix(),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("endPresaleTime >= startPresaleTime");
@@ -711,6 +719,7 @@ describe("SummitFactoryPresale", () => {
             softCap: parseEther(softCap).sub("1"),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("50% of hardcap <= softcap <= hardcap");
@@ -723,6 +732,7 @@ describe("SummitFactoryPresale", () => {
             softCap: parseEther(hardCap).add("1"),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("50% of hardcap <= softcap <= hardcap");
@@ -739,6 +749,7 @@ describe("SummitFactoryPresale", () => {
             claimIntervalDay: 0,
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("claimIntervalDay should be between 1 & 31");
@@ -751,6 +762,7 @@ describe("SummitFactoryPresale", () => {
             claimIntervalDay: 32,
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("claimIntervalDay should be between 1 & 31");
@@ -767,6 +779,7 @@ describe("SummitFactoryPresale", () => {
             claimIntervalHour: 24,
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("claimIntervalHour should be between 0 & 23");
@@ -783,6 +796,7 @@ describe("SummitFactoryPresale", () => {
             minBuy: parseEther(maxBuy),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("MinBuy should be less than maxBuy");
@@ -799,6 +813,7 @@ describe("SummitFactoryPresale", () => {
             maxBuy: parseEther(hardCap).add("1"),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("maxBuy should be less than hardCap");
@@ -815,6 +830,7 @@ describe("SummitFactoryPresale", () => {
             maxClaimPercentage: (0.9 * FEE_DENOMINATOR) / 100,
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("maxClaimPercentage should be between 1% & 100%");
@@ -828,6 +844,7 @@ describe("SummitFactoryPresale", () => {
             maxClaimPercentage: (101 * FEE_DENOMINATOR) / 100,
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("maxClaimPercentage should be between 1% & 100%");
@@ -843,6 +860,7 @@ describe("SummitFactoryPresale", () => {
             presaleToken: presaleToken.address,
           },
           { ...feeInfo, feeEmergencyWithdraw: (0.9 * FEE_DENOMINATOR) / 100 },
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("feeEmergencyWithdraw should be between 1% & 100%");
@@ -855,6 +873,7 @@ describe("SummitFactoryPresale", () => {
             presaleToken: presaleToken.address,
           },
           { ...feeInfo, feeEmergencyWithdraw: (0.9 * FEE_DENOMINATOR) / 100 },
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("feeEmergencyWithdraw should be between 1% & 100%");
@@ -870,6 +889,7 @@ describe("SummitFactoryPresale", () => {
             presaleToken: presaleToken.address,
           },
           { ...feeInfo, feePaymentToken: ((liquidityPercentage + 1) * FEE_DENOMINATOR) / 100 },
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("fee payment Token should be less than liquidityPercentage");
@@ -885,6 +905,7 @@ describe("SummitFactoryPresale", () => {
             presaleToken: presaleToken.address,
           },
           { ...feeInfo, feePresaleToken: ((liquidityPercentage + 1) * FEE_DENOMINATOR) / 100 },
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("fee presale Token should be less than liquidityPercentage");
@@ -901,6 +922,7 @@ describe("SummitFactoryPresale", () => {
             refundType: 2,
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("refundType should be between 0 or 1");
@@ -917,6 +939,7 @@ describe("SummitFactoryPresale", () => {
             listingChoice: 4,
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("listingChoice should be between 0 & 3");
@@ -939,6 +962,7 @@ describe("SummitFactoryPresale", () => {
             softCap: parseEther(softCap).add("1"),
           },
           feeInfo,
+          projectDetails,
           tokenPresales[0]
         )
       ).to.be.revertedWith("Only admin or owner can call this function");
@@ -972,6 +996,7 @@ describe("SummitFactoryPresale", () => {
           feePaymentToken: (4 * FEE_DENOMINATOR) / 100,
           feeEmergencyWithdraw: (1 * FEE_DENOMINATOR) / 100,
         },
+        projectDetails,
         tokenPresales[0],
         {
           gasLimit: 30000000,

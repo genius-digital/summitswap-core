@@ -27,5 +27,9 @@ interface ISummitCustomPresale {
 
   function getPresaleInfo() external view returns (PresaleInfo memory);
 
-  function updatePresaleAndApprove(PresaleInfo memory _presale, PresaleFeeInfo memory _feeInfo) external;
+  function updatePresaleAndApprove(
+    PresaleInfo memory _presale,
+    PresaleFeeInfo memory _feeInfo,
+    string[8] memory _projectDetails
+  ) external;
 }

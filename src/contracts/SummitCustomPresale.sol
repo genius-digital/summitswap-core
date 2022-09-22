@@ -275,13 +275,18 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     path[0] = ISummitswapRouter02(presale.router0).WETH();
     path[1] = presale.listingToken;
 
-    uint256[] memory amounts = ISummitswapRouter02(presale.router0).swapExactETHForTokens{value: amountRaised}(
+    ISummitswapRouter02(presale.router0).swapExactETHForTokens{value: amountRaised}(
       0,
       path,
       address(this),
       block.timestamp
     );
-    _addLiquidityTokens(amountToken, amounts[1], presale.listingToken, presale.router0);
+    _addLiquidityTokens(
+      amountToken,
+      IERC20(presale.listingToken).balanceOf(address(this)),
+      presale.listingToken,
+      presale.router0
+    );
   }
 
   function swapTokenForETHAndLiquify(uint256 amountToken, uint256 amountRaised) private {
@@ -307,14 +312,19 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     path[2] = presale.listingToken;
 
     IERC20(feeInfo.paymentToken).approve(presale.router0, amountRaised);
-    uint256[] memory amounts = ISummitswapRouter02(presale.router0).swapExactTokensForTokens(
+    ISummitswapRouter02(presale.router0).swapExactTokensForTokens(
       amountRaised,
       0,
       path,
       address(this),
       block.timestamp
     );
-    _addLiquidityTokens(amountToken, amounts[2], presale.listingToken, presale.router0);
+    _addLiquidityTokens(
+      amountToken,
+      IERC20(presale.listingToken).balanceOf(address(this)),
+      presale.listingToken,
+      presale.router0
+    );
   }
 
   function _addLiquidityETH(
@@ -477,11 +487,16 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     require(startDateClaim != 0, "Claim phase has not started");
     require(startDateClaim + presale.liquidityLockTime < block.timestamp, "Lp Tokens are locked");
     require(addresses[0] != presale.presaleToken && addresses[1] != presale.presaleToken, "address is presale token");
-    require(addresses[0] != feeInfo.paymentToken && addresses[1] != feeInfo.paymentToken, "address is paymentToken");
-    uint256 lpBal0 = IERC20(addresses[0]).balanceOf(address(this));
-    uint256 lpBal1 = IERC20(addresses[1]).balanceOf(address(this));
-    if (lpBal0 > 0) IERC20(addresses[0]).transfer(_receiver, lpBal0);
-    if (lpBal1 > 0) IERC20(addresses[1]).transfer(_receiver, lpBal1);
+    if (addresses[0] != address(0)) {
+      require(feeInfo.paymentToken == address(0) || addresses[0] != feeInfo.paymentToken, "address0 is paymentToken");
+      uint256 lpBal0 = IERC20(addresses[0]).balanceOf(address(this));
+      if (lpBal0 > 0) IERC20(addresses[0]).transfer(_receiver, lpBal0);
+    }
+    if (addresses[1] != address(0)) {
+      require(feeInfo.paymentToken == address(0) || addresses[1] != feeInfo.paymentToken, "address1 is paymentToken");
+      uint256 lpBal1 = IERC20(addresses[1]).balanceOf(address(this));
+      if (lpBal1 > 0) IERC20(addresses[1]).transfer(_receiver, lpBal1);
+    }
   }
 
   function toggleWhitelistPhase() external onlyOwner {
@@ -503,10 +518,15 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     IERC20(feeInfo.paymentToken).transfer(_receiver, _amount);
   }
 
-  function updatePresaleAndApprove(PresaleInfo memory _presale, PresaleFeeInfo memory _feeInfo) external onlyAdmin {
+  function updatePresaleAndApprove(
+    PresaleInfo memory _presale,
+    PresaleFeeInfo memory _feeInfo,
+    string[8] memory _projectDetails
+  ) external onlyAdmin {
     require(!presale.isApproved, "Presale is approved");
     presale = _presale;
     feeInfo = _feeInfo;
+    projectDetails = _projectDetails;
     presale.isApproved = true;
     presale.isPresaleCancelled = false;
     presale.isClaimPhase = false;

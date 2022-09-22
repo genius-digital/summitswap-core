@@ -4,6 +4,7 @@
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../shared/BaseTokenURI.sol";
+import "../interfaces/ISummitWhitelabelNftFactory.sol";
 
 pragma solidity ^0.8.6;
 
@@ -30,6 +31,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   using ECDSA for bytes32;
 
   TokenInfo public tokenInfo;
+  ISummitWhitelabelNftFactory public factory;
 
   address public immutable signer;
 
@@ -50,6 +52,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     signer = _signer;
 
     transferOwnership(_owner);
+    factory = ISummitWhitelabelNftFactory(_msgSender());
   }
 
   function _baseURI() internal view override(BaseTokenURI, ERC721A) returns (string memory) {
@@ -146,7 +149,15 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   }
 
   function withdraw(address _receipient) external onlyOwner {
-    (bool sent, ) = payable(_receipient).call{value: address(this).balance}("");
+    uint256 withdrawFee = factory.withdrawFee();
+    require(address(this).balance >= withdrawFee, "Funds is less than withdraw fee");
+
+    uint256 transferAmount = address(this).balance - withdrawFee;
+
+    (bool sent, ) = payable(_receipient).call{value: transferAmount}("");
     require(sent, "Failed to send Ether");
+
+    (sent, ) = payable(address(factory)).call{value: withdrawFee}("");
+    require(sent, "Failed to send withdraw fee");
   }
 }

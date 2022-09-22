@@ -23,6 +23,7 @@ describe("SummitWhitelabelNft", () => {
   let validSign2: any;
 
   const serviceFee = parseEther("0.001");
+  const withdrawFee = parseEther("0.001");
   const baseUri = "ipfs://QmSAo4kt2N9mdgwTF5MREgSWHoF3CxwwmbhZV5M3u83SVg/";
   const tokenInfo: TokenInfoStruct = {
     name: "Test Token",
@@ -40,6 +41,7 @@ describe("SummitWhitelabelNft", () => {
   beforeEach(async () => {
     summitWhitelabelNftFactory = (await deployContract(owner, SummitWhitelabelNftFactoryArtifact, [
       serviceFee,
+      withdrawFee,
       signer.address,
     ])) as SummitWhitelabelNftFactory;
 
@@ -419,7 +421,7 @@ describe("SummitWhitelabelNft", () => {
         "Ownable: caller is not the owner"
       );
     });
-    it("should be able to set public mint price", async () => {
+    it("should be able withdraw", async () => {
       await summitWhitelabelNft.connect(nftOwner).enterPublicPhase();
 
       const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
@@ -429,14 +431,18 @@ describe("SummitWhitelabelNft", () => {
       });
 
       const initialOwnerBalance = await provider.getBalance(owner.address);
+      const initialFactoryBalance = await provider.getBalance(summitWhitelabelNftFactory.address);
 
       assert.equal((await provider.getBalance(summitWhitelabelNft.address)).toString(), mintCost.toString());
-      await summitWhitelabelNft.connect(nftOwner).withdraw(owner.address, { gasLimit: 1000000 });
+      await summitWhitelabelNft.connect(nftOwner).withdraw(owner.address);
       assert.equal((await provider.getBalance(summitWhitelabelNft.address)).toString(), "0");
 
       const finalOwnerBalance = await provider.getBalance(owner.address);
+      const finalFactoryBalance = await provider.getBalance(summitWhitelabelNftFactory.address);
 
-      assert.equal(finalOwnerBalance.toString(), initialOwnerBalance.add(mintCost).toString());
+      assert.equal(finalOwnerBalance.add(withdrawFee).toString(), initialOwnerBalance.add(mintCost).toString());
+
+      assert.equal(finalFactoryBalance.sub(initialFactoryBalance).toString(), withdrawFee.toString());
     });
   });
 });

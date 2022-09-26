@@ -396,6 +396,26 @@ describe("SummitWhitelabelNft", () => {
     });
   });
 
+  describe("setMintPrice", () => {
+    const newWhitelistMintPrice = parseEther("5");
+    const newPublicMintPrice = parseEther("5");
+
+    it("should be reverted if called by non-owner", async () => {
+      await expect(
+        summitWhitelabelNft.connect(minter).setMintPrices(newWhitelistMintPrice, newPublicMintPrice)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+    it("should be able to set new mint prices", async () => {
+      await summitWhitelabelNft.connect(nftOwner).setMintPrices(newWhitelistMintPrice, newPublicMintPrice);
+
+      assert.equal(
+        (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice.toString(),
+        newWhitelistMintPrice.toString()
+      );
+      assert.equal((await summitWhitelabelNft.tokenInfo()).publicMintPrice.toString(), newPublicMintPrice.toString());
+    });
+  });
+
   describe("toggleReveal", () => {
     it("should be reverted if called by non-owner", async () => {
       await expect(summitWhitelabelNft.connect(minter).toggleIsReveal()).to.be.revertedWith(

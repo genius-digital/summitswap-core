@@ -144,6 +144,14 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     emit PublicMintPriceUpdated(_publicMintPrice);
   }
 
+  function setMintPrices(uint256 _whitelistMintPrice, uint256 _publicMintPrice) external onlyOwner {
+    tokenInfo.whitelistMintPrice = _whitelistMintPrice;
+    tokenInfo.publicMintPrice = _publicMintPrice;
+
+    emit WhitelistMintPriceUpdated(_whitelistMintPrice);
+    emit PublicMintPriceUpdated(_publicMintPrice);
+  }
+
   function toggleIsReveal() external onlyOwner {
     tokenInfo.isReveal = !tokenInfo.isReveal;
     emit IsRevealUpdated(tokenInfo.isReveal);

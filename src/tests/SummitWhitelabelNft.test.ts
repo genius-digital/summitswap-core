@@ -416,22 +416,28 @@ describe("SummitWhitelabelNft", () => {
     });
   });
 
-  describe("toggleReveal", () => {
+  describe("revealMetadata", () => {
+    const newBaseUri = "ipfs://helloworld";
+
     it("should be reverted if called by non-owner", async () => {
-      await expect(summitWhitelabelNft.connect(minter).toggleIsReveal()).to.be.revertedWith(
+      await expect(summitWhitelabelNft.connect(minter).revealMetadata(newBaseUri)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
     });
-    it("should be able to toggle isReveal", async () => {
+    it("should be able to reveal with new baseUri", async () => {
       assert.equal((await summitWhitelabelNft.tokenInfo()).isReveal, tokenInfo.isReveal);
-      await summitWhitelabelNft.connect(nftOwner).toggleIsReveal();
+      await summitWhitelabelNft.connect(nftOwner).revealMetadata(newBaseUri);
       assert.equal((await summitWhitelabelNft.tokenInfo()).isReveal, !tokenInfo.isReveal);
+
+      assert.equal(await summitWhitelabelNft.baseTokenURI(), newBaseUri);
     });
     it("should emit event", async () => {
       const isReveal = (await summitWhitelabelNft.tokenInfo()).isReveal;
-      await expect(summitWhitelabelNft.connect(nftOwner).toggleIsReveal())
+      await expect(summitWhitelabelNft.connect(nftOwner).revealMetadata(newBaseUri))
         .to.emit(summitWhitelabelNft, "IsRevealUpdated")
-        .withArgs(!isReveal);
+        .withArgs(!isReveal)
+        .to.emit(summitWhitelabelNft, "BaseTokenUriUpdated")
+        .withArgs(newBaseUri);
     });
   });
 

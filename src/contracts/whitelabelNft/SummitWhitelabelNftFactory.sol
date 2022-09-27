@@ -15,7 +15,7 @@ contract SummitWhitelabelNftFactory is Ownable {
   uint256 public withdrawFee;
   address public signer;
 
-  event CreateNft(address indexed owner, address indexed nftAddress, TokenInfo tokenInfo);
+  event CreateNft(address indexed owner, address indexed nftAddress, TokenInfo tokenInfo, string initialURI);
 
   constructor(
     uint256 _serviceFee,
@@ -42,7 +42,7 @@ contract SummitWhitelabelNftFactory is Ownable {
 
     refundExcessiveFee();
 
-    emit CreateNft(_collectionOwner, nftAddress, _tokenInfo);
+    emit CreateNft(_collectionOwner, nftAddress, _tokenInfo, _initialURI);
   }
 
   function getNfts() external view returns (address[] memory) {

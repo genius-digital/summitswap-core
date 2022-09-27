@@ -40,7 +40,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   event PublicMintPriceUpdated(uint256 price);
   event IsRevealUpdated(bool isReveal);
   event PreviewImageUrlUpdated(string previewImageUrl);
-  event BaseTokenUriUpdated(string tokenUri);
+  event BaseTokenUriUpdated(string baseUri);
 
   constructor(
     TokenInfo memory _tokenInfo,

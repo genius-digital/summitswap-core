@@ -6,15 +6,16 @@ import { tryVerify } from "./utils/verify";
 export async function deploySummitWhitelabelNft(tokenInfo: TokenInfoStruct, initialUri: string, owner: string) {
   console.log("Starting to deploy SummitWhitelabelNft");
 
+  const factory = "0x964062FE8136cBf1A4BAe80c684d47d110aA6F2C";
   const signerAddress = "0x3D2d8991370e34dd34b69B4CA09981d69146dFC1";
 
   const SummitWhitelabelNft = await ethers.getContractFactory("SummitWhitelabelNft");
-  const summitWhitelabelNft = await SummitWhitelabelNft.deploy(tokenInfo, initialUri, owner, signerAddress);
+  const summitWhitelabelNft = await SummitWhitelabelNft.deploy(tokenInfo, initialUri, owner, signerAddress, factory);
   await summitWhitelabelNft.deployed();
 
   console.log("SummitWhitelabelNft deployed to:", summitWhitelabelNft.address);
 
-  await tryVerify(summitWhitelabelNft.address, [tokenInfo, initialUri, owner, signerAddress]);
+  await tryVerify(summitWhitelabelNft.address, [tokenInfo, initialUri, owner, signerAddress, factory]);
 
   return summitWhitelabelNft;
 }

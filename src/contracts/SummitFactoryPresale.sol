@@ -207,22 +207,17 @@ contract SummitFactoryPresale is Ownable {
     ISummitCustomPresale(_presaleAddress).updatePresale(_presale, _feeInfo, _projectDetails);
   }
 
-  function assignAdminsPresale(address[] calldata _admins, address _presale) external onlyOwner {
+  function setAdminsPresale(
+    address[] calldata _admins,
+    bool _isAdmin,
+    address _presale
+  ) external onlyOwner {
     require(
       (pendingPresales.length > 0 && pendingPresales[pendingIndex[_presale]] == _presale) ||
         (approvedPresales.length > 0 && approvedPresales[approvedIndex[_presale]] == _presale),
       "Presale does not exist"
     );
-    ISummitCustomPresale(_presale).assignAdmins(_admins);
-  }
-
-  function revokeAdminsPresale(address[] calldata _admins, address _presale) external onlyOwner {
-    require(
-      (pendingPresales.length > 0 && pendingPresales[pendingIndex[_presale]] == _presale) ||
-        (approvedPresales.length > 0 && approvedPresales[approvedIndex[_presale]] == _presale),
-      "Presale does not exist"
-    );
-    ISummitCustomPresale(_presale).revokeAdmins(_admins);
+    ISummitCustomPresale(_presale).setAdmins(_admins, _isAdmin);
   }
 
   function assignAdmins(address[] calldata _admins) external onlyOwner {

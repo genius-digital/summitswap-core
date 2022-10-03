@@ -21,7 +21,7 @@ interface ISummitCustomPresale {
     address
   ) external;
 
-  function assignAdmins(address[] calldata _admins) external;
+  function setAdmins(address[] calldata _admins, bool _isAdmin) external;
 
   function revokeAdmins(address[] calldata _admins) external;
 

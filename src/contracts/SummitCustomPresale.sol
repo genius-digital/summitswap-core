@@ -549,15 +549,9 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     serviceFeeReceiver = _feeReceiver;
   }
 
-  function assignAdmins(address[] calldata _admins) external onlyDefaultAdmin {
+  function setAdmins(address[] calldata _admins, bool _isAdmin) external onlyDefaultAdmin {
     for (uint256 i = 0; i < _admins.length; i++) {
-      isAdmin[_admins[i]] = true;
-    }
-  }
-
-  function revokeAdmins(address[] calldata _admins) external onlyDefaultAdmin {
-    for (uint256 i = 0; i < _admins.length; i++) {
-      isAdmin[_admins[i]] = false;
+      isAdmin[_admins[i]] = _isAdmin;
     }
   }
 }

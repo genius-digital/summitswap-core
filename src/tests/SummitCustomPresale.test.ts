@@ -2379,7 +2379,7 @@ describe("SummitCustomPresale", () => {
       await presaleFactory.connect(admin).approvePresale(tokenPresales[0]);
 
       assert.equal(await customPresale.isAdmin(admin.address), false);
-      await presaleFactory.connect(owner).assignAdminsPresale([admin.address], customPresale.address);
+      await presaleFactory.connect(owner).setAdminsPresale([admin.address], true, customPresale.address);
       assert.equal(await customPresale.isAdmin(admin.address), true);
 
       await expect(
@@ -2415,7 +2415,7 @@ describe("SummitCustomPresale", () => {
 
       assert.equal(await customPresale.isAdmin(admin.address), false);
       assert.equal(await presaleFactory.isAdmin(admin.address), true);
-      await presaleFactory.connect(owner).assignAdminsPresale([admin.address], customPresale.address);
+      await presaleFactory.connect(owner).setAdminsPresale([admin.address], true, customPresale.address);
       assert.equal(await customPresale.isAdmin(admin.address), true);
 
       assert.equal((await customPresale.getPresaleInfo()).isApproved, false);
@@ -2488,7 +2488,7 @@ describe("SummitCustomPresale", () => {
       assert.equal(await customPresale.isAdmin(presaleFactory.address), true);
 
       assert.equal(await customPresale.isAdmin(admin.address), false);
-      await presaleFactory.connect(owner).assignAdminsPresale([admin.address], customPresale.address);
+      await presaleFactory.connect(owner).setAdminsPresale([admin.address], true, customPresale.address);
       assert.equal(await customPresale.isAdmin(admin.address), true);
 
       assert.equal((await customPresale.getPresaleInfo()).isApproved, false);
@@ -2536,7 +2536,7 @@ describe("SummitCustomPresale", () => {
       assert.equal(await customPresale.isAdmin(presaleFactory.address), true);
 
       assert.equal(await customPresale.isAdmin(admin.address), false);
-      await presaleFactory.connect(owner).assignAdminsPresale([admin.address], customPresale.address);
+      await presaleFactory.connect(owner).setAdminsPresale([admin.address], true, customPresale.address);
       assert.equal(await customPresale.isAdmin(admin.address), true);
 
       await customPresale.connect(admin).setServiceFeeReceiver(otherWallet1.address);
@@ -2798,11 +2798,11 @@ describe("SummitCustomPresale", () => {
   describe("assignAdmins()", () => {
     it("should defaultAdmin be only able to grant ADMIN role", async () => {
       await expect(
-        presaleFactory.connect(otherWallet1).assignAdminsPresale([otherWallet1.address], customPresale.address)
+        presaleFactory.connect(otherWallet1).setAdminsPresale([otherWallet1.address], true, customPresale.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
       assert.equal(await customPresale.defaultAdmin(), presaleFactory.address);
-      await presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], customPresale.address);
+      await presaleFactory.connect(owner).setAdminsPresale([otherWallet1.address], true, customPresale.address);
       assert.equal(await customPresale.isAdmin(otherWallet1.address), true);
     });
   });
@@ -2810,14 +2810,14 @@ describe("SummitCustomPresale", () => {
   describe("revokeAdmins()", () => {
     it("should defaultAdmin be only able to revoke ADMIN role", async () => {
       await expect(
-        presaleFactory.connect(otherWallet1).revokeAdminsPresale([admin.address], customPresale.address)
+        presaleFactory.connect(otherWallet1).setAdminsPresale([admin.address], false, customPresale.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
 
-      await presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], customPresale.address);
+      await presaleFactory.connect(owner).setAdminsPresale([otherWallet1.address], true, customPresale.address);
 
       assert.equal(await customPresale.isAdmin(otherWallet1.address), true);
       assert.equal(await customPresale.defaultAdmin(), presaleFactory.address);
-      await presaleFactory.connect(owner).revokeAdminsPresale([otherWallet1.address], customPresale.address);
+      await presaleFactory.connect(owner).setAdminsPresale([otherWallet1.address], false, customPresale.address);
       assert.equal(await customPresale.isAdmin(otherWallet1.address), false);
     });
   });

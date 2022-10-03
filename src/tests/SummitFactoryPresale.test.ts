@@ -1014,7 +1014,7 @@ describe("SummitFactoryPresale", () => {
     });
   });
 
-  describe("assignAdminsPresale()", () => {
+  describe("setAdminsPresale()", () => {
     beforeEach(async () => {
       await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
       await createPresale({});
@@ -1027,24 +1027,11 @@ describe("SummitFactoryPresale", () => {
       const summitCustomPresale = SummitCustomPresale.attach(tokenPresale);
 
       await expect(
-        presaleFactory.connect(otherWallet1).assignAdminsPresale([otherWallet1.address], tokenPresale)
+        presaleFactory.connect(otherWallet1).setAdminsPresale([otherWallet1.address], true, tokenPresale)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), false);
-      await presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], tokenPresale);
+      await presaleFactory.connect(owner).setAdminsPresale([otherWallet1.address], true, tokenPresale);
       assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), true);
-    });
-
-    it("should be reverted, if presale does not exist", async () => {
-      await expect(
-        presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], otherWallet1.address)
-      ).to.be.revertedWith("Presale does not exist");
-    });
-  });
-
-  describe("revokeAdminsPresale()", () => {
-    beforeEach(async () => {
-      await presaleToken.connect(owner).approve(presaleFactory.address, MAX_VALUE);
-      await createPresale({});
     });
 
     it("should OWNER be only able to revoke ADMIN role for presale", async () => {
@@ -1052,19 +1039,19 @@ describe("SummitFactoryPresale", () => {
 
       const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
       const summitCustomPresale = SummitCustomPresale.attach(tokenPresale);
-      await presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], tokenPresale);
+      await presaleFactory.connect(owner).setAdminsPresale([otherWallet1.address], true, tokenPresale);
 
       await expect(
-        presaleFactory.connect(otherWallet1).revokeAdminsPresale([otherWallet1.address], tokenPresale)
+        presaleFactory.connect(otherWallet1).setAdminsPresale([otherWallet1.address], false, tokenPresale)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), true);
-      await presaleFactory.connect(owner).revokeAdminsPresale([otherWallet1.address], tokenPresale);
+      await presaleFactory.connect(owner).setAdminsPresale([otherWallet1.address], false, tokenPresale);
       assert.equal(await summitCustomPresale.isAdmin(otherWallet1.address), false);
     });
 
     it("should be reverted, if presale does not exist", async () => {
       await expect(
-        presaleFactory.connect(owner).assignAdminsPresale([otherWallet1.address], otherWallet1.address)
+        presaleFactory.connect(owner).setAdminsPresale([otherWallet1.address], true, otherWallet1.address)
       ).to.be.revertedWith("Presale does not exist");
     });
   });

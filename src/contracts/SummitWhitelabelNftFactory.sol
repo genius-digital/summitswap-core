@@ -10,10 +10,13 @@ contract SummitWhitelabelNftFactory is Ownable {
   address[] public nfts;
   mapping(address => address[]) public userNfts;
   mapping(address => bool) public isWithdrawOperator;
+  mapping(address => bool) public isAdmin;
 
   uint256 public serviceFee;
   uint256 public withdrawFee;
   address public signer;
+
+  bool public canAnyoneCreate = false;
 
   event CreateNft(address indexed owner, address indexed nftAddress, TokenInfo tokenInfo, string initialURI);
 
@@ -31,6 +34,7 @@ contract SummitWhitelabelNftFactory is Ownable {
 
   function createNft(TokenInfo calldata _tokenInfo, string memory _initialURI) external payable {
     require(msg.value >= serviceFee, "Not enough serviceFee sent");
+    require(isAdmin[_msgSender()] || _msgSender() == owner() || canAnyoneCreate, "Not allowed to create NFT");
 
     address _collectionOwner = _msgSender();
 
@@ -62,6 +66,12 @@ contract SummitWhitelabelNftFactory is Ownable {
   }
 
   // OWNER FUNCTIONS
+  function setAdmins(address[] calldata _admins, bool _isAdmin) external onlyOwner {
+    for (uint256 i = 0; i < _admins.length; i++) {
+      isAdmin[_admins[i]] = _isAdmin;
+    }
+  }
+
   function setSigner(address _signer) external onlyOwner {
     signer = _signer;
   }

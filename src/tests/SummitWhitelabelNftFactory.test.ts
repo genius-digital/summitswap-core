@@ -8,7 +8,7 @@ import { waffle } from "hardhat";
 const { deployContract, provider } = waffle;
 
 describe("SummitWhitelabelNftFactory", () => {
-  const [owner, signer, wallet1, wallet2, withdrawReceiver, withdrawOperator] = provider.getWallets();
+  const [owner, signer, admin1, wallet1, wallet2, withdrawReceiver, withdrawOperator] = provider.getWallets();
 
   let summitWhitelabelNftFactory: SummitWhitelabelNftFactory;
 
@@ -34,6 +34,7 @@ describe("SummitWhitelabelNftFactory", () => {
       withdrawFee,
       signer.address,
     ])) as SummitWhitelabelNftFactory;
+    await summitWhitelabelNftFactory.connect(owner).setAdmins([admin1.address], true);
   });
 
   describe("constructor", () => {
@@ -52,20 +53,31 @@ describe("SummitWhitelabelNftFactory", () => {
         })
       ).to.be.revertedWith("Not enough serviceFee sent");
     });
+    it("should be reverted if canAnyoneCreate is false", async () => {
+      await expect(
+        summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+          value: serviceFee,
+        })
+      ).to.be.revertedWith("Not allowed to create NFT");
+    });
     it("should be able to deploy a new NFT", async () => {
-      await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+      await summitWhitelabelNftFactory.connect(owner).createNft(tokenInfo, baseUri, {
+        value: serviceFee,
+      });
+      await summitWhitelabelNftFactory.connect(admin1).createNft(tokenInfo, baseUri, {
         value: serviceFee,
       });
 
-      assert.equal((await summitWhitelabelNftFactory.getNfts()).length, 1);
-      assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet1.address)).length, 1);
+      assert.equal((await summitWhitelabelNftFactory.getNfts()).length, 2);
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(owner.address)).length, 1);
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(admin1.address)).length, 1);
     });
     it("should refund excess fee", async () => {
       const excessFee = parseEther("1");
 
-      const initialWallet1Balance = await provider.getBalance(wallet1.address);
+      const initialAdmin1Balance = await provider.getBalance(admin1.address);
 
-      const tx = await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+      const tx = await summitWhitelabelNftFactory.connect(admin1).createNft(tokenInfo, baseUri, {
         value: serviceFee.add(excessFee),
       });
 
@@ -74,15 +86,15 @@ describe("SummitWhitelabelNftFactory", () => {
       const gasPrice = txReceipt.effectiveGasPrice;
       const gasCost = gasPrice.mul(gasUsed);
 
-      const finalWallet1Balance = await provider.getBalance(wallet1.address);
+      const finalAdmin1Balance = await provider.getBalance(admin1.address);
 
-      const diffWallet1Balance = finalWallet1Balance.sub(initialWallet1Balance).add(gasCost).abs();
+      const diffBalance = finalAdmin1Balance.sub(initialAdmin1Balance).add(gasCost).abs();
 
-      assert.equal(diffWallet1Balance.toString(), serviceFee.toString());
+      assert.equal(diffBalance.toString(), serviceFee.toString());
     });
     it("should emit CreateNft event", async () => {
       await expect(
-        summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+        summitWhitelabelNftFactory.connect(admin1).createNft(tokenInfo, baseUri, {
           value: serviceFee,
         })
       ).to.emit(summitWhitelabelNftFactory, "CreateNft");
@@ -94,7 +106,7 @@ describe("SummitWhitelabelNftFactory", () => {
       const nfts0 = await summitWhitelabelNftFactory.getNfts();
       assert.equal(nfts0.length, 0);
 
-      await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+      await summitWhitelabelNftFactory.connect(admin1).createNft(tokenInfo, baseUri, {
         value: serviceFee,
       });
 
@@ -105,14 +117,14 @@ describe("SummitWhitelabelNftFactory", () => {
 
   describe("nftsOf", () => {
     it("should get nft addresses of a user", async () => {
-      assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet1.address)).length, 0);
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(admin1.address)).length, 0);
       assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet2.address)).length, 0);
 
-      await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+      await summitWhitelabelNftFactory.connect(admin1).createNft(tokenInfo, baseUri, {
         value: serviceFee,
       });
 
-      assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet1.address)).length, 1);
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(admin1.address)).length, 1);
       assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet2.address)).length, 0);
     });
   });
@@ -147,7 +159,7 @@ describe("SummitWhitelabelNftFactory", () => {
 
   describe("withdraw", () => {
     beforeEach(async () => {
-      await summitWhitelabelNftFactory.connect(wallet1).createNft(tokenInfo, baseUri, {
+      await summitWhitelabelNftFactory.connect(admin1).createNft(tokenInfo, baseUri, {
         value: serviceFee,
       });
       await summitWhitelabelNftFactory.connect(owner).addWithdrawOperators([withdrawOperator.address]);

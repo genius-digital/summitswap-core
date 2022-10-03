@@ -66,6 +66,10 @@ contract SummitWhitelabelNftFactory is Ownable {
   }
 
   // OWNER FUNCTIONS
+  function toggleCanAnyoneCreate() external onlyOwner {
+    canAnyoneCreate = !canAnyoneCreate;
+  }
+
   function setAdmins(address[] calldata _admins, bool _isAdmin) external onlyOwner {
     for (uint256 i = 0; i < _admins.length; i++) {
       isAdmin[_admins[i]] = _isAdmin;

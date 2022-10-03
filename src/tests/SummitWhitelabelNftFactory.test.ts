@@ -71,6 +71,14 @@ describe("SummitWhitelabelNftFactory", () => {
       assert.equal((await summitWhitelabelNftFactory.getNfts()).length, 2);
       assert.equal((await summitWhitelabelNftFactory.nftsOf(owner.address)).length, 1);
       assert.equal((await summitWhitelabelNftFactory.nftsOf(admin1.address)).length, 1);
+
+      await summitWhitelabelNftFactory.connect(owner).toggleCanAnyoneCreate();
+      await summitWhitelabelNftFactory.connect(wallet2).createNft(tokenInfo, baseUri, {
+        value: serviceFee,
+      });
+
+      assert.equal((await summitWhitelabelNftFactory.getNfts()).length, 3);
+      assert.equal((await summitWhitelabelNftFactory.nftsOf(wallet2.address)).length, 1);
     });
     it("should refund excess fee", async () => {
       const excessFee = parseEther("1");

@@ -3,8 +3,8 @@
 
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "../shared/BaseTokenURI.sol";
-import "../interfaces/ISummitWhitelabelNftFactory.sol";
+import "./shared/BaseTokenURI.sol";
+import "./interfaces/ISummitWhitelabelNftFactory.sol";
 
 pragma solidity ^0.8.6;
 

@@ -1,4 +1,4 @@
-import SummitWhitelabelNftFactoryArtifact from "@built-contracts/whitelabelNft/SummitWhitelabelNftFactory.sol/SummitWhitelabelNftFactory.json";
+import SummitWhitelabelNftFactoryArtifact from "@built-contracts/SummitWhitelabelNftFactory.sol/SummitWhitelabelNftFactory.json";
 import { SummitWhitelabelNftFactory } from "build/typechain";
 import { TokenInfoStruct } from "build/typechain/SummitWhitelabelNftFactory";
 import { assert, expect } from "chai";

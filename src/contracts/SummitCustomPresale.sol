@@ -518,15 +518,23 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     IERC20(feeInfo.paymentToken).transfer(_receiver, _amount);
   }
 
+  function updatePresale(
+    PresaleInfo memory _presale,
+    PresaleFeeInfo memory _feeInfo,
+    string[8] memory _projectDetails
+  ) public onlyAdmin {
+    presale = _presale;
+    feeInfo = _feeInfo;
+    projectDetails = _projectDetails;
+  }
+
   function updatePresaleAndApprove(
     PresaleInfo memory _presale,
     PresaleFeeInfo memory _feeInfo,
     string[8] memory _projectDetails
   ) external onlyAdmin {
     require(!presale.isApproved, "Presale is approved");
-    presale = _presale;
-    feeInfo = _feeInfo;
-    projectDetails = _projectDetails;
+    updatePresale(_presale, _feeInfo, _projectDetails);
     presale.isApproved = true;
     presale.isPresaleCancelled = false;
     presale.isClaimPhase = false;

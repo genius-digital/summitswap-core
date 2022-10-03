@@ -716,26 +716,13 @@ describe("SummitFactoryPresale", () => {
             ...presaleInfo,
             router0: summitRouter.address,
             presaleToken: presaleToken.address,
-            softCap: parseEther(softCap).sub("1"),
-          },
-          feeInfo,
-          projectDetails,
-          tokenPresales[0]
-        )
-      ).to.be.revertedWith("50% of hardcap <= softcap <= hardcap");
-      await expect(
-        presaleFactory.connect(admin).updatePresaleAndApprove(
-          {
-            ...presaleInfo,
-            router0: summitRouter.address,
-            presaleToken: presaleToken.address,
             softCap: parseEther(hardCap).add("1"),
           },
           feeInfo,
           projectDetails,
           tokenPresales[0]
         )
-      ).to.be.revertedWith("50% of hardcap <= softcap <= hardcap");
+      ).to.be.revertedWith("softcap <= hardcap");
     });
 
     it("should be reverted, if claimIntervalDay not valid", async () => {
@@ -752,20 +739,20 @@ describe("SummitFactoryPresale", () => {
           projectDetails,
           tokenPresales[0]
         )
-      ).to.be.revertedWith("claimIntervalDay should be between 1 & 31");
+      ).to.be.revertedWith("claimIntervalDay should be between 1 & 28");
       await expect(
         presaleFactory.connect(admin).updatePresaleAndApprove(
           {
             ...presaleInfo,
             router0: summitRouter.address,
             presaleToken: presaleToken.address,
-            claimIntervalDay: 32,
+            claimIntervalDay: 29,
           },
           feeInfo,
           projectDetails,
           tokenPresales[0]
         )
-      ).to.be.revertedWith("claimIntervalDay should be between 1 & 31");
+      ).to.be.revertedWith("claimIntervalDay should be between 1 & 28");
     });
 
     it("should be reverted, if claimIntervalHour greater than 24", async () => {

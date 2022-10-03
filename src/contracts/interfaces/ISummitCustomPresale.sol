@@ -32,4 +32,10 @@ interface ISummitCustomPresale {
     PresaleFeeInfo memory _feeInfo,
     string[8] memory _projectDetails
   ) external;
+
+  function updatePresale(
+    PresaleInfo memory _presale,
+    PresaleFeeInfo memory _feeInfo,
+    string[8] memory _projectDetails
+  ) external;
 }

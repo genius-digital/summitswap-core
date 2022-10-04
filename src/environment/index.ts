@@ -35,7 +35,7 @@ const RpcUrls = {
   "97": "https://data-seed-prebsc-1-s1.binance.org:8545/",
 } as Record<string, string>;
 
-const VERIFY_SUPPORTED_ON = ["56", "97"];
+const VERIFY_SUPPORTED_ON = ["1", "5", "56", "97"];
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";

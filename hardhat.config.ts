@@ -102,6 +102,17 @@ export default {
     hardhat: {
       allowUnlimitedContractSize: true,
     },
+    1: {
+      url: "https://mainnet.infura.io/v3/ea49cb738655406db0978cca8683d96c",
+      accounts,
+    },
+    5: {
+      url: "https://goerli.infura.io/v3/ea49cb738655406db0978cca8683d96c",
+      accounts,
+      timeout: 500000,
+      gas: 7000000,
+      allowUnlimitedContractSize: true,
+    },
     56: {
       url: "https://bsc-dataseed.binance.org/",
       accounts,
@@ -119,6 +130,11 @@ export default {
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.BSCSCAN_API_KEY,
+    apiKey: {
+      bsc: process.env.BSCSCAN_API_KEY,
+      bscTestnet: process.env.BSCSCAN_API_KEY,
+      mainnet: process.env.ETHERSCAN_API_KEY,
+      goerli: process.env.ETHERSCAN_API_KEY,
+    },
   },
 } as HardhatUserConfig;

@@ -45,6 +45,7 @@ describe("SummitWhitelabelNft", () => {
       signer.address,
     ])) as SummitWhitelabelNftFactory;
 
+    await summitWhitelabelNftFactory.connect(owner).setAdmins([nftOwner.address], true);
     await summitWhitelabelNftFactory.connect(nftOwner).createNft(tokenInfo, baseUri, {
       value: serviceFee,
     });

@@ -523,6 +523,7 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     PresaleFeeInfo memory _feeInfo,
     string[8] memory _projectDetails
   ) public onlyAdmin {
+    _presale.totalBought = presale.totalBought;
     presale = _presale;
     feeInfo = _feeInfo;
     projectDetails = _projectDetails;

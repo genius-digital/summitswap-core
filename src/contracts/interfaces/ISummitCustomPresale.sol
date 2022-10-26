@@ -21,13 +21,19 @@ interface ISummitCustomPresale {
     address
   ) external;
 
-  function assignAdmins(address[] calldata _admins) external;
+  function setAdmins(address[] calldata _admins, bool _isAdmin) external;
 
   function revokeAdmins(address[] calldata _admins) external;
 
   function getPresaleInfo() external view returns (PresaleInfo memory);
 
   function updatePresaleAndApprove(
+    PresaleInfo memory _presale,
+    PresaleFeeInfo memory _feeInfo,
+    string[8] memory _projectDetails
+  ) external;
+
+  function updatePresale(
     PresaleInfo memory _presale,
     PresaleFeeInfo memory _feeInfo,
     string[8] memory _projectDetails

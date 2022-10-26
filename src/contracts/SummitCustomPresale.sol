@@ -518,15 +518,24 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     IERC20(feeInfo.paymentToken).transfer(_receiver, _amount);
   }
 
+  function updatePresale(
+    PresaleInfo memory _presale,
+    PresaleFeeInfo memory _feeInfo,
+    string[8] memory _projectDetails
+  ) public onlyAdmin {
+    _presale.totalBought = presale.totalBought;
+    presale = _presale;
+    feeInfo = _feeInfo;
+    projectDetails = _projectDetails;
+  }
+
   function updatePresaleAndApprove(
     PresaleInfo memory _presale,
     PresaleFeeInfo memory _feeInfo,
     string[8] memory _projectDetails
   ) external onlyAdmin {
     require(!presale.isApproved, "Presale is approved");
-    presale = _presale;
-    feeInfo = _feeInfo;
-    projectDetails = _projectDetails;
+    updatePresale(_presale, _feeInfo, _projectDetails);
     presale.isApproved = true;
     presale.isPresaleCancelled = false;
     presale.isClaimPhase = false;
@@ -541,15 +550,9 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     serviceFeeReceiver = _feeReceiver;
   }
 
-  function assignAdmins(address[] calldata _admins) external onlyDefaultAdmin {
+  function setAdmins(address[] calldata _admins, bool _isAdmin) external onlyDefaultAdmin {
     for (uint256 i = 0; i < _admins.length; i++) {
-      isAdmin[_admins[i]] = true;
-    }
-  }
-
-  function revokeAdmins(address[] calldata _admins) external onlyDefaultAdmin {
-    for (uint256 i = 0; i < _admins.length; i++) {
-      isAdmin[_admins[i]] = false;
+      isAdmin[_admins[i]] = _isAdmin;
     }
   }
 }

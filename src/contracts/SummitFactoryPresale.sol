@@ -49,6 +49,48 @@ contract SummitFactoryPresale is Ownable {
     _;
   }
 
+  modifier updatePresaleValidation(
+    PresaleInfo memory _presale,
+    PresaleFeeInfo memory _feeInfo,
+    address _presaleAddress
+  ) {
+    PresaleInfo memory presale = ISummitCustomPresale(_presaleAddress).getPresaleInfo();
+    require(_presale.presaleToken == presale.presaleToken, "Presale token should be same");
+    require(_presale.presalePrice == presale.presalePrice, "Presale price should be same");
+    require(_presale.listingPrice == presale.listingPrice, "listingPrice should be same");
+    require(_presale.hardCap == presale.hardCap, "hardCap should be same");
+    require(_presale.liquidityPercentage == presale.liquidityPercentage, "liquidityPercentage should be same");
+    require(_presale.startPresaleTime >= presale.startPresaleTime, "startPresaleTime >= set startPresaleTime");
+    require(_presale.endPresaleTime > _presale.startPresaleTime, "endPresaleTime >= startPresaleTime");
+    require(_presale.softCap <= presale.hardCap, "softcap <= hardcap");
+    require(
+      _presale.claimIntervalDay >= 1 && _presale.claimIntervalDay <= 28,
+      "claimIntervalDay should be between 1 & 28"
+    );
+    require(_presale.minBuy < _presale.maxBuy, "MinBuy should be less than maxBuy");
+    require(_presale.maxBuy <= _presale.hardCap, "maxBuy should be less than hardCap");
+    require(_presale.claimIntervalHour <= 23, "claimIntervalHour should be between 0 & 23");
+    require(
+      _presale.maxClaimPercentage >= 10000000 && _presale.maxClaimPercentage <= 1000000000,
+      "maxClaimPercentage should be between 1% & 100%"
+    );
+    require(
+      _feeInfo.feeEmergencyWithdraw >= 10000000 && _feeInfo.feeEmergencyWithdraw <= 1000000000,
+      "feeEmergencyWithdraw should be between 1% & 100%"
+    );
+    require(
+      _feeInfo.feePresaleToken < _presale.liquidityPercentage,
+      "fee presale Token should be less than liquidityPercentage"
+    );
+    require(
+      _feeInfo.feePaymentToken < _presale.liquidityPercentage,
+      "fee payment Token should be less than liquidityPercentage"
+    );
+    require(_presale.refundType <= 1, "refundType should be between 0 or 1");
+    require(_presale.listingChoice <= 3, "listingChoice should be between 0 & 3");
+    _;
+  }
+
   function createPresale(
     string[8] memory projectDetails,
     PresaleInfo memory presale,
@@ -60,16 +102,13 @@ contract SummitFactoryPresale is Ownable {
     require(presale.startPresaleTime > block.timestamp, "Presale startTime > block.timestamp");
     require(presale.endPresaleTime > presale.startPresaleTime, "Presale End time > presale start time");
     require(
-      presale.claimIntervalDay >= 1 && presale.claimIntervalDay <= 31,
-      "claimIntervalDay should be between 1 & 31"
+      presale.claimIntervalDay >= 1 && presale.claimIntervalDay <= 28,
+      "claimIntervalDay should be between 1 & 28"
     );
     require(presale.claimIntervalHour <= 23, "claimIntervalHour should be between 0 & 23");
     require(presale.liquidityLockTime >= 300, "liquidityLockTime >= 300 seconds");
     require(presale.minBuy < presale.maxBuy, "MinBuy should be less than maxBuy");
-    require(
-      presale.softCap >= (presale.hardCap * 50) / 100 && presale.softCap <= presale.hardCap,
-      "Softcap should be greater than or equal to 50% of hardcap"
-    );
+    require(presale.softCap <= presale.hardCap, "Softcap should be greater than or equal to 50% of hardcap");
     require(
       presale.liquidityPercentage >= 250000000 && presale.liquidityPercentage <= 1000000000,
       "Liquidity Percentage should be between 25% & 100%"
@@ -149,66 +188,36 @@ contract SummitFactoryPresale is Ownable {
     PresaleFeeInfo memory _feeInfo,
     string[8] memory _projectDetails,
     address _presaleAddress
-  ) external isAdminOrOwner presalePending(_presaleAddress) {
-    PresaleInfo memory presale = ISummitCustomPresale(_presaleAddress).getPresaleInfo();
-    require(!presale.isApproved, "Presale is approved");
-    require(_presale.presaleToken == presale.presaleToken, "Presale token should be same");
-    require(_presale.presalePrice == presale.presalePrice, "Presale price should be same");
-    require(_presale.listingPrice == presale.listingPrice, "listingPrice should be same");
-    require(_presale.hardCap == presale.hardCap, "hardCap should be same");
-    require(_presale.liquidityPercentage == presale.liquidityPercentage, "liquidityPercentage should be same");
-    require(_presale.startPresaleTime >= presale.startPresaleTime, "startPresaleTime >= set startPresaleTime");
-    require(_presale.endPresaleTime > _presale.startPresaleTime, "endPresaleTime >= startPresaleTime");
-    require(
-      _presale.softCap >= (presale.hardCap * 50) / 100 && _presale.softCap <= presale.hardCap,
-      "50% of hardcap <= softcap <= hardcap"
-    );
-    require(
-      _presale.claimIntervalDay >= 1 && _presale.claimIntervalDay <= 31,
-      "claimIntervalDay should be between 1 & 31"
-    );
-    require(_presale.minBuy < _presale.maxBuy, "MinBuy should be less than maxBuy");
-    require(_presale.maxBuy <= _presale.hardCap, "maxBuy should be less than hardCap");
-    require(_presale.claimIntervalHour <= 23, "claimIntervalHour should be between 0 & 23");
-    require(
-      _presale.maxClaimPercentage >= 10000000 && _presale.maxClaimPercentage <= 1000000000,
-      "maxClaimPercentage should be between 1% & 100%"
-    );
-    require(
-      _feeInfo.feeEmergencyWithdraw >= 10000000 && _feeInfo.feeEmergencyWithdraw <= 1000000000,
-      "feeEmergencyWithdraw should be between 1% & 100%"
-    );
-    require(
-      _feeInfo.feePresaleToken < _presale.liquidityPercentage,
-      "fee presale Token should be less than liquidityPercentage"
-    );
-    require(
-      _feeInfo.feePaymentToken < _presale.liquidityPercentage,
-      "fee payment Token should be less than liquidityPercentage"
-    );
-    require(_presale.refundType <= 1, "refundType should be between 0 or 1");
-    require(_presale.listingChoice <= 3, "listingChoice should be between 0 & 3");
-
+  )
+    external
+    isAdminOrOwner
+    presalePending(_presaleAddress)
+    updatePresaleValidation(_presale, _feeInfo, _presaleAddress)
+  {
     ISummitCustomPresale(_presaleAddress).updatePresaleAndApprove(_presale, _feeInfo, _projectDetails);
     removeFromPending(_presaleAddress);
   }
 
-  function assignAdminsPresale(address[] calldata _admins, address _presale) external onlyOwner {
-    require(
-      (pendingPresales.length > 0 && pendingPresales[pendingIndex[_presale]] == _presale) ||
-        (approvedPresales.length > 0 && approvedPresales[approvedIndex[_presale]] == _presale),
-      "Presale does not exist"
-    );
-    ISummitCustomPresale(_presale).assignAdmins(_admins);
+  function updatePresale(
+    PresaleInfo memory _presale,
+    PresaleFeeInfo memory _feeInfo,
+    string[8] memory _projectDetails,
+    address _presaleAddress
+  ) external isAdminOrOwner updatePresaleValidation(_presale, _feeInfo, _presaleAddress) {
+    ISummitCustomPresale(_presaleAddress).updatePresale(_presale, _feeInfo, _projectDetails);
   }
 
-  function revokeAdminsPresale(address[] calldata _admins, address _presale) external onlyOwner {
+  function setAdminsPresale(
+    address[] calldata _admins,
+    bool _isAdmin,
+    address _presale
+  ) external onlyOwner {
     require(
       (pendingPresales.length > 0 && pendingPresales[pendingIndex[_presale]] == _presale) ||
         (approvedPresales.length > 0 && approvedPresales[approvedIndex[_presale]] == _presale),
       "Presale does not exist"
     );
-    ISummitCustomPresale(_presale).revokeAdmins(_admins);
+    ISummitCustomPresale(_presale).setAdmins(_admins, _isAdmin);
   }
 
   function assignAdmins(address[] calldata _admins) external onlyOwner {

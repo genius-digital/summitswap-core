@@ -50,7 +50,6 @@ describe("SummitCustomPresale", () => {
   const FEE_DENOMINATOR = 10 ** 9;
   const FEE_PAYMENT_TOKEN = 50000000; // 5%
   const FEE_PRESALE_TOKEN = 20000000; // 2%
-  const FEE_EMERGENCY_WITHDRAW = 100000000; // 10%
 
   const presalePrice = "100";
   const listingPrice = "100";
@@ -108,7 +107,6 @@ describe("SummitCustomPresale", () => {
     paymentToken: ZERO_ADDRESS,
     feePaymentToken: FEE_PAYMENT_TOKEN,
     feePresaleToken: FEE_PRESALE_TOKEN,
-    feeEmergencyWithdraw: FEE_EMERGENCY_WITHDRAW,
   };
 
   const calculateTokenAmount = (
@@ -214,7 +212,6 @@ describe("SummitCustomPresale", () => {
         paymentToken: _paymentToken || ZERO_ADDRESS,
         feePaymentToken: FEE_PAYMENT_TOKEN,
         feePresaleToken: FEE_PRESALE_TOKEN,
-        feeEmergencyWithdraw: FEE_EMERGENCY_WITHDRAW,
       } as PresaleFeeInfoStruct,
       parseUnits(_tokenAmount.toString(), await presaleToken.decimals()),
       {
@@ -284,11 +281,6 @@ describe("SummitCustomPresale", () => {
 
     beforeEach(async () => {
       feeInfo = await customPresale.getFeeInfo();
-    });
-
-    it("should be feeEmergencyWithdraw", () => {
-      const feeEmergencyWithdraw = feeInfo.feeEmergencyWithdraw;
-      assert.equal(FEE_EMERGENCY_WITHDRAW.toString(), feeEmergencyWithdraw.toString());
     });
 
     it("should be FEE_PAYMENT_TOKEN", () => {
@@ -1347,205 +1339,6 @@ describe("SummitCustomPresale", () => {
     });
   });
 
-  describe("emergencyWithdrawPaymentToken()", () => {
-    let snapshotId: any;
-    afterEach(async () => {
-      await timeMachine.revertToSnapshot(snapshotId);
-    });
-    beforeEach(async () => {
-      const snapshot = await timeMachine.takeSnapshot();
-      snapshotId = snapshot.result;
-    });
-
-    it("should be reverted, if presale not started", async () => {
-      await expect(customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken()).to.be.revertedWith(
-        "Presale Not started Yet"
-      );
-    });
-
-    it("should be reverted, if presale has ended", async () => {
-      const nextIntervalTimestamp = dayjs().add(5, "months").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await expect(customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken()).to.be.revertedWith(
-        "Presale Ended"
-      );
-    });
-
-    it("should be reverted, if tokens not bought", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await expect(customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken()).to.be.revertedWith(
-        "You do not have any contributions"
-      );
-    });
-
-    it("should be reverted, if presale is cancelled", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(minBuy),
-      });
-      await customPresale.connect(owner).cancelPresale();
-      await expect(customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken()).to.be.revertedWith(
-        "Presale has been cancelled"
-      );
-    });
-
-    it("should be reverted, if is claim phase", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(maxBuy),
-      });
-      await customPresale.connect(owner).finalize();
-      await expect(customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken()).to.be.revertedWith(
-        "Presale claim phase"
-      );
-    });
-
-    it("should send 10% BNB to service fee address if bought with BNB", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(minBuy),
-      });
-      const initialBalance = await provider.getBalance(serviceFeeReceiver.address);
-      await customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken();
-      const finalBalance = await provider.getBalance(serviceFeeReceiver.address);
-      assert.equal(
-        finalBalance.sub(initialBalance).toString(),
-        parseUnits(minBuy).mul(FEE_EMERGENCY_WITHDRAW).div(FEE_DENOMINATOR).toString()
-      );
-    });
-
-    it("should send 10% paymentToken to service fee address if bought with paymentToken", async () => {
-      paymentToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
-      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
-      await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await createPresale({ _paymentToken: paymentToken.address });
-
-      const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
-      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
-      customPresale = SummitCustomPresale.attach(tokenPresale[0]);
-      await presaleFactory.connect(admin).approvePresale(customPresale.address);
-
-      await paymentToken.connect(otherWallet1).approve(customPresale.address, MAX_VALUE);
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buyCustomCurrency(parseEther(minBuy));
-
-      const initialBalance = await paymentToken.balanceOf(serviceFeeReceiver.address);
-      await customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken();
-      const finalBalance = await paymentToken.balanceOf(serviceFeeReceiver.address);
-      assert.equal(
-        finalBalance.sub(initialBalance).toString(),
-        parseUnits(minBuy).mul(FEE_EMERGENCY_WITHDRAW).div(FEE_DENOMINATOR).toString()
-      );
-    });
-
-    it("should be equal withdrawal BNB amount and Buy BNB amount ", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(minBuy),
-      });
-      const initialBoughtAmount = await customPresale.bought(otherWallet1.address);
-      await customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken();
-      const finalBoughtAmount = await customPresale.bought(otherWallet1.address);
-      assert.equal(initialBoughtAmount.sub(finalBoughtAmount).toString(), parseEther(minBuy).toString());
-    });
-
-    it("should be equal bought paymentToken amount and withdrawal amount if payment token not native coin", async () => {
-      paymentToken = (await deployContract(otherWallet1, TokenArtifact, [])) as DummyToken;
-      presaleToken = (await deployContract(owner, TokenArtifact, [])) as DummyToken;
-      await presaleToken.approve(presaleFactory.address, MAX_VALUE);
-      await createPresale({ _paymentToken: paymentToken.address });
-
-      const tokenPresale = await presaleFactory.getTokenPresales(presaleToken.address);
-      const SummitCustomPresale = await ethers.getContractFactory("SummitCustomPresale");
-      customPresale = SummitCustomPresale.attach(tokenPresale[0]);
-      await presaleFactory.connect(admin).approvePresale(customPresale.address);
-
-      await paymentToken.connect(otherWallet1).approve(customPresale.address, MAX_VALUE);
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buyCustomCurrency(parseEther(minBuy));
-
-      const balance0 = await paymentToken.balanceOf(otherWallet1.address);
-      await customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken();
-      const balance1 = await paymentToken.balanceOf(otherWallet1.address);
-
-      assert.equal(
-        balance1.sub(balance0).add(parseUnits(minBuy).mul(FEE_EMERGENCY_WITHDRAW).div(FEE_DENOMINATOR)).toString(),
-        parseEther(minBuy).toString()
-      );
-    });
-
-    it("should be 0 bought amount after emergencyWithdrawPaymentToken", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(minBuy),
-      });
-      await customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken();
-      const boughtAmount = await customPresale.bought(otherWallet1.address);
-      assert.equal(boughtAmount.toString(), "0");
-    });
-
-    it("should be equal change in total bought and withdrawal amount", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(minBuy),
-      });
-      await customPresale.connect(otherWallet2).buy({
-        value: parseEther(minBuy),
-      });
-      const initialTotalBought = (await customPresale.getPresaleInfo()).totalBought;
-      await customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken();
-      const finalTotalBought = (await customPresale.getPresaleInfo()).totalBought;
-      assert.equal(initialTotalBought.sub(finalTotalBought).toString(), parseEther(minBuy).toString());
-    });
-
-    it("should be greater balance after emergencyWithdrawPaymentToken", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(maxBuy),
-      });
-      const initialBalance = await provider.getBalance(otherWallet1.address);
-      await customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken();
-      const finalBalance = await provider.getBalance(otherWallet1.address);
-      assert.equal(finalBalance.gt(initialBalance), true);
-    });
-
-    it("should be remove from contributors after emergencyWithdrawPaymentToken", async () => {
-      const nextIntervalTimestamp = dayjs().add(50, "minutes").unix();
-      await timeMachine.advanceTimeAndBlock(nextIntervalTimestamp - dayjs().unix());
-
-      await customPresale.connect(otherWallet1).buy({
-        value: parseEther(maxBuy),
-      });
-
-      const length0 = (await customPresale.getContributors()).length;
-      assert.equal(length0.toString(), "1");
-      await customPresale.connect(otherWallet1).emergencyWithdrawPaymentToken();
-      const length1 = (await customPresale.getContributors()).length;
-      assert.equal(length1.toString(), "0");
-    });
-  });
-
   describe("addWhiteList()", () => {
     const whitelist = [owner.address, otherOwner.address, otherWallet1.address];
     it("should be reverted, if set with otherWallet1", async () => {
@@ -2439,7 +2232,6 @@ describe("SummitCustomPresale", () => {
           ...feeInfo,
           feePresaleToken: (2 * FEE_DENOMINATOR) / 100,
           feePaymentToken: (4 * FEE_DENOMINATOR) / 100,
-          feeEmergencyWithdraw: (1 * FEE_DENOMINATOR) / 100,
         },
         projectDetails,
         {
@@ -2463,7 +2255,6 @@ describe("SummitCustomPresale", () => {
       assert.equal(updatedPresaleInfo.listingChoice.toString(), "2");
       assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
       assert.equal(updatedPresaleInfo.isVestingEnabled, true);
-      assert.equal(updatedfeeInfo.feeEmergencyWithdraw.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePresaleToken.toString(), ((2 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePaymentToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
     });

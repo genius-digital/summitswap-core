@@ -378,27 +378,6 @@ contract SummitCustomPresale is Ownable, ReentrancyGuard {
     removeContributor(msg.sender);
   }
 
-  function emergencyWithdrawPaymentToken() external nonReentrant {
-    require(block.timestamp >= presale.startPresaleTime, "Presale Not started Yet");
-    require(block.timestamp < presale.endPresaleTime, "Presale Ended");
-    require(bought[msg.sender] > 0, "You do not have any contributions");
-    require(!presale.isPresaleCancelled, "Presale has been cancelled");
-    require(!presale.isClaimPhase, "Presale claim phase");
-
-    uint256 feeAmount = (bought[msg.sender] * feeInfo.feeEmergencyWithdraw) / FEE_DENOMINATOR;
-
-    if (feeInfo.paymentToken == address(0)) {
-      payable(msg.sender).transfer(bought[msg.sender] - feeAmount);
-      payable(serviceFeeReceiver).transfer(feeAmount);
-    } else {
-      IERC20(feeInfo.paymentToken).transfer(msg.sender, bought[msg.sender] - feeAmount);
-      IERC20(feeInfo.paymentToken).transfer(serviceFeeReceiver, feeAmount);
-    }
-    presale.totalBought = presale.totalBought - bought[msg.sender];
-    bought[msg.sender] = 0;
-    removeContributor(msg.sender);
-  }
-
   //////////////////
   // Owner functions
 

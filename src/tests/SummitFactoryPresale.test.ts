@@ -39,7 +39,6 @@ describe("SummitFactoryPresale", () => {
   const FEE_DENOMINATOR = 10 ** 9;
   const FEE_PAYMENT_TOKEN = 300000000; // 3%
   const FEE_PRESALE_TOKEN = 300000000; // 3%
-  const FEE_EMERGENCY_WITHDRAW = 1000000000; // 10%
 
   const presalePrice = "100";
   const listingPrice = "100";
@@ -113,7 +112,6 @@ describe("SummitFactoryPresale", () => {
     paymentToken: ZERO_ADDRESS,
     feePaymentToken: FEE_PAYMENT_TOKEN,
     feePresaleToken: FEE_PRESALE_TOKEN,
-    feeEmergencyWithdraw: FEE_EMERGENCY_WITHDRAW,
   };
 
   const calculateTokenAmount = (
@@ -215,7 +213,6 @@ describe("SummitFactoryPresale", () => {
         paymentToken: _paymentTokenAddress || ZERO_ADDRESS,
         feePaymentToken: FEE_PAYMENT_TOKEN,
         feePresaleToken: FEE_PRESALE_TOKEN,
-        feeEmergencyWithdraw: FEE_EMERGENCY_WITHDRAW,
       } as PresaleFeeInfoStruct,
       parseUnits(_tokenAmount.toString(), await presaleToken.decimals()),
       {
@@ -837,35 +834,6 @@ describe("SummitFactoryPresale", () => {
       ).to.be.revertedWith("maxClaimPercentage should be between 1% & 100%");
     });
 
-    it("should be reverted, if feeEmergencyWithdraw not valid", async () => {
-      const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
-      await expect(
-        presaleFactory.connect(admin).updatePresaleAndApprove(
-          {
-            ...presaleInfo,
-            router0: summitRouter.address,
-            presaleToken: presaleToken.address,
-          },
-          { ...feeInfo, feeEmergencyWithdraw: (0.9 * FEE_DENOMINATOR) / 100 },
-          projectDetails,
-          tokenPresales[0]
-        )
-      ).to.be.revertedWith("feeEmergencyWithdraw should be between 1% & 100%");
-
-      await expect(
-        presaleFactory.connect(admin).updatePresaleAndApprove(
-          {
-            ...presaleInfo,
-            router0: summitRouter.address,
-            presaleToken: presaleToken.address,
-          },
-          { ...feeInfo, feeEmergencyWithdraw: (0.9 * FEE_DENOMINATOR) / 100 },
-          projectDetails,
-          tokenPresales[0]
-        )
-      ).to.be.revertedWith("feeEmergencyWithdraw should be between 1% & 100%");
-    });
-
     it("should be reverted, if feePaymentToken not valid", async () => {
       const tokenPresales = await presaleFactory.getTokenPresales(presaleToken.address);
       await expect(
@@ -981,7 +949,6 @@ describe("SummitFactoryPresale", () => {
           ...feeInfo,
           feePresaleToken: (2 * FEE_DENOMINATOR) / 100,
           feePaymentToken: (4 * FEE_DENOMINATOR) / 100,
-          feeEmergencyWithdraw: (1 * FEE_DENOMINATOR) / 100,
         },
         projectDetails,
         tokenPresales[0],
@@ -1008,7 +975,6 @@ describe("SummitFactoryPresale", () => {
       assert.equal(updatedPresaleInfo.listingChoice.toString(), "2");
       assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
       assert.equal(updatedPresaleInfo.isVestingEnabled, true);
-      assert.equal(updatedfeeInfo.feeEmergencyWithdraw.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePresaleToken.toString(), ((2 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePaymentToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
     });

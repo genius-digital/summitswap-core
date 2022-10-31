@@ -50,7 +50,6 @@ describe("SummitCustomPresale", () => {
   const FEE_DENOMINATOR = 10 ** 9;
   const FEE_PAYMENT_TOKEN = 50000000; // 5%
   const FEE_PRESALE_TOKEN = 20000000; // 2%
-  const FEE_EMERGENCY_WITHDRAW = 100000000; // 10%
 
   const presalePrice = "100";
   const listingPrice = "100";
@@ -108,7 +107,6 @@ describe("SummitCustomPresale", () => {
     paymentToken: ZERO_ADDRESS,
     feePaymentToken: FEE_PAYMENT_TOKEN,
     feePresaleToken: FEE_PRESALE_TOKEN,
-    feeEmergencyWithdraw: FEE_EMERGENCY_WITHDRAW,
   };
 
   const calculateTokenAmount = (
@@ -214,7 +212,6 @@ describe("SummitCustomPresale", () => {
         paymentToken: _paymentToken || ZERO_ADDRESS,
         feePaymentToken: FEE_PAYMENT_TOKEN,
         feePresaleToken: FEE_PRESALE_TOKEN,
-        feeEmergencyWithdraw: FEE_EMERGENCY_WITHDRAW,
       } as PresaleFeeInfoStruct,
       parseUnits(_tokenAmount.toString(), await presaleToken.decimals()),
       {
@@ -284,11 +281,6 @@ describe("SummitCustomPresale", () => {
 
     beforeEach(async () => {
       feeInfo = await customPresale.getFeeInfo();
-    });
-
-    it("should be feeEmergencyWithdraw", () => {
-      const feeEmergencyWithdraw = feeInfo.feeEmergencyWithdraw;
-      assert.equal(FEE_EMERGENCY_WITHDRAW.toString(), feeEmergencyWithdraw.toString());
     });
 
     it("should be FEE_PAYMENT_TOKEN", () => {
@@ -2240,7 +2232,6 @@ describe("SummitCustomPresale", () => {
           ...feeInfo,
           feePresaleToken: (2 * FEE_DENOMINATOR) / 100,
           feePaymentToken: (4 * FEE_DENOMINATOR) / 100,
-          feeEmergencyWithdraw: (1 * FEE_DENOMINATOR) / 100,
         },
         projectDetails,
         {
@@ -2264,7 +2255,6 @@ describe("SummitCustomPresale", () => {
       assert.equal(updatedPresaleInfo.listingChoice.toString(), "2");
       assert.equal(updatedPresaleInfo.isWhiteListPhase, true);
       assert.equal(updatedPresaleInfo.isVestingEnabled, true);
-      assert.equal(updatedfeeInfo.feeEmergencyWithdraw.toString(), ((1 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePresaleToken.toString(), ((2 * FEE_DENOMINATOR) / 100).toString());
       assert.equal(updatedfeeInfo.feePaymentToken.toString(), ((4 * FEE_DENOMINATOR) / 100).toString());
     });

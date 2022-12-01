@@ -33,7 +33,7 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   TokenInfo public tokenInfo;
   ISummitWhitelabelNftFactory public factory;
 
-  address public immutable signer;
+  address public signer;
 
   event PhaseUpdated(Phase previousPhase, Phase updatedPhase);
   event WhitelistMintPriceUpdated(uint256 price);
@@ -105,7 +105,15 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
     return signer == hash.recover(signature);
   }
 
+  function getSigner() external view returns (address) {
+    return signer;
+  }
+
   // Owner function
+  function setSigner(address _signer) external onlyOwner {
+    signer = _signer;
+  }
+
   function devMints(address[] calldata _tos, uint256 _mintAmount) external onlyOwner {
     for (uint256 i; i < _tos.length; i++) {
       mintX(_tos[i], _mintAmount);

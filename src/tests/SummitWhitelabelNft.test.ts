@@ -15,7 +15,7 @@ enum Phase {
 }
 
 describe("SummitWhitelabelNft", () => {
-  const [owner, nftOwner, signer, whitelistMinter1, whitelistMinter2, minter] = provider.getWallets();
+  const [owner, nftOwner, signer, whitelistMinter1, whitelistMinter2, minter, newSigner] = provider.getWallets();
 
   let summitWhitelabelNftFactory: SummitWhitelabelNftFactory;
   let summitWhitelabelNft: SummitWhitelabelNft;
@@ -259,6 +259,18 @@ describe("SummitWhitelabelNft", () => {
       const tokenUri = `${baseUri}${filename}.json`;
 
       assert.equal(await summitWhitelabelNft.tokenURI(tokenId), tokenUri);
+    });
+  });
+
+  describe("setSigner", () => {
+    it("should be reverted if called by non-owner", async () => {
+      await expect(summitWhitelabelNft.connect(minter).setSigner(newSigner.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+    it("should be able to set new signer", async () => {
+      await summitWhitelabelNft.connect(nftOwner).setSigner(newSigner.address);
+      assert.equal(await summitWhitelabelNft.getSigner(), newSigner.address);
     });
   });
 

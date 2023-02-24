@@ -33,6 +33,11 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   TokenInfo public tokenInfo;
   ISummitWhitelabelNftFactory public factory;
 
+  uint256 public whitelistMintPerWallet = 0; // 0 means no limit
+  uint256 public publicMintPerWallet = 0; // 0 means no limit
+  mapping(address => uint256) public whitelistMinted;
+  mapping(address => uint256) public publicMinted;
+
   address public signer;
 
   event PhaseUpdated(Phase previousPhase, Phase updatedPhase);
@@ -41,6 +46,9 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   event IsRevealUpdated(bool isReveal);
   event PreviewImageUrlUpdated(string previewImageUrl);
   event BaseTokenUriUpdated(string baseUri);
+
+  event WhitelistMintPerWalletUpdated(uint256 whitelistMintPerWallet);
+  event PublicMintPerWalletUpdated(uint256 publicMintPerWallet);
 
   constructor(
     TokenInfo memory _tokenInfo,
@@ -64,14 +72,24 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
   function mint(uint256 _mintAmount) external payable {
     require(tokenInfo.phase != Phase.Pause, "Minting is paused");
     require(tokenInfo.phase == Phase.Public, "Please provide signature");
+    require(
+      publicMintPerWallet == 0 || publicMinted[_msgSender()] + _mintAmount <= publicMintPerWallet,
+      "Public mint limit reached"
+    );
 
+    publicMinted[_msgSender()] += _mintAmount;
     mintX(_msgSender(), _mintAmount);
   }
 
   function mint(uint256 _mintAmount, bytes memory _signature) external payable {
     require(tokenInfo.phase != Phase.Pause, "Minting is paused");
     require(tokenInfo.phase == Phase.Whitelist && isSignatureValid(_msgSender(), _signature), "Invalid signature");
+    require(
+      whitelistMintPerWallet == 0 || whitelistMinted[_msgSender()] + _mintAmount <= whitelistMintPerWallet,
+      "Whitelist mint limit reached"
+    );
 
+    whitelistMinted[_msgSender()] += _mintAmount;
     mintX(_msgSender(), _mintAmount);
   }
 
@@ -159,6 +177,14 @@ contract SummitWhitelabelNft is ERC721AQueryable, BaseTokenURI {
 
     emit WhitelistMintPriceUpdated(_whitelistMintPrice);
     emit PublicMintPriceUpdated(_publicMintPrice);
+  }
+
+  function setMintPerWallet(uint256 _whitelistMintPerWallet, uint256 _publicMintPerWallet) external onlyOwner {
+    whitelistMintPerWallet = _whitelistMintPerWallet;
+    publicMintPerWallet = _publicMintPerWallet;
+
+    emit WhitelistMintPerWalletUpdated(_whitelistMintPerWallet);
+    emit PublicMintPerWalletUpdated(_publicMintPerWallet);
   }
 
   function revealMetadata(string memory _baseUri) external onlyOwner {

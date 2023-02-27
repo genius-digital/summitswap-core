@@ -152,6 +152,34 @@ describe("SummitWhitelabelNft", () => {
           mintPrice.mul(mintAmount).add(gasCost).toString()
         );
       });
+      it("should be reverted if exceed whitelistMintPerWallet", async () => {
+        const whitelistMintPerWallet = BigNumber.from(3);
+        const publicMintPerWallet = BigNumber.from(0);
+
+        const firstMintAmount = BigNumber.from(3);
+        const secondMintAmount = BigNumber.from(1);
+
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;
+
+        await summitWhitelabelNft.connect(nftOwner).setMintPerWallet(whitelistMintPerWallet, publicMintPerWallet);
+
+        await summitWhitelabelNft
+          .connect(whitelistMinter1)
+          ["mint(uint256,bytes)"](firstMintAmount, validSign1.signature, {
+            value: mintPrice.mul(firstMintAmount),
+          });
+
+        assert.equal(
+          (await summitWhitelabelNft.whitelistMinted(whitelistMinter1.address)).toNumber(),
+          firstMintAmount.toNumber()
+        );
+
+        await expect(
+          summitWhitelabelNft.connect(whitelistMinter1)["mint(uint256,bytes)"](secondMintAmount, validSign1.signature, {
+            value: mintPrice.mul(secondMintAmount),
+          })
+        ).to.be.revertedWith("Whitelist mint limit reached");
+      });
       it("should be able to mint", async () => {
         const mintPrice = (await summitWhitelabelNft.tokenInfo()).whitelistMintPrice;
         await summitWhitelabelNft.connect(whitelistMinter1)["mint(uint256,bytes)"](mintAmount, validSign1.signature, {
@@ -219,6 +247,29 @@ describe("SummitWhitelabelNft", () => {
           minterMinterBalanceInitial.sub(minterMinterBalanceFinal).toString(),
           mintPrice.mul(mintAmount).add(gasCost).toString()
         );
+      });
+      it("should be reverted if exceed publicMintPerWallet", async () => {
+        const whitelistMintPerWallet = BigNumber.from(0);
+        const publicMintPerWallet = BigNumber.from(3);
+
+        const firstMintAmount = BigNumber.from(3);
+        const secondMintAmount = BigNumber.from(1);
+
+        const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
+
+        await summitWhitelabelNft.connect(nftOwner).setMintPerWallet(whitelistMintPerWallet, publicMintPerWallet);
+
+        await summitWhitelabelNft.connect(minter)["mint(uint256)"](firstMintAmount, {
+          value: mintPrice.mul(firstMintAmount),
+        });
+
+        assert.equal((await summitWhitelabelNft.publicMinted(minter.address)).toNumber(), firstMintAmount.toNumber());
+
+        await expect(
+          summitWhitelabelNft.connect(minter)["mint(uint256)"](secondMintAmount, {
+            value: mintPrice.mul(secondMintAmount),
+          })
+        ).to.be.revertedWith("Public mint limit reached");
       });
       it("should be able to mint", async () => {
         const mintPrice = (await summitWhitelabelNft.tokenInfo()).publicMintPrice;
@@ -426,6 +477,27 @@ describe("SummitWhitelabelNft", () => {
         newWhitelistMintPrice.toString()
       );
       assert.equal((await summitWhitelabelNft.tokenInfo()).publicMintPrice.toString(), newPublicMintPrice.toString());
+    });
+  });
+
+  describe("setMintPerWallet", () => {
+    const newWhitelistMintPerWallet = BigNumber.from(5);
+    const newPublicMintPerWallet = BigNumber.from(7);
+
+    it("should be reverted if called by non-owner", async () => {
+      await expect(
+        summitWhitelabelNft.connect(minter).setMintPerWallet(newWhitelistMintPerWallet, newPublicMintPerWallet)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should be able to set new mint per wallet", async () => {
+      await summitWhitelabelNft.connect(nftOwner).setMintPerWallet(newWhitelistMintPerWallet, newPublicMintPerWallet);
+
+      assert.equal(
+        (await summitWhitelabelNft.whitelistMintPerWallet()).toNumber(),
+        newWhitelistMintPerWallet.toNumber()
+      );
+      assert.equal((await summitWhitelabelNft.publicMintPerWallet()).toNumber(), newPublicMintPerWallet.toNumber());
     });
   });
 
